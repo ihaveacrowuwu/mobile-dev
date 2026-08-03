@@ -169,6 +169,12 @@ ksp {
 }
 
 dependencies {
+    // ── Project modules ────────────────────────────────────────────────────
+    // Type-safe accessor (see settings.gradle.kts): a renamed module is a compile error.
+    // `api`, not `implementation`: domain models appear in this module's own public API
+    // (view model state, composable parameters), so consumers need them transitively.
+    api(projects.core.model)
+
     // ── Platform / BOM ─────────────────────────────────────────────────────
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))

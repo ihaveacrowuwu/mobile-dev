@@ -1,4 +1,8 @@
 pluginManagement {
+    // build-logic must be included FIRST so its convention plugins exist before this
+    // build resolves plugins.
+    includeBuild("build-logic")
+
     repositories {
         google {
             content {
@@ -28,6 +32,11 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
 }
 
+// `projects.core.model` instead of `project(":core:model")`, a renamed module then becomes
+// a compile error rather than a runtime "project not found".
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = "SkyCast"
 
 include(":app")
+include(":core:model")

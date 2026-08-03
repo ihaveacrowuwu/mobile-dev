@@ -87,6 +87,13 @@ mockk = "1.14.7"
 turbine = "1.2.1"
 
 [libraries]
+# ── Gradle plugin artifacts, for build-logic's convention plugins ───────────
+# compileOnly dependencies of :build-logic:convention so it can reference AGP/KGP/KSP
+# types. Versions come from the same refs the app uses, so there is one source of truth.
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
+
 # ── Core / lifecycle ───────────────────────────────────────────────────────
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
@@ -150,6 +157,11 @@ mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "moc
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 [plugins]
+# ── Our own convention plugins, from the build-logic included build ─────────
+# These have no version: they are produced by build-logic, not resolved from a repository.
+skycast-jvm-library = { id = "skycast.jvm.library" }
+skycast-android-library = { id = "skycast.android.library" }
+
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
