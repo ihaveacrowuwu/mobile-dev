@@ -42,8 +42,7 @@ struct ErrorView: View {
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            Image(systemName: error.symbolName)
-                .font(.system(size: 56))
+            ScaledSymbol(error.symbolName)
                 .foregroundStyle(Color.skyError)
                 // Decorative: the title and message already carry the meaning.
                 .accessibilityHidden(true)
@@ -79,8 +78,7 @@ struct EmptyStateView: View {
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            Image(systemName: systemImage)
-                .font(.system(size: 56))
+            ScaledSymbol(systemImage)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 
@@ -187,7 +185,7 @@ struct StaleDataBanner: View {
 
         SkyGlassGroup {
             StaleDataBanner(
-                message: "Offline, showing data from 20 minutes ago",
+                message: "Offline: showing data from 20 minutes ago",
                 onRetry: {},
                 onDismiss: {}
             )

@@ -17,8 +17,7 @@ struct ConditionBadge: View {
     var size: CGFloat = 64
 
     var body: some View {
-        Image(systemName: condition.symbolName(isDaytime: isDaytime))
-            .font(.system(size: size, weight: .light))
+        ScaledSymbol(condition.symbolName(isDaytime: isDaytime), baseSize: size)
             .symbolRenderingMode(.multicolor)
             // Glass gives the badge depth without a coloured fill, so the symbol's own
             // colours stay accurate.

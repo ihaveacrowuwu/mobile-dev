@@ -39,15 +39,65 @@ extension ThemeMode {
 
 /// Typography helpers.
 ///
-/// Everything is built on the system text styles, so text scales with the user's Dynamic
-/// Type setting.
-extension Font {
-    /// The one oversized style, for the single hero temperature reading.
+/// Everything is built on the system text styles, so text scales with the user's Dynamic Type
+/// setting.
+enum SkyTypography {
+    /// Base point size for the single hero temperature reading.
     ///
-    /// `.system(size:weight:design:)` alone would NOT scale, so it is wrapped in a
-    /// relative text style, this is the whole reason the helper exists rather than
-    /// callers writing `.font(.system(size: 88))`.
-    static var skyHeroTemperature: Font {
-        .system(size: 88, weight: .thin, design: .rounded)
+    /// Must be used with `@ScaledMetric(relativeTo: .largeTitle)`, see
+    /// ``ScaledHeroTemperature``. `Font.system(size:)` alone does **not** respond to Dynamic
+    /// Type, which is why there is no plain `Font` extension for this.
+    static let heroTemperatureBaseSize: CGFloat = 88
+
+    /// Base point size for the large illustrative symbols in the error and empty states.
+    static let stateSymbolBaseSize: CGFloat = 56
+
+    /// Base point size for the smaller placeholder-screen symbol.
+    static let placeholderSymbolBaseSize: CGFloat = 44
+}
+
+/// The hero temperature, at a size that scales with Dynamic Type.
+///
+/// `@ScaledMetric` is the only correct way to use a specific point size on iOS: it multiplies
+/// the base value by the user's current text-size scale factor, relative to a named text
+/// style. A bare `.font(.system(size: 88))` would stay 88pt at every accessibility setting.
+struct ScaledHeroTemperature: View {
+    let text: String
+
+    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = SkyTypography.heroTemperatureBaseSize
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: size, weight: .thin, design: .rounded))
+            // Stops the layout jumping as the number changes width between refreshes.
+            .monospacedDigit()
+            // Animates the digits themselves rather than cross-fading the whole label.
+            .contentTransition(.numericText())
+    }
+}
+
+/// A large illustrative SF Symbol that scales with Dynamic Type.
+///
+/// Apple's guidance is that symbols scale with the text beside them. A fixed-size symbol next
+/// to scaled text looks wrong at large accessibility sizes.
+struct ScaledSymbol: View {
+    private let systemName: String
+
+    /// Initialised via the property-wrapper backing store because the scale factor depends
+    /// on `baseSize` and `relativeTo`, which are only known at init.
+    @ScaledMetric private var size: CGFloat
+
+    init(
+        _ systemName: String,
+        baseSize: CGFloat = SkyTypography.stateSymbolBaseSize,
+        relativeTo: Font.TextStyle = .largeTitle
+    ) {
+        self.systemName = systemName
+        _size = ScaledMetric(wrappedValue: baseSize, relativeTo: relativeTo)
+    }
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.system(size: size))
     }
 }

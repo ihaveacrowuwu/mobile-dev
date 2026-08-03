@@ -18,8 +18,7 @@ struct PlaceholderScreen<Destination: View>: View {
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            Image(systemName: "hammer")
-                .font(.system(size: 44))
+            ScaledSymbol("hammer", baseSize: SkyTypography.placeholderSymbolBaseSize)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 

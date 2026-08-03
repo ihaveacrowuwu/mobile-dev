@@ -134,13 +134,8 @@ private struct CurrentConditionsHero: View {
             ConditionBadge(condition: weather.condition, isDaytime: weather.isDaytime)
 
             HStack(alignment: .top, spacing: 0) {
-                Text("\(temperature)")
-                    .font(.skyHeroTemperature)
-                    // Monospaced digits stop the layout jumping as the temperature
-                    // changes width between refreshes.
-                    .monospacedDigit()
-                    // Animates the number itself rather than cross-fading the whole label.
-                    .contentTransition(.numericText())
+                // Scales with Dynamic Type; see ScaledHeroTemperature.
+                ScaledHeroTemperature(text: "\(temperature)")
                 Text(unit.symbol)
                     .font(.title2)
                     .padding(.top, Spacing.md)

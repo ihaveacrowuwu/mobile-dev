@@ -9,8 +9,7 @@ import SwiftUI
 struct LocationsScreen: View {
     var body: some View {
         VStack(spacing: Spacing.md) {
-            Image(systemName: "mappin.and.ellipse")
-                .font(.system(size: 44))
+            ScaledSymbol("mappin.and.ellipse", baseSize: SkyTypography.placeholderSymbolBaseSize)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 

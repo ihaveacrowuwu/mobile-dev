@@ -1,11 +1,12 @@
 package com.nauhaan.skycast.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,6 +34,15 @@ import com.nauhaan.skycast.ui.today.TodayScreen
  */
 @Composable
 fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
+    // Read the Expressive motion scheme once, here, where we are still in a @Composable.
+    // The transition lambdas below run in AnimatedContentTransitionScope, which is not
+    // composable, so MaterialTheme cannot be read inside them.
+    //
+    // Spatial spec for the slide (geometry, where overshoot is desirable) and effects spec for
+    // the fade (opacity, which must NOT overshoot past fully opaque).
+    val slideSpec = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+    val fadeSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+
     NavHost(
         navController = navigator.navController,
         startDestination = Route.Today,
@@ -42,33 +52,33 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
         enterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(TRANSITION_MILLIS),
+                animationSpec = slideSpec,
             )
         },
         exitTransition = {
             slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(TRANSITION_MILLIS),
+                animationSpec = slideSpec,
             )
         },
         popEnterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(TRANSITION_MILLIS),
+                animationSpec = slideSpec,
             )
         },
         popExitTransition = {
             slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(TRANSITION_MILLIS),
+                animationSpec = slideSpec,
             )
         },
     ) {
         // ── Tabs ───────────────────────────────────────────────────────────
 
         composable<Route.Today>(
-            enterTransition = { fadeIn(tween(TRANSITION_MILLIS)) },
-            exitTransition = { fadeOut(tween(TRANSITION_MILLIS)) },
+            enterTransition = { fadeIn(fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) },
         ) {
             TodayScreen(
                 onNavigateToLocationDetail = navigator::navigateToLocationDetail,
@@ -77,15 +87,15 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
         }
 
         composable<Route.Forecast>(
-            enterTransition = { fadeIn(tween(TRANSITION_MILLIS)) },
-            exitTransition = { fadeOut(tween(TRANSITION_MILLIS)) },
+            enterTransition = { fadeIn(fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) },
         ) {
             ForecastScreen(onNavigateToDayDetail = navigator::navigateToDayDetail)
         }
 
         composable<Route.Locations>(
-            enterTransition = { fadeIn(tween(TRANSITION_MILLIS)) },
-            exitTransition = { fadeOut(tween(TRANSITION_MILLIS)) },
+            enterTransition = { fadeIn(fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) },
         ) {
             LocationsScreen(
                 onNavigateToAddLocation = navigator::navigateToAddLocation,
@@ -94,8 +104,8 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
         }
 
         composable<Route.Settings>(
-            enterTransition = { fadeIn(tween(TRANSITION_MILLIS)) },
-            exitTransition = { fadeOut(tween(TRANSITION_MILLIS)) },
+            enterTransition = { fadeIn(fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) },
         ) {
             SettingsScreen(onNavigateToAbout = navigator::navigateToAbout)
         }
@@ -129,5 +139,3 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
         }
     }
 }
-
-private const val TRANSITION_MILLIS = 250
