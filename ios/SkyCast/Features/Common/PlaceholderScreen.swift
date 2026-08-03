@@ -30,7 +30,7 @@ struct PlaceholderScreen<Destination: View>: View {
 
             if let linkTitle {
                 NavigationLink(linkTitle, destination: destination)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glass)
                     .padding(.top, Spacing.sm)
             }
         }

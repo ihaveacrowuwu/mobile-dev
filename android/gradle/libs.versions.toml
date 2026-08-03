@@ -29,7 +29,36 @@ coreSplashscreen = "1.0.1"
 activityCompose = "1.12.4"
 lifecycle = "2.9.4"
 navigationCompose = "2.9.8"
+# Governs every androidx.compose.* artifact EXCEPT material3, which is pinned below.
+#
+# NOT the newest BOM on purpose. 2026.06.01 pins compose-ui 1.12.0-beta01, which
+# requires compileSdk 37 AND Android Gradle Plugin 9.1+. 2026.01.01 pins ui 1.10.2,
+# which is happy on compileSdk 36 / AGP 8.13 and still satisfies material3's
+# requirement of ui >= 1.8.2. Bumping this means migrating the whole toolchain,
+# Material 3 Expressive.
 composeBom = "2026.01.01"
+
+# Material3 is pinned ABOVE the BOM, on purpose.
+#
+# The BOM pins material3 1.4.0. In 1.4.0 the whole Material 3 Expressive API,
+# `MaterialExpressiveTheme`, `ExperimentalMaterial3ExpressiveApi`, the emphasized
+# type roles, `MotionScheme`: is Kotlin-`internal`, so it cannot be called from
+# app code at all. (It looks public under `javap` because Kotlin `internal`
+# compiles to public JVM bytecode; only the Kotlin compiler enforces it.)
+#
+# Expressive first becomes public API in 1.5.0. That line is alpha, so this is a
+# deliberate stability trade-off taken to get the current Material design language
+#, Material 3 Expressive.
+#
+# alpha14 specifically, not the newest alpha. It carries the complete Expressive
+# surface we use: MaterialExpressiveTheme, MotionScheme, emphasized type roles,
+# MaterialShapes, LoadingIndicator, ButtonGroup, FloatingToolbar, SplitButton,
+# while depending only on compose-ui 1.8.2. Every alpha from 19 onward requires
+# compose-ui 1.12.x, which drags in compileSdk 37 + AGP 9.
+#
+# Pinned to an exact alpha, never a range: a fixed alpha is reproducible, and the
+# only risk is at bump time.
+material3 = "1.5.0-alpha14"
 room = "2.8.4"
 datastore = "1.1.7"
 # 2.58 is the newest Hilt that actually works with AGP 8.x. 2.59.2+ rejects AGP 8
@@ -73,7 +102,8 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+# Explicitly versioned so it overrides the BOM: see the `material3` note above.
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 

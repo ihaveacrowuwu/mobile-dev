@@ -19,9 +19,16 @@ name: SkyCast
 options:
   bundleIdPrefix: com.nauhaan
   deploymentTarget:
-    # 17.0 is the floor for SwiftData and the Observation framework, both of which
-    # this architecture depends on. It still covers the large majority of devices.
-    iOS: "17.0"
+    # 26.0, because Liquid Glass is a hard requirement for this project.
+    #
+    # Every Liquid Glass API (`glassEffect`, `GlassEffectContainer`,
+    # `buttonStyle(.glass)`, `tabBarMinimizeBehavior`, `backgroundExtensionEffect`)
+    # is iOS 26+. Targeting 26.0 lets the code use them unconditionally instead of
+    # being littered with `if #available` and maintaining two visual designs.
+    #
+    # The cost is real: devices on iOS 17-25 are excluded. Recorded in
+    # Liquid Glass.
+    iOS: "26.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
   groupSortPosition: top

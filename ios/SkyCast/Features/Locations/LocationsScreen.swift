@@ -22,13 +22,13 @@ struct LocationsScreen: View {
             NavigationLink("Add location") {
                 AddLocationScreen()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.glassProminent)
             .padding(.top, Spacing.sm)
 
             NavigationLink("Open a location (demo navigation)") {
                 LocationDetailScreen(locationID: PreviewIdentifiers.locationID)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.glass)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(Spacing.lg)

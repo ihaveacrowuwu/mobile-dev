@@ -71,44 +71,50 @@ struct TodayContent: View {
 
     private var content: some View {
         ScrollView {
-            VStack(spacing: Spacing.md) {
-                if state.showsStaleBanner {
-                    StaleDataBanner(
-                        message: state.staleBannerMessage,
-                        onRetry: { Task { await onRefresh() } },
-                        onDismiss: onDismissBanner
-                    )
-                }
+            // One glass container for every floating surface on this screen, so the
+            // banner, hero and detail card behave as a single material instead of three
+            // independent panes with visible seams between them.
+            SkyGlassGroup(spacing: Spacing.md) {
+                VStack(spacing: Spacing.md) {
+                    if state.showsStaleBanner {
+                        StaleDataBanner(
+                            message: state.staleBannerMessage,
+                            onRetry: { Task { await onRefresh() } },
+                            onDismiss: onDismissBanner
+                        )
+                    }
 
-                if let weather = state.weather {
-                    CurrentConditionsHeader(
-                        weather: weather,
-                        unit: state.preferences.temperatureUnit
-                    )
+                    if let weather = state.weather {
+                        CurrentConditionsHero(
+                            weather: weather,
+                            unit: state.preferences.temperatureUnit
+                        )
 
-                    // TODO(nauhaan): replace with the real detail grid, humidity, wind,
-                    //  pressure, visibility, sunrise/sunset. Tracked for the Functionality
-                    //  criterion; the plumbing above is already final.
-                    Text("Humidity, wind, pressure and sunrise details will appear here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(Spacing.md)
-                        .background(Color.skySurface, in: RoundedRectangle(cornerRadius: Radius.md))
-                        .padding(.horizontal, Spacing.md)
+                        // TODO(nauhaan): replace with the real detail grid, humidity, wind,
+                        //  pressure, visibility, sunrise/sunset. Tracked for the Functionality
+                        //  criterion; the plumbing above is already final.
+                        Text("Humidity, wind, pressure and sunrise details will appear here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .skyGlass(.hero)
+                    }
                 }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.md)
             }
-            .padding(.vertical, Spacing.md)
         }
-        .background(Color.skyBackground)
+        // Liquid Glass: softens where content meets the navigation bar and the minimised
+        // tab bar, instead of the hard clip that a plain ScrollView would produce.
+        .scrollEdgeEffectStyle(.soft, for: .all)
         // Native pull-to-refresh; also drives the Retry action above.
         .refreshable { await onRefresh() }
     }
 }
 
-/// The hero reading: place, condition symbol, and one very large temperature.
-private struct CurrentConditionsHeader: View {
+/// The hero reading: place, condition badge, and one very large temperature.
+private struct CurrentConditionsHero: View {
     let weather: Weather
     let unit: TemperatureUnit
 
@@ -121,18 +127,20 @@ private struct CurrentConditionsHeader: View {
     }
 
     var body: some View {
-        VStack(spacing: Spacing.xs) {
+        VStack(spacing: Spacing.sm) {
             Text(weather.locationName)
                 .font(.title2.weight(.semibold))
 
-            Image(systemName: weather.condition.symbolName(isDaytime: weather.isDaytime))
-                .font(.system(size: 56))
-                .symbolRenderingMode(.multicolor)
-                .accessibilityHidden(true)
+            ConditionBadge(condition: weather.condition, isDaytime: weather.isDaytime)
 
             HStack(alignment: .top, spacing: 0) {
                 Text("\(temperature)")
                     .font(.skyHeroTemperature)
+                    // Monospaced digits stop the layout jumping as the temperature
+                    // changes width between refreshes.
+                    .monospacedDigit()
+                    // Animates the number itself rather than cross-fading the whole label.
+                    .contentTransition(.numericText())
                 Text(unit.symbol)
                     .font(.title2)
                     .padding(.top, Spacing.md)
@@ -147,7 +155,7 @@ private struct CurrentConditionsHeader: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(Spacing.md)
+        .skyGlass(.hero)
         // One combined announcement. Without this a VoiceOver user hears "London", "22",
         // "°C", "Clear sky", "Feels like 21°C" as five disconnected fragments.
         .accessibilityElement(children: .ignore)
@@ -163,40 +171,24 @@ private struct CurrentConditionsHeader: View {
 
 #Preview("Loading") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(isLoading: true),
-            onRefresh: {},
-            onDismissBanner: {}
-        )
+        TodayContent(state: TodayUiState(isLoading: true), onRefresh: {}, onDismissBanner: {})
     }
 }
 
 #Preview("Empty") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(hasNoLocation: true),
-            onRefresh: {},
-            onDismissBanner: {}
-        )
+        TodayContent(state: TodayUiState(hasNoLocation: true), onRefresh: {}, onDismissBanner: {})
     }
 }
 
 #Preview("Offline, no cache") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(error: .offline),
-            onRefresh: {},
-            onDismissBanner: {}
-        )
+        TodayContent(state: TodayUiState(error: .offline), onRefresh: {}, onDismissBanner: {})
     }
 }
 
 #Preview("No API key") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(error: .unauthorized),
-            onRefresh: {},
-            onDismissBanner: {}
-        )
+        TodayContent(state: TodayUiState(error: .unauthorized), onRefresh: {}, onDismissBanner: {})
     }
 }

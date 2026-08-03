@@ -35,11 +35,19 @@ object Spacing {
     val xxl: Dp = 48.dp
 }
 
-/** Corner radii, kept consistent so cards and sheets share a visual language. */
+/**
+ * Corner radii.
+ *
+ * Larger and more varied than baseline Material 3, following Material 3 **Expressive**.
+ */
 object Radius {
-    val sm: Dp = 8.dp
-    val md: Dp = 16.dp
-    val lg: Dp = 24.dp
+    val xs: Dp = 8.dp
+    val sm: Dp = 12.dp
+    val md: Dp = 20.dp
+    val lg: Dp = 28.dp
+    val xl: Dp = 36.dp
+
+    /** Fully rounded, for chips and the hero surface. */
     val pill: Dp = 999.dp
 }
 

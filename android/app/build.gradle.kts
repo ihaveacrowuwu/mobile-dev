@@ -145,6 +145,13 @@ kotlin {
         // Enable with -PwarningsAsErrors=true; CI does exactly that.
         allWarningsAsErrors.set(providers.gradleProperty("warningsAsErrors").orNull.toBoolean())
         freeCompilerArgs.addAll(
+            // Material 3 Expressive is adopted project-wide, so the opt-in lives here rather than
+            // as an @OptIn on every file that touches an emphasized type role, MotionScheme or an
+            // expressive component.
+            //
+            // ExperimentalMaterial3Api is NOT opted into globally. Those APIs are opted into per
+            // use site, so the experimental signal stays visible.
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
             "-Xconsistent-data-class-copy-visibility",
             // Opt in to Kotlin's future default: an annotation on a constructor
             // parameter also applies to the generated field. Without this, every

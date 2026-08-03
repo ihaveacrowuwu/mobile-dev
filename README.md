@@ -9,8 +9,8 @@
 | | iOS | Android |
 | --- | --- | --- |
 | **Language** | Swift 6 | Kotlin 2.2 |
-| **UI** | SwiftUI | Jetpack Compose (Material 3) |
-| **Minimum OS** | iOS 17.0 | Android 8.0 (API 26) |
+| **UI** | SwiftUI + **Liquid Glass** | Jetpack Compose + **Material 3 Expressive** |
+| **Minimum OS** | iOS 26.0 | Android 8.0 (API 26) |
 | **Persistence** | SwiftData + `UserDefaults` | Room + DataStore |
 | **Networking** | `URLSession` + `async`/`await` | Retrofit + OkHttp + coroutines |
 | **DI** | `AppContainer` (hand-rolled) | Hilt |
@@ -227,7 +227,7 @@ xcodebuild -scheme SkyCast -destination 'platform=iOS Simulator,name=iPhone 17' 
 | Technology | Purpose |
 | --- | --- |
 | Swift 6 (strict concurrency) | Language; data-race safety enforced at compile time |
-| SwiftUI | Declarative UI |
+| SwiftUI + **Liquid Glass** (iOS 26) | Declarative UI; `glassEffect`, `GlassEffectContainer`, glass button styles |
 | SwiftData | Local relational cache and saved locations |
 | Observation (`@Observable`) | View-model state observed directly by SwiftUI |
 | `URLSession` + `async`/`await` | Networking |
@@ -245,7 +245,7 @@ first-party Apple framework.
 | Technology | Purpose |
 | --- | --- |
 | Kotlin 2.2 + coroutines / Flow | Language and concurrency |
-| Jetpack Compose (Material 3) | Declarative UI, dynamic colour |
+| Jetpack Compose + Material 3 **Expressive** | Declarative UI, dynamic colour, expressive motion/shape/type |
 | Navigation Compose | Type-safe `@Serializable` routes |
 | Room | Local SQLite cache and saved locations |
 | DataStore (Preferences) | Settings |
@@ -356,18 +356,26 @@ mobile-dev/
    reachable and navigable but show a description of their planned content. The
    repositories, caches, mappers and geocoding beneath them are fully implemented and
    unit-tested, so these are presentation-only gaps.
-2. **iOS has not been compiled.** Xcode was not installed on the machine used to scaffold
-   this project, so the Swift sources have been formatted and reviewed but not built.
-   SwiftLint also requires Xcode's SourceKit and could not run. Expect to fix a small
-   number of compile errors on first build.
-3. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
+2. **iOS has not been compiled.** The iOS simulator runtime was still installing while
+   this was written, so the Swift sources have been formatted and reviewed but never built.
+   SwiftLint also requires Xcode's SourceKit and could not run. The Liquid Glass APIs are
+   new, so expect to fix a small number of signature errors on first build, they are
+   concentrated in `ios/SkyCast/Core/DesignSystem/GlassSurface.swift` by design.
+3. **iOS requires iOS 26.** Liquid Glass is an iOS 26 API surface, so the deployment
+   target is 26.0 and devices below that are excluded. This is a deliberate trade-off for
+   the design language; lowering the target means giving up Liquid Glass.
+4. **Compose Material3 is an alpha (`1.5.0-alpha14`).** Material 3 Expressive is
+   Kotlin-`internal` in 1.4.0, the newest stable release, so there is no stable route to
+   it. Pinned to an exact alpha for reproducibility. Also why the Compose BOM sits at
+   2026.01.01 rather than the newest, see the recorded decision.
+5. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
    and Gradle itself onto versions whose mutual compatibility is unverified here. Hilt is
    therefore pinned to 2.58, the newest release that still works with AGP 8. Recorded in
    `android/gradle/libs.versions.toml`.
-4. **No release signing configuration.** `assembleRelease` uses the debug signing config so
+6. **No release signing configuration.** `assembleRelease` uses the debug signing config so
    it is runnable locally and in CI. A real keystore would be required for Play Store
    distribution.
-5. **English only.** Strings are externalised, but no translations exist and
+7. **English only.** Strings are externalised, but no translations exist and
    `androidResources.localeFilters` ships only `en`.
 
 ### Future improvements

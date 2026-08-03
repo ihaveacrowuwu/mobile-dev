@@ -34,9 +34,11 @@ import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.WeatherConditionBadge
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.TemperatureUnit
+import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.toPresentation
 import kotlin.math.roundToInt
 
@@ -140,6 +142,8 @@ internal fun TodayContent(
                         CurrentConditionsHeader(
                             locationName = weather.locationName,
                             description = weather.description,
+                            condition = weather.condition,
+                            isDaytime = weather.isDaytime,
                             temperature = weather.temperatureCelsius,
                             feelsLike = weather.feelsLikeCelsius,
                             unit = uiState.preferences.temperatureUnit,
@@ -181,6 +185,8 @@ internal fun TodayContent(
 private fun CurrentConditionsHeader(
     locationName: String,
     description: String,
+    condition: WeatherCondition,
+    isDaytime: Boolean,
     temperature: Double,
     feelsLike: Double,
     unit: TemperatureUnit,
@@ -216,11 +222,17 @@ private fun CurrentConditionsHeader(
     ) {
         Text(
             text = locationName,
-            style = MaterialTheme.typography.titleLarge,
+            // Expressive's emphasized title role: this is the screen's anchor label.
+            style = MaterialTheme.typography.titleLargeEmphasized,
             textAlign = TextAlign.Center,
         )
+        WeatherConditionBadge(
+            condition = condition,
+            isDaytime = isDaytime,
+            modifier = Modifier.padding(vertical = Spacing.sm),
+        )
         Row(verticalAlignment = Alignment.Top) {
-            Text(text = "$displayed", style = MaterialTheme.typography.displayLarge)
+            Text(text = "$displayed", style = MaterialTheme.typography.displayLargeEmphasized)
             Text(
                 text = unit.symbol,
                 style = MaterialTheme.typography.headlineSmall,

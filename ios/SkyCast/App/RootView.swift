@@ -6,23 +6,31 @@ import SwiftUI
 /// own scroll position and pushed screens across tab switches, the same property Android
 /// achieves with `saveState`/`restoreState` in `SkyCastNavigator`. A single shared stack
 /// would reset the user's place every time they visited Settings.
+///
+/// ## Liquid Glass
+///
+/// The tab bar, navigation bars and toolbars adopt Liquid Glass **automatically** because
+/// the app is built against the iOS 26 SDK, there is no modifier to add. The two things
+/// worth opting into explicitly are below.
 struct RootView: View {
     @State private var selectedTab: AppTab = .today
 
     var body: some View {
         TabView(selection: $selectedTab) {
             ForEach(AppTab.allCases) { tab in
-                NavigationStack {
-                    tab.destination
+                Tab(tab.title, systemImage: tab.systemImage, value: tab) {
+                    NavigationStack {
+                        tab.destination
+                    }
+                    .accessibilityIdentifier(tab.accessibilityIdentifier)
                 }
-                .tabItem {
-                    Label(tab.title, systemImage: tab.systemImage)
-                }
-                // Stable identifiers for UI tests; the visible title is copy and may change.
-                .accessibilityIdentifier(tab.accessibilityIdentifier)
-                .tag(tab)
             }
         }
+        // Liquid Glass behaviour: the tab bar shrinks to a compact pill as the user
+        // scrolls down, handing the full screen over to content and expanding again on
+        // scroll up. This is the headline interaction of the new tab bar, and it is
+        // opt-in rather than automatic.
+        .tabBarMinimizeBehavior(.onScrollDown)
     }
 }
 
@@ -72,7 +80,8 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
 }
 
 #Preview {
-    RootView()
-        .environment(AppContainer.preview())
-        .environment(AppContainer.preview().settingsStore)
+    let container = AppContainer.preview()
+    return RootView()
+        .environment(container)
+        .environment(container.settingsStore)
 }

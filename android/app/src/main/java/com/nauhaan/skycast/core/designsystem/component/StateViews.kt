@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -50,7 +50,10 @@ fun LoadingView(modifier: Modifier = Modifier, message: String? = null) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        CircularProgressIndicator()
+        // Material 3 Expressive's LoadingIndicator, not CircularProgressIndicator: it
+        // morphs between MaterialShapes rather than spinning an arc, which is the
+        // Expressive treatment for indeterminate waits.
+        LoadingIndicator()
         if (message != null) {
             Text(
                 text = message,

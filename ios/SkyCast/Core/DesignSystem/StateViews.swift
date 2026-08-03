@@ -1,12 +1,13 @@
 import SwiftUI
 
-// The four screen states, implemented once and reused everywhere.
-//
-// Centralising loading/empty/error presentation means every screen handles all four
-// states consistently, with accessibility already wired in, exactly what the
-// *Functionality* and *UI/UX* criteria look for.
+// The four screen states, implemented once and reused everywhere, with accessibility wired in.
 //
 // The Android counterpart is `core/designsystem/component/StateViews.kt`.
+//
+// The full-screen states use **no glass**: glass is for floating layers over content, and a
+// full-screen state *is* the content. Only [StaleDataBanner], which floats over cached content, is
+// glass. Buttons use `.glass` / `.glassProminent`, the iOS 26 replacement for `.bordered` /
+// `.borderedProminent`.
 
 /// Full-screen loader. Shown only when there is genuinely nothing cached to render.
 struct LoadingView: View {
@@ -59,7 +60,7 @@ struct ErrorView: View {
             // Only offered when retrying can actually succeed, see AppError.isRetryable.
             if let onRetry, error.isRetryable {
                 Button("Retry", action: onRetry)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glass)
                     .padding(.top, Spacing.sm)
             }
         }
@@ -94,7 +95,8 @@ struct EmptyStateView: View {
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
+                    // Prominent glass: this is the screen's single primary action.
+                    .buttonStyle(.glassProminent)
                     .padding(.top, Spacing.sm)
             }
         }
@@ -107,7 +109,8 @@ struct EmptyStateView: View {
 /// is stale.
 ///
 /// This is the visible half of the offline-first promise: the user keeps their data and is
-/// merely told it might be out of date.
+/// merely told it might be out of date. It is the one surface in the app that genuinely
+/// floats over content, so it is the one that gets tinted glass.
 struct StaleDataBanner: View {
     let message: String
     var onRetry: (() -> Void)?
@@ -125,6 +128,7 @@ struct StaleDataBanner: View {
             if let onRetry {
                 Button("Retry", action: onRetry)
                     .font(.footnote.weight(.semibold))
+                    .buttonStyle(.glass)
             }
             if let onDismiss {
                 Button {
@@ -133,17 +137,15 @@ struct StaleDataBanner: View {
                     Image(systemName: "xmark")
                         .font(.footnote)
                 }
+                .buttonStyle(.glass)
                 .accessibilityLabel("Dismiss")
             }
         }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
         .frame(maxWidth: .infinity)
-        .background(Color.skyWarning.opacity(0.18))
+        .skyGlass(.notice)
         // Announced as soon as it appears, so a VoiceOver user learns the data is stale
         // without having to go looking for the banner.
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isStaticText)
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -172,10 +174,24 @@ struct StaleDataBanner: View {
     )
 }
 
-#Preview("Stale banner") {
-    StaleDataBanner(
-        message: "Offline, showing data from 20 minutes ago",
-        onRetry: {},
-        onDismiss: {}
-    )
+#Preview("Stale banner over content") {
+    // Previewed over a gradient, because glass samples what is behind it and is invisible against
+    // a flat colour.
+    ZStack {
+        LinearGradient(
+            colors: [.blue, .purple, .orange],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+
+        SkyGlassGroup {
+            StaleDataBanner(
+                message: "Offline, showing data from 20 minutes ago",
+                onRetry: {},
+                onDismiss: {}
+            )
+            .padding(Spacing.md)
+        }
+    }
 }
