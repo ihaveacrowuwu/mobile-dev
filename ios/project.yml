@@ -1,0 +1,157 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# XcodeGen project definition: the SINGLE source of truth for SkyCast.xcodeproj.
+#
+# Why XcodeGen instead of a hand-managed .xcodeproj:
+#   • `project.pbxproj` is a generated artefact that merges terribly. Two people
+#     adding a file on different branches produces a conflict no one can review.
+#   • New Swift files are picked up automatically from the `sources` directories,
+#     so nobody can forget to add a file to the target.
+#   • Build settings are readable, diffable YAML and .xcconfig files.
+#
+# Regenerate after editing this file:
+#     cd ios && xcodegen generate
+#
+# NEVER hand-edit SkyCast.xcodeproj/project.pbxproj: it will be overwritten.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: SkyCast
+
+options:
+  bundleIdPrefix: com.nauhaan
+  deploymentTarget:
+    # 17.0 is the floor for SwiftData and the Observation framework, both of which
+    # this architecture depends on. It still covers the large majority of devices.
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+  # Fail generation rather than silently produce a project referencing missing files.
+  disabledValidations: []
+
+# Shared build settings. Anything environment- or secret-specific lives in the
+# .xcconfig files below instead, so it can be gitignored.
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Swift 6 strict concurrency. Warnings here are real data races, fix them with
+    # correct isolation (`actor`, `@MainActor`, `Sendable`), never by silencing.
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE: true
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+    DEAD_CODE_STRIPPING: true
+    CLANG_ENABLE_MODULES: true
+    # Treat warnings as errors so the codebase cannot drift.
+    GCC_TREAT_WARNINGS_AS_ERRORS: true
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: false # flipped on in CI only, see .github/workflows
+    CODE_SIGN_STYLE: Automatic
+    # Simulator builds and CI need no signing identity.
+    CODE_SIGNING_REQUIRED: false
+    CODE_SIGNING_ALLOWED: false
+  configs:
+    debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      ENABLE_TESTABILITY: true
+    release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+      VALIDATE_PRODUCT: true
+
+targets:
+  # ── App ────────────────────────────────────────────────────────────────────
+  SkyCast:
+    type: application
+    platform: iOS
+    sources:
+      - path: SkyCast
+        excludes:
+          - "**/.DS_Store"
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast
+        PRODUCT_NAME: SkyCast
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0.0
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        # Portrait plus both landscapes: the layout is responsive, and locking
+        # rotation on a phone-sized app is a usability regression.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: >-
+          UIInterfaceOrientationPortrait
+          UIInterfaceOrientationLandscapeLeft
+          UIInterfaceOrientationLandscapeRight
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: true
+    info:
+      path: Config/Info.plist
+      properties:
+        CFBundleDisplayName: SkyCast
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        # Read at runtime by AppConfiguration. The value is substituted from
+        # Config/Secrets.xcconfig, which is gitignored: no key in source control.
+        OpenWeatherAPIKey: $(OPEN_WEATHER_API_KEY)
+        OpenWeatherBaseURL: https://api.openweathermap.org/
+        # No location permission is requested: places are chosen by name, so asking
+        # for GPS would be an unjustified prompt.
+        ITSAppUsesNonExemptEncryption: false
+
+  # ── Unit tests (Swift Testing) ─────────────────────────────────────────────
+  SkyCastTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SkyCastTests
+    dependencies:
+      - target: SkyCast
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast.tests
+        GENERATE_INFOPLIST_FILE: true
+
+  # ── UI tests (XCUITest) ───────────────────────────────────────────────────
+  SkyCastUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: SkyCastUITests
+    dependencies:
+      - target: SkyCast
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: SkyCast
+
+schemes:
+  SkyCast:
+    build:
+      targets:
+        SkyCast: all
+        SkyCastTests: [test]
+        SkyCastUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      coverageTargets:
+        - SkyCast
+      targets:
+        - SkyCastTests
+        - SkyCastUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark-mode variant of the pre-Compose window theme. Without this the splash screen
+  flashes white before SkyCastTheme applies the user's dark preference.
+-->
+<resources>
+    <style name="Theme.SkyCast" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

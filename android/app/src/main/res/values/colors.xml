@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  XML colours are needed only by the launcher icon and the splash window, which exist
+  before Compose is running. All in-app colour lives in Kotlin (Color.kt) so it can be
+  semantic and theme-aware.
+-->
+<resources>
+    <color name="ic_launcher_background">#00639D</color>
+    <color name="splash_background">#00639D</color>
+</resources>

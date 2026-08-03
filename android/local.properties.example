@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Copy this file to `local.properties` and fill in the values.
+#
+#     cp local.properties.example local.properties
+#
+# `local.properties` is gitignored. NEVER commit it: it contains your API key
+# and a machine-specific SDK path.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Absolute path to your Android SDK.
+# macOS default:  /Users/<you>/Library/Android/sdk
+# Linux default:  /home/<you>/Android/Sdk
+sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
+
+# OpenWeather API key: free tier is enough.
+# Get one at https://home.openweathermap.org/api_keys
+# A newly created key can take up to ~2 hours to activate.
+#
+# Leave it blank and the app still builds and runs; it will show an
+# "API key not configured" screen instead of weather data.
+OPEN_WEATHER_API_KEY=

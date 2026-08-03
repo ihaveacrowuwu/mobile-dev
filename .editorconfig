@@ -1,0 +1,68 @@
+# EditorConfig: https://editorconfig.org
+# Honoured by Xcode 16+, Android Studio, VS Code, and ktlint.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+[*.{kt,kts}]
+indent_size = 4
+
+# ── ktlint ───────────────────────────────────────────────────────────────────
+# `intellij_idea`, not `ktlint_official`. The `ktlint_official` style enforces
+# multiline-expression-wrapping, which rewrites idiomatic Compose
+#     modifier = Modifier.fillMaxSize().padding(16.dp)
+# into
+#     modifier =
+#         Modifier
+#             .fillMaxSize()
+# That is not how Compose is written anywhere in Google's own samples, and it makes
+# every screen harder to read. `intellij_idea` matches the official Kotlin style
+# guide and what Android Studio produces on Reformat Code, so the IDE, the CLI and
+# CI all agree.
+ktlint_code_style = intellij_idea
+
+# @Composable functions are PascalCase by convention, which the function-naming
+# rule reads as a violation.
+ktlint_standard_function-naming = disabled
+# Compose CompositionLocals and design tokens (Spacing.md, StateIconSize) use
+# PascalCase/camelCase vals that the property-naming rule rejects.
+ktlint_standard_property-naming = disabled
+
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+[*.swift]
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.{json,json5}]
+indent_size = 2
+
+[*.{xml,plist,xcconfig}]
+indent_size = 4
+
+[*.md]
+# Trailing whitespace is a hard line break in Markdown.
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.{sh,bash}]
+indent_size = 2
+
+[{Makefile,*.mk}]
+indent_style = tab
+
+[gradle/libs.versions.toml]
+indent_size = 4
+
+[*.properties]
+indent_size = 4

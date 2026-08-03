@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+// Debug-only diagnostics.
+OTHER_SWIFT_FLAGS = $(inherited) -D DEBUG
+
+// Faster incremental builds while developing.
+SWIFT_COMPILATION_MODE = incremental
+ONLY_ACTIVE_ARCH = YES

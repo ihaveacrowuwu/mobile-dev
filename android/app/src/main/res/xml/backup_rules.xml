@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 and below (android:fullBackupContent).
+
+  Saved locations and settings are backed up, losing the user's places on a device
+  migration would be a poor experience. The weather cache is excluded: it is
+  regenerable, expires in minutes, and would waste the user's backup quota.
+-->
+<full-backup-content>
+    <include
+        domain="database"
+        path="skycast.db" />
+    <include
+        domain="file"
+        path="datastore/" />
+    <exclude
+        domain="database"
+        path="skycast.db-wal" />
+    <exclude
+        domain="database"
+        path="skycast.db-shm" />
+</full-backup-content>

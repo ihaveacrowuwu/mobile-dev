@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Every user-facing string lives here. Never hardcode display text in a composable:
+  it makes the app untranslatable, and it hides copy from review.
+-->
+<resources>
+    <string name="app_name">SkyCast</string>
+
+    <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
+    <string name="tab_today">Today</string>
+    <string name="tab_forecast">Forecast</string>
+    <string name="tab_locations">Locations</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Longer descriptions announced by TalkBack, where the short label is ambiguous. -->
+    <string name="tab_today_description">Today\'s weather</string>
+    <string name="tab_forecast_description">Five day forecast</string>
+    <string name="tab_locations_description">Saved locations</string>
+    <string name="tab_settings_description">Settings</string>
+
+    <!-- ── Actions ──────────────────────────────────────────────────────── -->
+    <string name="action_retry">Retry</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_add_location">Add location</string>
+    <string name="action_back">Back</string>
+
+    <!-- ── Today ────────────────────────────────────────────────────────── -->
+    <string name="today_loading">Fetching the latest weather…</string>
+    <string name="today_empty_title">No locations yet</string>
+    <string name="today_empty_message">Add a place and SkyCast will keep its forecast ready, even offline.</string>
+    <string name="today_feels_like">Feels like %1$d%2$s</string>
+    <string name="today_details_placeholder">Humidity, wind, pressure and sunrise details will appear here.</string>
+    <!--
+      One combined announcement for the hero block. Without it a screen-reader user
+      hears the place, the number, the unit and the description as four disconnected
+      fragments.
+    -->
+    <string name="today_conditions_accessibility">%1$s, %2$d%3$s, %4$s, feels like %5$d%3$s</string>
+    <string name="today_open_detail_action">Open full details</string>
+
+    <!-- ── Banners ──────────────────────────────────────────────────────── -->
+    <string name="banner_data_may_be_out_of_date">Showing saved data, it may be out of date.</string>
+
+    <!-- ── Errors ───────────────────────────────────────────────────────── -->
+    <string name="error_offline_title">No internet connection</string>
+    <string name="error_offline_message">Connect to a network and try again. Saved locations still work offline.</string>
+    <string name="error_timeout_title">That took too long</string>
+    <string name="error_timeout_message">The weather service did not respond in time.</string>
+    <string name="error_not_found_title">Place not found</string>
+    <string name="error_not_found_message">We couldn\'t find weather data for that location.</string>
+    <string name="error_rate_limited_title">Too many requests</string>
+    <string name="error_rate_limited_message">You\'ve hit the free API limit. Try again in a minute.</string>
+    <string name="error_unauthorized_title">API key not configured</string>
+    <string name="error_unauthorized_message">Add your OpenWeather key to local.properties and rebuild. See the README for setup steps.</string>
+    <string name="error_server_title">Service unavailable</string>
+    <string name="error_server_message">The weather service is having problems. Please try again shortly.</string>
+    <string name="error_decoding_title">Unexpected response</string>
+    <string name="error_decoding_message">We couldn\'t read the weather data. This is a bug, please report it.</string>
+    <string name="error_storage_title">Storage problem</string>
+    <string name="error_storage_message">Saved data couldn\'t be read. Clearing the cache in Settings may help.</string>
+    <string name="error_unknown_title">Something went wrong</string>
+    <string name="error_unknown_message">An unexpected error occurred. Please try again.</string>
+
+    <!-- ── Settings ─────────────────────────────────────────────────────── -->
+    <string name="settings_section_units">Units</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="unit_celsius">Celsius (°C)</string>
+    <string name="unit_fahrenheit">Fahrenheit (°F)</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_colour">Use wallpaper colours</string>
+    <string name="settings_dynamic_colour_summary">Match the app to your wallpaper (Android 12 and later).</string>
+    <string name="settings_clear_cache">Clear cached weather</string>
+    <string name="settings_clear_cache_summary">Removes saved forecasts. Your locations are kept.</string>
+    <string name="settings_about">About &amp; licences</string>
+
+    <!-- ── Detail screens ───────────────────────────────────────────────── -->
+    <string name="detail_location_title">Location details</string>
+    <string name="detail_day_title">Day details</string>
+
+    <!--
+      ── Placeholders ──────────────────────────────────────────────────────
+      Temporary. Each string is deleted as its screen is implemented; none should
+      remain in the final submission.
+    -->
+    <string name="placeholder_forecast">A five-day forecast list, tappable through to a 3-hourly breakdown.</string>
+    <string name="placeholder_locations">Your saved places, reorderable, swipe to delete.</string>
+    <string name="placeholder_add_location">Search for a city by name and save it.</string>
+    <string name="placeholder_location_detail">Full conditions for location #%1$d.</string>
+    <string name="placeholder_day_detail">Hour-by-hour readings for day %1$d at location #%2$d.</string>
+    <string name="placeholder_about">Weather data by OpenWeather. Open-source licences listed here.</string>
+    <string name="placeholder_action_open_day">Open a day (demo navigation)</string>
+    <string name="placeholder_action_open_location">Open a location (demo navigation)</string>
+</resources>

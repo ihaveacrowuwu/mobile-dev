@@ -1,0 +1,119 @@
+# ─────────────────────────────────────────────────────────────
+# SkyCast: root .gitignore
+# Covers macOS, Xcode/Swift (ios/) and Gradle/Android (android/)
+# ─────────────────────────────────────────────────────────────
+
+# ── Secrets ──────────────────────────────────────────────────
+# API keys never enter version control. Templates (*.example) do.
+Secrets.xcconfig
+secrets.properties
+local.properties
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+!debug.keystore
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Icon?
+
+# ── Xcode / Swift ────────────────────────────────────────────
+## Build products
+build/
+DerivedData/
+*.o
+*.a
+*.dSYM.zip
+*.dSYM
+
+## User-specific Xcode state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Xcode 8+ / Instruments
+timeline.xctimeline
+playground.xcworkspace
+*.hmap
+*.ipa
+*.xcarchive
+
+## Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+!ios/SkyCast.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+## CocoaPods / Carthage (unused here, guarded anyway)
+Pods/
+Carthage/Build/
+
+## fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# ── Android / Gradle / Kotlin ────────────────────────────────
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+output.json
+release/
+
+## Gradle wrapper JAR IS committed on purpose (reproducible builds).
+## Do not add gradle-wrapper.jar here.
+
+## Kotlin
+.kotlin/
+
+## Lint / static analysis reports
+lint-results*.html
+lint-results*.xml
+**/build/reports/
+
+# ── IDEs ─────────────────────────────────────────────────────
+## Android Studio / IntelliJ: keep shared run configs & code style
+.idea/*
+!.idea/codeStyles/
+!.idea/runConfigurations/
+*.iml
+*.ipr
+*.iws
+
+## VS Code: keep shared settings/extensions
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ── Misc ─────────────────────────────────────────────────────
+*.log
+*.tmp
+*.swp
+*~
+node_modules/

@@ -1,0 +1,44 @@
+# SwiftFormat configuration.
+# Run:  cd ios && swiftformat .
+#
+# SwiftFormat owns layout; SwiftLint owns correctness and style rules it cannot fix.
+# Keeping the split clean means they never fight over the same line.
+
+--swiftversion 6.0
+
+# ── Files ────────────────────────────────────────────────────────────────────
+--exclude build,DerivedData,.build,SkyCast.xcodeproj
+
+# ── Layout ───────────────────────────────────────────────────────────────────
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--wrapreturntype if-multiline
+--wrapconditions after-first
+--funcattributes prev-line
+--typeattributes prev-line
+--storedvarattrs same-line
+
+# ── Style ────────────────────────────────────────────────────────────────────
+--self remove
+--importgrouping testable-bottom
+--commas always
+--trimwhitespace always
+--emptybraces no-space
+--ranges no-space
+--decimalgrouping 3
+--semicolons never
+--stripunusedargs closure-only
+--voidtype void
+
+# ── Rules ────────────────────────────────────────────────────────────────────
+# `redundantType` would strip explicit types that document intent at API boundaries.
+# `organizeDeclarations` reorders members and fights the // MARK: structure we write by
+# hand to mirror the Android files.
+--disable redundantType, organizeDeclarations, blankLinesAroundMark
+
+--enable isEmpty, redundantOptionalBinding, sortImports, blankLineAfterImports
+--enable wrapMultilineStatementBraces, redundantClosure, preferKeyPath

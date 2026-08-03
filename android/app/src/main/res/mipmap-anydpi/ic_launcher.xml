@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive launcher icon. The launcher applies its own mask (circle, squircle, rounded
+  square) to the layers below, which is why the art must stay inside the safe zone
+  described in ic_launcher_foreground.xml.
+
+  `monochrome` supplies the themed-icon variant used on Android 13+.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>

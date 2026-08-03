@@ -1,0 +1,152 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Gradle Version Catalog: the SINGLE source of truth for every dependency.
+#
+# Never write a version string inside a build.gradle.kts. Add it here instead,
+# then reference it as libs.some.alias / libs.plugins.some.alias.
+#
+# Every entry added here must also be recorded in docs/licensing.md (MO4).
+# ─────────────────────────────────────────────────────────────────────────────
+
+[versions]
+# ── Build tooling ──────────────────────────────────────────────────────────
+agp = "8.13.2"
+kotlin = "2.2.21"
+ksp = "2.2.21-2.0.5"
+detekt = "1.23.8"
+ktlintGradle = "12.3.0"
+ktlintCli = "1.5.0"
+
+# ── SDK levels ─────────────────────────────────────────────────────────────
+# minSdk 26 (Android 8.0) covers ~97% of active devices and is the floor for
+# adaptive icons, java.time desugaring and modern notification behaviour.
+compileSdk = "36"
+minSdk = "26"
+targetSdk = "36"
+
+# ── AndroidX / Jetpack ─────────────────────────────────────────────────────
+coreKtx = "1.17.0"
+coreSplashscreen = "1.0.1"
+activityCompose = "1.12.4"
+lifecycle = "2.9.4"
+navigationCompose = "2.9.8"
+composeBom = "2026.01.01"
+room = "2.8.4"
+datastore = "1.1.7"
+# 2.58 is the newest Hilt that actually works with AGP 8.x. 2.59.2+ rejects AGP 8
+# outright, and 2.59: despite advertising AGP 8.4+, references the AGP 9-only
+# `ScopedArtifact.POST_COMPILATION_CLASSES` and fails at configuration time.
+# Bump this together with `agp` when moving to AGP 9.
+hilt = "2.58"
+hiltNavigationCompose = "1.2.0"
+
+# ── Networking & serialization ─────────────────────────────────────────────
+retrofit = "2.12.0"
+retrofitKotlinxConverter = "1.0.0"
+okhttp = "4.12.0"
+kotlinxSerialization = "1.9.0"
+coroutines = "1.10.2"
+coil = "3.3.0"
+
+# ── Desugaring ─────────────────────────────────────────────────────────────
+desugarJdkLibs = "2.1.5"
+
+# ── Testing ────────────────────────────────────────────────────────────────
+junit = "4.13.2"
+androidxTestJunit = "1.2.1"
+espresso = "3.6.1"
+mockk = "1.14.7"
+turbine = "1.2.1"
+
+[libraries]
+# ── Core / lifecycle ───────────────────────────────────────────────────────
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+
+# ── Compose ────────────────────────────────────────────────────────────────
+# The BOM aligns every androidx.compose.* artifact, so those get no version.
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# ── Dependency injection ───────────────────────────────────────────────────
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+# ── Persistence ────────────────────────────────────────────────────────────
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# ── Networking ─────────────────────────────────────────────────────────────
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-kotlinx-serialization = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxConverter" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# ── Images ─────────────────────────────────────────────────────────────────
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# ── Desugaring ─────────────────────────────────────────────────────────────
+# Backports java.time and other newer APIs to minSdk 26.
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+
+# ── Unit testing (JVM) ─────────────────────────────────────────────────────
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+
+# ── Instrumented testing (device) ──────────────────────────────────────────
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
+
+[bundles]
+compose = [
+    "androidx-compose-ui",
+    "androidx-compose-ui-graphics",
+    "androidx-compose-ui-tooling-preview",
+    "androidx-compose-material3",
+    "androidx-compose-material-icons-extended",
+]
+networking = [
+    "retrofit",
+    "retrofit-kotlinx-serialization",
+    "okhttp",
+    "okhttp-logging-interceptor",
+    "kotlinx-serialization-json",
+]
+unit-test = [
+    "junit",
+    "kotlinx-coroutines-test",
+    "mockk",
+    "turbine",
+]

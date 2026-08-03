@@ -1,0 +1,113 @@
+# Detekt overrides. `buildUponDefaultConfig = true` is set in build.gradle.kts,
+# so this file only records where we deliberately differ from the defaults and why.
+
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    # Composable functions are declarative; a 90-line body is often the clearest
+    # form. Real logic still belongs in a view model, which this limit protects.
+    active: true
+    threshold: 90
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    # Stateless composables legitimately take many small parameters (state in,
+    # lambdas out): that is the hoisting pattern, not a smell.
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 10
+    ignoreAnnotated: ['Composable', 'Inject']
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 20
+    ignoreAnnotatedFunctions: ['Composable']
+    ignorePrivate: true
+    # Room DAOs are declarative query collections, not classes with behaviour. Splitting
+    # one up to satisfy a function count would fragment a coherent table's API.
+    excludes: ['**/data/local/dao/**']
+
+exceptions:
+  TooGenericExceptionCaught:
+    # Repository implementations deliberately catch Throwable at the boundary and
+    # translate it into AppError, so nothing framework-specific escapes.
+    excludes: ['**/data/repository/**']
+  SwallowedException:
+    active: true
+  TooGenericExceptionThrown:
+    active: true
+
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'
+
+style:
+  MagicNumber:
+    # Kept active: it catches real magic numbers in UI and business logic. The
+    # exclusions below are places where a literal is genuinely clearer than a
+    # named constant, not places where the rule is inconvenient.
+    active: true
+    ignoreNumbers: ['-1', '0', '1', '2']
+    ignoreAnnotated: ['Composable', 'Preview']
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+      # Design tokens: colour hex literals and the 4 dp spacing scale ARE the
+      # definitions. Naming them again would just add indirection.
+      - '**/core/designsystem/**'
+      # OpenWeather condition-id ranges (200..232, 800, …) are taken verbatim from
+      # the API documentation; the literals are the clearest possible spelling.
+      - '**/domain/model/Weather.kt'
+      # Physical unit conversion factors (9/5 + 32, 3.6, 2.236936). Naming these
+      # would obscure formulas every reader already recognises.
+      - '**/domain/model/UserPreferences.kt'
+      # HTTP status codes and ranges.
+      - '**/data/remote/ErrorMapper.kt'
+  MaxLineLength:
+    maxLineLength: 120
+    excludes: ['**/test/**', '**/androidTest/**']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+  ReturnCount:
+    max: 3
+  ForbiddenComment:
+    # A bare TODO is fine only with an owner.
+    active: true
+    comments:
+      - reason: 'Add an owner and a reason: // TODO(nauhaan): why'
+        value: 'TODO:'
+      - reason: 'Fix it or open an issue.'
+        value: 'FIXME:'
+  WildcardImport:
+    active: true
+    excludeImports:
+      # Compose and Room idiomatically use star imports for their DSLs.
+      - 'androidx.compose.foundation.layout.*'
+      - 'androidx.compose.material3.*'
+      - 'androidx.compose.runtime.*'
+      - 'java.util.*'
+  UnnecessaryAbstractClass:
+    excludes: ['**/di/**']
+
+coroutines:
+  GlobalCoroutineUsage:
+    # Never launch outside a lifecycle-aware scope.
+    active: true
+  InjectDispatcher:
+    # Dispatchers are injected via DispatcherProvider so tests are deterministic.
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true
+  LateinitUsage:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+  Deprecation:
+    active: true

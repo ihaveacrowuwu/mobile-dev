@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+SWIFT_COMPILATION_MODE = wholemodule
+ONLY_ACTIVE_ARCH = NO
+
+// Ship debug symbols separately so crash reports are symbolisable without
+// shipping the symbols inside the binary.
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

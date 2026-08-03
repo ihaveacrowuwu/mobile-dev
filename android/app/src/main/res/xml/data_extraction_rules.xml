@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (android:dataExtractionRules).
+
+  Two separate policies:
+    cloud-backup:    include saved locations and settings so a new device restores them.
+    device-transfer: the same, since it is a direct device-to-device copy.
+
+  The write-ahead-log sidecar files are excluded from both: copying a WAL without its
+  database can produce a corrupt restore.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include
+            domain="database"
+            path="skycast.db" />
+        <include
+            domain="file"
+            path="datastore/" />
+        <exclude
+            domain="database"
+            path="skycast.db-wal" />
+        <exclude
+            domain="database"
+            path="skycast.db-shm" />
+    </cloud-backup>
+    <device-transfer>
+        <include
+            domain="database"
+            path="skycast.db" />
+        <include
+            domain="file"
+            path="datastore/" />
+        <exclude
+            domain="database"
+            path="skycast.db-wal" />
+        <exclude
+            domain="database"
+            path="skycast.db-shm" />
+    </device-transfer>
+</data-extraction-rules>

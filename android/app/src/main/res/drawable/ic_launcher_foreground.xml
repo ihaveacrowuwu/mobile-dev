@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher icon foreground: a sun behind a cloud, as a vector.
+
+  A vector rather than PNGs so there are no binary assets in the repository and the icon
+  stays crisp at every density. The 108×108 viewport with art inside the middle 72×72 is
+  the adaptive-icon safe zone, anything outside it can be cropped by the launcher mask.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sun -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M64,38 m-13,0 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0" />
+
+    <!-- Sun rays -->
+    <group>
+        <path
+            android:fillColor="#FFD54F"
+            android:pathData="M62,16h4v9h-4z" />
+        <path
+            android:fillColor="#FFD54F"
+            android:pathData="M82.5,24.6l2.8,2.8l-6.4,6.4l-2.8,-2.8z" />
+        <path
+            android:fillColor="#FFD54F"
+            android:pathData="M87,36h9v4h-9z" />
+        <path
+            android:fillColor="#FFD54F"
+            android:pathData="M45.6,24.6l6.4,6.4l-2.8,2.8l-6.4,-6.4z" />
+    </group>
+
+    <!-- Cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,74 a12,12 0 0,1 0.6,-23.9 a16,16 0 0,1 30.4,3.6 a11,11 0 0,1 -1.5,20.3 z" />
+
+</vector>

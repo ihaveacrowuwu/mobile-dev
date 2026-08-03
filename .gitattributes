@@ -1,2 +1,47 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalise line endings to LF in the repository.
+* text=auto eol=lf
+
+# ── Explicit text types ──────────────────────────────────────
+*.swift    text diff=swift
+*.kt       text diff=kotlin
+*.kts      text diff=kotlin
+*.java     text diff=java
+*.md       text diff=markdown
+*.yml      text
+*.yaml     text
+*.json     text
+*.xml      text
+*.gradle   text
+*.pro      text
+*.properties text
+*.xcconfig text
+*.sh       text eol=lf
+*.plist    text
+
+# ── Shell scripts and the Gradle wrapper must stay executable ─
+gradlew    text eol=lf
+scripts/*.sh text eol=lf
+
+# ── Windows-only wrapper keeps CRLF ──────────────────────────
+gradlew.bat text eol=crlf
+
+# ── Binary: never diff, never normalise ──────────────────────
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.webp     binary
+*.pdf      binary
+*.zip      binary
+*.jar      binary
+*.keystore binary
+*.jks      binary
+*.mp4      binary
+*.mov      binary
+*.ttf      binary
+*.otf      binary
+
+# ── Generated / vendored: collapse in PR diffs ───────────────
+*.pbxproj                          -diff linguist-generated=true
+gradle/wrapper/gradle-wrapper.jar  binary linguist-vendored=true
+docs/screenshots/**                linguist-documentation=true

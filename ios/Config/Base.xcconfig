@@ -1,0 +1,15 @@
+// ────────────────────────────────────────────────────────────────────────────
+// Settings shared by every configuration.
+//
+// Secrets.xcconfig is included here rather than in each configuration so the key
+// is defined exactly once. The `#include?` form (with the question mark) makes the
+// file OPTIONAL: a fresh clone with no Secrets.xcconfig still builds, and the app
+// shows its "API key not configured" screen instead of failing to compile.
+// CI relies on this.
+// ────────────────────────────────────────────────────────────────────────────
+
+#include? "Secrets.xcconfig"
+
+// Fallback so the Info.plist substitution always resolves. A real key in
+// Secrets.xcconfig overrides this, because that include is processed first.
+OPEN_WEATHER_API_KEY = $(inherited)
