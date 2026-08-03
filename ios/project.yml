@@ -117,6 +117,11 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
+      # Includes SkyCastTests/Fixtures/*.json: real captured OpenWeather responses, shared
+      # byte-for-byte with android/app/src/test/resources/fixtures/. XcodeGen classifies
+      # non-source files as resources automatically and flattens them into the bundle root,
+      # which is where Bundle(for:).url(forResource:) looks. Do NOT also declare the folder
+      # explicitly: that copies every fixture twice.
       - path: SkyCastTests
     dependencies:
       - target: SkyCast

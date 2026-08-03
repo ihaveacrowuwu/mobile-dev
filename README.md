@@ -45,8 +45,8 @@ aeroplane mode.
 This is the submission for **UFCF7H-15-3 Mobile Applications**, Practical Skills
 Assessment (75% of the module).
 
-**Status:** both platforms build, lint clean and pass their full test suites, Android 22
-unit + 5 instrumented, iOS 30 unit + 6 UI. The architecture, data layer, navigation,
+**Status:** both platforms build, lint clean and pass their full test suites, Android 26
+unit + 5 instrumented, iOS 35 unit + 6 UI. The architecture, data layer, navigation,
 persistence, theming and CI are complete and verified. Some feature screens are still
 placeholders,
 see [Known issues and future improvements](#known-issues-and-future-improvements) for
@@ -306,7 +306,7 @@ fake and no device.
 | Persistence | 15 | Room / SwiftData caches + DataStore / `UserDefaults` settings; TTLs; cascade deletes; works fully offline |
 | Functionality | 15 | Loading, empty, error, offline and success states all handled; retry paths; graceful missing-key state |
 | Code quality & documentation | 10 | Layered folders mirrored across platforms; doc comments; ktlint + detekt + SwiftLint + Android Lint clean with warnings-as-errors |
-| Testing & debugging | 5 | 22 Android unit + 5 instrumented; 30 iOS unit (Swift Testing) + 6 XCUITests. **All passing.** Error and offline paths covered explicitly |
+| Testing & debugging | 5 | 26 Android unit + 5 instrumented; 35 iOS unit (Swift Testing) + 6 XCUITests. **All passing.** Includes contract tests against real captured API payloads, shared between platforms. Error and offline paths covered explicitly |
 | Presentation & reflection | 5 | This README, [`docs/reflection.md`](docs/reflection.md) |
 
 ---
@@ -314,7 +314,7 @@ fake and no device.
 ## Testing
 
 ```bash
-cd android && ./gradlew testDebugUnitTest          # 22 unit tests, no device
+cd android && ./gradlew testDebugUnitTest          # 26 unit tests, no device
 cd android && ./gradlew connectedDebugAndroidTest  # navigation + settings, needs a device
 cd ios && xcodebuild test -scheme SkyCast -destination 'platform=iOS Simulator,name=iPhone 17' | xcbeautify
 ```

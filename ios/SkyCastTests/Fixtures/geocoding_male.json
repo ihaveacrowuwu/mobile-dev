@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Malé",
+    "local_names": {
+      "pl": "Male",
+      "ml": "മാലി",
+      "nl": "Malé",
+      "zh": "马累",
+      "be": "Мале",
+      "oc": "Male",
+      "et": "Male",
+      "hr": "Malé",
+      "fr": "Malé",
+      "sv": "Malé",
+      "mr": "मले",
+      "uk": "Мале",
+      "dv": "މާލެ",
+      "en": "Malé",
+      "ru": "Мале",
+      "ta": "மாலே",
+      "it": "Male",
+      "cs": "Male",
+      "hi": "माले",
+      "hu": "Malé",
+      "de": "Malé"
+    },
+    "lat": 4.1779879,
+    "lon": 73.5107387,
+    "country": "MV"
+  },
+  {
+    "name": "Mâle",
+    "lat": 48.275771899999995,
+    "lon": 0.7586810586102217,
+    "country": "FR",
+    "state": "Normandy"
+  },
+  {
+    "name": "Mare'",
+    "local_names": {
+      "ko": "마레",
+      "ml": "മാറ",
+      "fr": "Maré",
+      "he": "מארע",
+      "ja": "マーレ",
+      "ku": "Marih",
+      "ru": "Марэ",
+      "de": "Mare",
+      "ar": "مارع",
+      "en": "Mare'"
+    },
+    "lat": 36.4814643,
+    "lon": 37.1968431,
+    "country": "SY",
+    "state": "Aleppo Governorate"
+  },
+  {
+    "name": "Male",
+    "local_names": {
+      "en": "Male",
+      "fr": "Male",
+      "ko": "말레",
+      "ru": "Малое",
+      "uk": "Мале"
+    },
+    "lat": 50.737949,
+    "lon": 33.697811,
+    "country": "UA",
+    "state": "Sumy Oblast"
+  },
+  {
+    "name": "Male",
+    "local_names": {
+      "ru": "Малое",
+      "uk": "Мале",
+      "en": "Male",
+      "ko": "말레"
+    },
+    "lat": 46.7422317,
+    "lon": 30.4981283,
+    "country": "UA",
+    "state": "Odesa Oblast"
+  }
+]
