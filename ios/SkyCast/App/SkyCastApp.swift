@@ -15,6 +15,13 @@ struct SkyCastApp: App {
             RootView()
                 .environment(container)
                 .environment(container.settingsStore)
+                // Debug-only, and a no-op unless the store is empty. Deleted with
+                // DebugLocationSeeder once the Locations feature ships.
+                .task {
+                    #if DEBUG
+                        await DebugLocationSeeder.seedIfEmpty(container.locationRepository)
+                    #endif
+                }
                 // Applied at the root so the user's Light/Dark/System choice takes effect
                 // everywhere, including sheets and alerts.
                 .preferredColorScheme(container.settingsStore.preferences.themeMode.preferredColorScheme)

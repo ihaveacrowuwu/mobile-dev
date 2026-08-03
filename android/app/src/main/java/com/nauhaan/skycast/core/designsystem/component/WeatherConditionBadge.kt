@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Grain
+import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material.icons.filled.Umbrella
@@ -70,7 +71,7 @@ fun WeatherConditionBadge(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = condition.icon(),
+            imageVector = condition.icon(isDaytime),
             // Decorative: the surrounding text already names the condition, so
             // announcing the icon too would repeat it for screen-reader users.
             contentDescription = null,
@@ -97,9 +98,18 @@ private fun WeatherCondition.expressiveShape(): RoundedPolygon = when (this) {
     WeatherCondition.UNKNOWN -> MaterialShapes.Circle
 }
 
-private fun WeatherCondition.icon(): ImageVector = when (this) {
-    WeatherCondition.CLEAR -> Icons.Filled.WbSunny
-    WeatherCondition.CLOUDS -> Icons.Filled.Cloud
+/**
+ * Icon for a condition, varying by time of day where it matters.
+ *
+ * [isDaytime] is not decoration: a sun icon at 4am is simply wrong. Clear and cloudy skies are
+ * the two conditions where night genuinely changes the symbol; rain and snow look the same at any
+ * hour.
+ *
+ * Kept in step with `WeatherCondition.symbolName(isDaytime:)` on iOS.
+ */
+private fun WeatherCondition.icon(isDaytime: Boolean): ImageVector = when (this) {
+    WeatherCondition.CLEAR -> if (isDaytime) Icons.Filled.WbSunny else Icons.Filled.NightsStay
+    WeatherCondition.CLOUDS -> if (isDaytime) Icons.Filled.Cloud else Icons.Filled.NightsStay
     WeatherCondition.RAIN -> Icons.Filled.Umbrella
     WeatherCondition.DRIZZLE -> Icons.Filled.WaterDrop
     WeatherCondition.THUNDERSTORM -> Icons.Filled.Thunderstorm
@@ -158,6 +168,9 @@ private fun WeatherConditionBadgePreview() {
         ) {
             WeatherCondition.entries.forEach { condition ->
                 WeatherConditionBadge(condition = condition, isDaytime = true, size = 72.dp)
+            }
+            WeatherCondition.entries.forEach { condition ->
+                WeatherConditionBadge(condition = condition, isDaytime = false, size = 72.dp)
             }
         }
     }
