@@ -22,6 +22,10 @@ else
   readonly GREEN='' RED='' YELLOW='' BOLD='' RESET=''
 fi
 
+# Resolve Xcode without needing `sudo xcode-select`: see scripts/xcode-env.sh.
+# shellcheck source=scripts/xcode-env.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/xcode-env.sh"
+
 problems=0
 warnings=0
 
@@ -52,7 +56,8 @@ check_tool gh "gh --version" optional
 # ── iOS ─────────────────────────────────────────────────────────────────────
 section "iOS"
 
-developer_dir="$(xcode-select -p 2>/dev/null || true)"
+# DEVELOPER_DIR (set by xcode-env.sh) takes precedence, exactly as the tools see it.
+developer_dir="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
 if [[ "$developer_dir" == *"Xcode.app"* ]]; then
   ok "Xcode" "$(xcodebuild -version 2>/dev/null | head -1)"
 
@@ -61,10 +66,14 @@ if [[ "$developer_dir" == *"Xcode.app"* ]]; then
   else
     bad "iOS runtime" "no simulator runtime installed (Xcode ▸ Settings ▸ Components)"
   fi
-elif [[ -n "$developer_dir" ]]; then
-  bad "Xcode" "only Command Line Tools at $developer_dir"
-  printf '      Install Xcode from the App Store, then run:\n'
+elif [[ -d /Applications/Xcode.app ]]; then
+  # Xcode is installed but not selected. Not fatal: the scripts set DEVELOPER_DIR
+  # themselves, so this only affects bare xcodebuild calls in your own shell.
+  warn "Xcode" "installed but not selected (active: $developer_dir)"
+  printf '      The scripts here set DEVELOPER_DIR and work as-is. To fix your shell:\n'
   printf '        sudo xcode-select -s /Applications/Xcode.app/Contents/Developer\n'
+  printf '      or add to ~/.zshrc:\n'
+  printf '        export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer\n'
 else
   bad "Xcode" "not installed"
 fi

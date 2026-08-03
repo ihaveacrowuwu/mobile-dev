@@ -13,6 +13,10 @@ set -uo pipefail
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Resolve Xcode without needing `sudo xcode-select`: see scripts/xcode-env.sh.
+# shellcheck source=scripts/xcode-env.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/xcode-env.sh"
+
 FIX=0
 [[ "${1:-}" == "--fix" ]] && FIX=1
 
@@ -66,7 +70,7 @@ fi
 
 if ! command -v swiftlint >/dev/null 2>&1; then
   skip "swiftlint" "not installed"
-elif [[ "$(xcode-select -p 2>/dev/null)" != *"Xcode.app"* ]]; then
+elif [[ "${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null)}" != *"Xcode.app"* ]]; then
   # SwiftLint links against Xcode's SourceKit; Command Line Tools alone is not enough.
   skip "swiftlint" "requires full Xcode, not just Command Line Tools"
 else

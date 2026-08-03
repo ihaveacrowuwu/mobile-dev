@@ -10,8 +10,19 @@ import SwiftUI
 /// ## Liquid Glass
 ///
 /// The tab bar, navigation bars and toolbars adopt Liquid Glass **automatically** because
-/// the app is built against the iOS 26 SDK, there is no modifier to add. The two things
-/// worth opting into explicitly are below.
+/// the app is built against the iOS 26 SDK, there is no modifier to add. The one thing
+/// worth opting into explicitly is `tabBarMinimizeBehavior`, below.
+///
+/// ## A note on UI testing
+///
+/// There is deliberately **no** `.accessibilityIdentifier` on the tabs. SwiftUI generates the
+/// tab-bar buttons from each `Tab`'s label, and an identifier set on either the `Tab` or its
+/// content does not reach the generated button, verified by dumping the accessibility tree.
+/// `SkyCastUITests` therefore queries by label *scoped to* `app.tabBars`, which is
+/// unambiguous even though "Forecast" also appears as a screen heading.
+///
+/// (Android needs the opposite: `TopLevelDestination.testTag`, because Compose offers no
+/// equivalent scoping and the bar label collides with the heading.)
 struct RootView: View {
     @State private var selectedTab: AppTab = .today
 
@@ -22,7 +33,6 @@ struct RootView: View {
                     NavigationStack {
                         tab.destination
                     }
-                    .accessibilityIdentifier(tab.accessibilityIdentifier)
                 }
             }
         }
@@ -61,11 +71,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         case .locations: "mappin.and.ellipse"
         case .settings: "gearshape"
         }
-    }
-
-    /// Used by `SkyCastUITests` to select a tab without depending on its label text.
-    var accessibilityIdentifier: String {
-        "tab_\(rawValue)"
     }
 
     @ViewBuilder

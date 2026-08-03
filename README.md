@@ -45,8 +45,10 @@ aeroplane mode.
 This is the submission for **UFCF7H-15-3 Mobile Applications**, Practical Skills
 Assessment (75% of the module).
 
-**Status:** the architecture, data layer, navigation, persistence, theming, testing
-harness and CI are complete and verified. Some feature screens are still placeholders,
+**Status:** both platforms build, lint clean and pass their full test suites, Android 22
+unit + 5 instrumented, iOS 30 unit + 6 UI. The architecture, data layer, navigation,
+persistence, theming and CI are complete and verified. Some feature screens are still
+placeholders,
 see [Known issues and future improvements](#known-issues-and-future-improvements) for
 exactly what is and is not built.
 
@@ -304,7 +306,7 @@ fake and no device.
 | Persistence | 15 | Room / SwiftData caches + DataStore / `UserDefaults` settings; TTLs; cascade deletes; works fully offline |
 | Functionality | 15 | Loading, empty, error, offline and success states all handled; retry paths; graceful missing-key state |
 | Code quality & documentation | 10 | Layered folders mirrored across platforms; doc comments; ktlint + detekt + SwiftLint + Android Lint clean with warnings-as-errors |
-| Testing & debugging | 5 | 22 Android unit tests + 5 instrumented tests; Swift Testing suites + 6 XCUITests; error paths covered explicitly |
+| Testing & debugging | 5 | 22 Android unit + 5 instrumented; 30 iOS unit (Swift Testing) + 6 XCUITests. **All passing.** Error and offline paths covered explicitly |
 | Presentation & reflection | 5 | This README, [`docs/reflection.md`](docs/reflection.md) |
 
 ---
@@ -315,6 +317,14 @@ fake and no device.
 cd android && ./gradlew testDebugUnitTest          # 22 unit tests, no device
 cd android && ./gradlew connectedDebugAndroidTest  # navigation + settings, needs a device
 cd ios && xcodebuild test -scheme SkyCast -destination 'platform=iOS Simulator,name=iPhone 17' | xcbeautify
+```
+
+Or both platforms at once, no `sudo xcode-select` required, the scripts resolve Xcode via
+`DEVELOPER_DIR` themselves:
+
+```bash
+./scripts/test.sh          # unit tests, both platforms
+./scripts/test.sh --all    # plus UI tests
 ```
 
 The suites deliberately concentrate on **error and offline paths**, not just happy paths,
@@ -356,11 +366,12 @@ mobile-dev/
    reachable and navigable but show a description of their planned content. The
    repositories, caches, mappers and geocoding beneath them are fully implemented and
    unit-tested, so these are presentation-only gaps.
-2. **iOS has not been compiled.** The iOS simulator runtime was still installing while
-   this was written, so the Swift sources have been formatted and reviewed but never built.
-   SwiftLint also requires Xcode's SourceKit and could not run. The Liquid Glass APIs are
-   new, so expect to fix a small number of signature errors on first build, they are
-   concentrated in `ios/SkyCast/Core/DesignSystem/GlassSurface.swift` by design.
+2. **`Tab` accessibility identifiers do not reach the tab bar.** SwiftUI generates the
+   tab-bar button from a `Tab`'s label, and `.accessibilityIdentifier` on either the `Tab`
+   or its content is not propagated to that button (verified by dumping the accessibility
+   tree). `SkyCastUITests` therefore queries by label scoped to `app.tabBars`, which is
+   unambiguous. Android needs the opposite, `testTag`, because Compose offers no
+   equivalent scoping.
 3. **iOS requires iOS 26.** Liquid Glass is an iOS 26 API surface, so the deployment
    target is 26.0 and devices below that are excluded. This is a deliberate trade-off for
    the design language; lowering the target means giving up Liquid Glass.

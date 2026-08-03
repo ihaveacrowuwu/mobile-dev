@@ -15,6 +15,10 @@ cd "$REPO_ROOT"
 
 readonly SIMULATOR_NAME="${SIMULATOR_NAME:-iPhone 17}"
 
+# Resolve Xcode without needing `sudo xcode-select`: see scripts/xcode-env.sh.
+# shellcheck source=scripts/xcode-env.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/xcode-env.sh"
+
 RUN_UI=0
 [[ "${1:-}" == "--all" ]] && RUN_UI=1
 
@@ -60,7 +64,7 @@ fi
 # ── iOS ─────────────────────────────────────────────────────────────────────
 section "iOS"
 
-if [[ "$(xcode-select -p 2>/dev/null)" != *"Xcode.app"* ]]; then
+if [[ "${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null)}" != *"Xcode.app"* ]]; then
   skip "iOS tests" "Xcode not installed (only Command Line Tools)"
 else
   # Regenerate first so a newly added Swift file is definitely in the target.

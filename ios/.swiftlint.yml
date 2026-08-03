@@ -56,6 +56,22 @@ opt_in_rules:
   - yoda_condition
 
 disabled_rules:
+  # ── Layout rules SwiftFormat owns ────────────────────────────────────────────
+  # SwiftFormat is the formatter; SwiftLint checks correctness and style it cannot
+  # fix. Leaving these enabled makes the two tools fight, and every `swiftformat .`
+  # would then produce SwiftLint errors:
+  #
+  #   trailing_comma : .swiftformat sets `--commas always`. Trailing commas in
+  #                     collection and argument lists give cleaner diffs (adding a
+  #                     line touches one line, not two), which is why we want them.
+  #   opening_brace  : .swiftformat sets `--wrapMultilineStatementBraces`, which
+  #                     puts `{` on its own line after a wrapped signature. That is
+  #                     more readable for long generic signatures than cramming the
+  #                     brace onto the last parameter line.
+  - trailing_comma
+  - opening_brace
+
+  # ── Genuinely not wanted ─────────────────────────────────────────────────────
   # SwiftUI view bodies are declarative; nesting depth is the structure, not a smell.
   - type_body_length
   # `body` and `#Preview` blocks legitimately run long.

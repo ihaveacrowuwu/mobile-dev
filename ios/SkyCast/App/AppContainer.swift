@@ -39,8 +39,10 @@ final class AppContainer {
             modelContainer = try ModelContainerFactory.live()
         } catch {
             assertionFailure("Persistent store unavailable: \(error)")
-            // If even in-memory fails the process cannot function at all.
-            modelContainer = try! ModelContainerFactory.inMemory()
+            // If even an in-memory store cannot be built, the schema itself is invalid and
+            // the process cannot function. fatalError rather than `try!` so the crash log
+            // says *why* instead of just "unexpectedly found nil".
+            modelContainer = Self.makeInMemoryContainer(context: "live() fallback")
         }
 
         let local = LocalDataStore(modelContainer: modelContainer)
@@ -64,7 +66,7 @@ final class AppContainer {
     /// Uses a per-instance `UserDefaults` suite so a preview cannot overwrite the real
     /// app's stored settings.
     static func preview(networkAvailable: Bool = true) -> AppContainer {
-        let modelContainer = try! ModelContainerFactory.inMemory()
+        let modelContainer = Self.makeInMemoryContainer(context: "preview()")
         let local = LocalDataStore(modelContainer: modelContainer)
         let api = OpenWeatherAPIClient()
         let monitor = StaticNetworkMonitor(online: networkAvailable)
@@ -81,5 +83,19 @@ final class AppContainer {
             locationRepository: LocationRepositoryImpl(api: api, local: local),
             settingsStore: SettingsStore(defaults: defaults)
         )
+    }
+
+    /// Builds an in-memory container, or crashes with a message that identifies the cause.
+    ///
+    /// An in-memory `ModelContainer` can only fail if the `Schema` is invalid, a programmer
+    /// error, not a runtime condition, and not something the app can recover from. A
+    /// descriptive `fatalError` is therefore more useful than `try!`, which would produce a
+    /// crash log with no explanation.
+    private static func makeInMemoryContainer(context: String) -> ModelContainer {
+        do {
+            return try ModelContainerFactory.inMemory()
+        } catch {
+            fatalError("SkyCast schema is invalid (\(context)): \(error)")
+        }
     }
 }

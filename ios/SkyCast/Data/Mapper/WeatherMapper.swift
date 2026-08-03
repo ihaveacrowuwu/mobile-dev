@@ -56,10 +56,11 @@ enum WeatherMapper {
         -> Forecast
     {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: dto.city.timezoneOffsetSeconds)
-            ?? TimeZone(secondsFromGMT: 0)!
+        // `.gmt` rather than `TimeZone(secondsFromGMT: 0)!`, same value, no force unwrap.
+        // A malformed offset from the API must degrade to GMT, not trap.
+        calendar.timeZone = TimeZone(secondsFromGMT: dto.city.timezoneOffsetSeconds) ?? .gmt
 
-        let readings = dto.readings.map { reading -> (day: Date, hourly: HourlyForecast, dto: ForecastReadingDTO) in
+        let readings = dto.readings.map { reading -> DatedReading in
             let time = Date(timeIntervalSince1970: TimeInterval(reading.timeEpochSeconds))
             let hourly = HourlyForecast(
                 time: time,
@@ -69,7 +70,7 @@ enum WeatherMapper {
                 precipitationProbability: reading.precipitationProbability,
                 windSpeedMetresPerSecond: reading.wind.speed
             )
-            return (calendar.startOfDay(for: time), hourly, reading)
+            return DatedReading(day: calendar.startOfDay(for: time), hourly: hourly, dto: reading)
         }
 
         let grouped = Dictionary(grouping: readings, by: \.day)
@@ -257,16 +258,27 @@ enum WeatherMapper {
     /// The reading nearest local noon best characterises a whole day; the 03:00 reading
     /// would make every day look clear and cold.
     private static func representativeEntry(
-        from entries: [(day: Date, hourly: HourlyForecast, dto: ForecastReadingDTO)],
+        from entries: [DatedReading],
         calendar: Calendar
     )
-        -> (day: Date, hourly: HourlyForecast, dto: ForecastReadingDTO)
+        -> DatedReading
     {
         entries.min { lhs, rhs in
             let lhsDistance = abs(calendar.component(.hour, from: lhs.hourly.time) - Constants.middayHour)
             let rhsDistance = abs(calendar.component(.hour, from: rhs.hourly.time) - Constants.middayHour)
             return lhsDistance < rhsDistance
         } ?? entries[0]
+    }
+
+    /// A forecast reading paired with the calendar day it falls in, in the *location's*
+    /// timezone.
+    ///
+    /// A named type rather than a tuple: a three-member tuple is at the limit of what stays
+    /// readable, and `entries.map(\.dto.main.temperatureMin)` is far clearer than `.2.main…`.
+    private struct DatedReading {
+        let day: Date
+        let hourly: HourlyForecast
+        let dto: ForecastReadingDTO
     }
 
     private enum Constants {
