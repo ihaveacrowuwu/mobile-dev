@@ -106,8 +106,11 @@ private fun WeatherCondition.expressiveShape(): RoundedPolygon = when (this) {
  * hour.
  *
  * Kept in step with `WeatherCondition.symbolName(isDaytime:)` on iOS.
+ *
+ * `internal`, not `private`, so `WeatherConditionIconTest` can assert the day/night divergence
+ * directly. A test that could only check "an icon exists" is what let the original bug through.
  */
-private fun WeatherCondition.icon(isDaytime: Boolean): ImageVector = when (this) {
+internal fun WeatherCondition.icon(isDaytime: Boolean): ImageVector = when (this) {
     WeatherCondition.CLEAR -> if (isDaytime) Icons.Filled.WbSunny else Icons.Filled.NightsStay
     WeatherCondition.CLOUDS -> if (isDaytime) Icons.Filled.Cloud else Icons.Filled.NightsStay
     WeatherCondition.RAIN -> Icons.Filled.Umbrella

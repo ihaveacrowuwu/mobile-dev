@@ -47,6 +47,41 @@ struct WeatherConditionTests {
             #expect(!condition.symbolName(isDaytime: false).isEmpty)
         }
     }
+
+    /// Asserts that the symbol differs between day and night.
+    ///
+    /// `everyConditionHasSymbols` above passes whether or not the distinction is honoured, so this
+    /// is the test that holds the property.
+    ///
+    /// Mirrored by `WeatherConditionIconTest` on Android.
+    @Test("Clear and cloudy skies use a different symbol at night")
+    func symbolsDifferBetweenDayAndNight() {
+        #expect(
+            WeatherCondition.clear.symbolName(isDaytime: true)
+                != WeatherCondition.clear.symbolName(isDaytime: false),
+            "A clear sky must not use the same symbol at 4am as at noon"
+        )
+        #expect(
+            WeatherCondition.clouds.symbolName(isDaytime: true)
+                != WeatherCondition.clouds.symbolName(isDaytime: false)
+        )
+    }
+
+    /// The complement: rain looks the same at any hour, so varying it would be noise.
+    @Test(
+        "Precipitation and low-visibility conditions look the same at any hour",
+        arguments: [
+            WeatherCondition.rain,
+            .drizzle,
+            .thunderstorm,
+            .snow,
+            .mist,
+            .unknown,
+        ]
+    )
+    func symbolsInvariantToTimeOfDay(condition: WeatherCondition) {
+        #expect(condition.symbolName(isDaytime: true) == condition.symbolName(isDaytime: false))
+    }
 }
 
 @Suite("Unit conversion")
