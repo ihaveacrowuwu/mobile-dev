@@ -3,15 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      Only two permissions, both normal (no runtime prompt):
-        INTERNET           , fetch weather.
-        ACCESS_NETWORK_STATE, let NetworkMonitor distinguish "offline" from "failed",
-                               which is what allows a silent cache fallback instead of
-                               an error the user cannot act on.
+      INTERNET and ACCESS_NETWORK_STATE are declared by :core:network, the module whose code
+      actually requires them, and merged in from there. They are restated here because the
+      app manifest is where a reviewer looks for the app's full permission surface, the
+      merger unions duplicates, so this costs nothing.
 
-      Deliberately NOT requested: location. The user picks places by name, so asking
-      for GPS would be an unjustified permission, and unnecessary permissions are a
-      usability and privacy failure.
+      Deliberately NOT requested: location. The user picks places by name, so asking for GPS
+      would be an unjustified permission, and unnecessary permissions are a usability and
+      privacy failure.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

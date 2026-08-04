@@ -52,7 +52,9 @@ else
 
   (cd android && ./gradlew ktlintCheck --quiet) && pass "ktlintCheck" || fail "ktlintCheck"
   (cd android && ./gradlew detekt --quiet) && pass "detekt" || fail "detekt"
-  (cd android && ./gradlew lintDebug --quiet) && pass "Android Lint" || fail "Android Lint"
+  # `lintDebug` without a project prefix runs it for every module, which is the point:
+  # a library module can violate lint independently of :app.
+  (cd android && ./gradlew lintDebug --quiet) && pass "Android Lint (all modules)" || fail "Android Lint"
 fi
 
 # ── iOS ─────────────────────────────────────────────────────────────────────

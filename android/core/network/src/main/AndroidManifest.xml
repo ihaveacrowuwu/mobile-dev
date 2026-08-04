@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      A library declares the permissions its own code requires; the manifest merger hoists
+      them into the app. Declaring them only in :app made Android Lint (correctly) flag
+      ConnectivityNetworkMonitor for MissingPermission, it cannot know a consumer will
+      supply them, and a different consumer might not.
+
+      INTERNET             : fetch weather (OpenWeatherAPIClient).
+      ACCESS_NETWORK_STATE : let ConnectivityNetworkMonitor distinguish "offline" from
+                              "request failed", which is what allows the silent cache
+                              fallback instead of an error the user cannot act on.
+
+      Both are normal permissions: no runtime prompt.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+</manifest>
