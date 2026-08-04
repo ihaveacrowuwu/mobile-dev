@@ -56,6 +56,9 @@ style:
     excludes:
       - '**/test/**'
       - '**/androidTest/**'
+      # :core:testing holds shared fixtures in src/main so other modules can depend on it.
+      # Its sample coordinates and temperatures are test data, not production magic numbers.
+      - '**/core/testing/**'
       # Design tokens: colour hex literals and the 4 dp spacing scale ARE the
       # definitions. Naming them again would just add indirection.
       - '**/core/designsystem/**'

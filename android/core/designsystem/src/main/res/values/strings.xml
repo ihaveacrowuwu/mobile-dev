@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Strings owned by the design system, because its components reference them directly.
+  A module must ship the resources its own code uses; leaving these in :app would make
+  :core:designsystem uncompilable on its own.
+-->
+<resources>
+    <string name="action_retry">Retry</string>
+    <string name="action_dismiss">Dismiss</string>
+</resources>

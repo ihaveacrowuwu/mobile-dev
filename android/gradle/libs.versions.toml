@@ -132,6 +132,10 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+# Pure-Kotlin coroutines, for the java-library modules that must not see Android.
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+# Just the @Inject/@Singleton annotations. Hilt itself only appears in impl modules.
+javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
 
 # ── Images ─────────────────────────────────────────────────────────────────
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
@@ -161,6 +165,9 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 # These have no version: they are produced by build-logic, not resolved from a repository.
 skycast-jvm-library = { id = "skycast.jvm.library" }
 skycast-android-library = { id = "skycast.android.library" }
+skycast-android-library-compose = { id = "skycast.android.library.compose" }
+skycast-hilt = { id = "skycast.hilt" }
+skycast-android-room = { id = "skycast.android.room" }
 
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

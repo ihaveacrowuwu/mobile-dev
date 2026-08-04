@@ -60,9 +60,12 @@ class SkycastAndroidLibraryConventionPlugin : Plugin<Project> {
                     allWarningsAsErrors.set(
                         providers.gradleProperty("warningsAsErrors").orNull.toBoolean(),
                     )
+                    // The Material 3 Expressive opt-in is NOT here. It belongs to the Compose
+                    // convention plugin, because a module without material3 on its classpath cannot
+                    // resolve the marker and Kotlin warns "Opt-in requirement marker … is
+                    // unresolved", which -Werror turns into a build failure for :core:network,
+                    // :core:database and :core:datastore.
                     freeCompilerArgs.addAll(
-                        // Material 3 Expressive is adopted project-wide.
-                        "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
                         "-Xconsistent-data-class-copy-visibility",
                         "-Xannotation-default-target=param-property",
                     )

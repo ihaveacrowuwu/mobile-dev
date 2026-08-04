@@ -59,11 +59,17 @@ subprojects {
 tasks.register("qualityCheck") {
     group = "verification"
     description = "Runs ktlint, detekt, Android Lint and JVM unit tests."
+    // Aggregate across every module, not just :app. `test` picks up the JVM modules'
+    // suites too, which `:app:testDebugUnitTest` alone would silently skip.
     dependsOn(
-        ":app:ktlintCheck",
-        ":app:detekt",
+        subprojects.mapNotNull { it.tasks.findByName("ktlintCheck") },
+        subprojects.mapNotNull { it.tasks.findByName("detekt") },
         ":app:lintDebug",
         ":app:testDebugUnitTest",
+        ":core:model:test",
+        ":core:common:test",
+        ":core:designsystem:testDebugUnitTest",
+        ":core:data:testDebugUnitTest",
     )
 }
 

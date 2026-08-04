@@ -40,5 +40,17 @@ gradlePlugin {
             id = "skycast.android.library"
             implementationClass = "SkycastAndroidLibraryConventionPlugin"
         }
+        register("androidLibraryCompose") {
+            id = "skycast.android.library.compose"
+            implementationClass = "SkycastAndroidLibraryComposeConventionPlugin"
+        }
+        register("hilt") {
+            id = "skycast.hilt"
+            implementationClass = "SkycastHiltConventionPlugin"
+        }
+        register("androidRoom") {
+            id = "skycast.android.room"
+            implementationClass = "SkycastAndroidRoomConventionPlugin"
+        }
     }
 }

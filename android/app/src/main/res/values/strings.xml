@@ -19,8 +19,6 @@
     <string name="tab_settings_description">Settings</string>
 
     <!-- ── Actions ──────────────────────────────────────────────────────── -->
-    <string name="action_retry">Retry</string>
-    <string name="action_dismiss">Dismiss</string>
     <string name="action_add_location">Add location</string>
     <string name="action_back">Back</string>
 

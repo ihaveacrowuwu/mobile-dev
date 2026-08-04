@@ -162,18 +162,20 @@ kotlin {
     }
 }
 
-// Room's exported schemas are committed so migrations are reviewable in diffs.
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-    arg("room.generateKotlin", "true")
-}
-
 dependencies {
     // ── Project modules ────────────────────────────────────────────────────
     // Type-safe accessor (see settings.gradle.kts): a renamed module is a compile error.
     // `api`, not `implementation`: domain models appear in this module's own public API
     // (view model state, composable parameters), so consumers need them transitively.
     api(projects.core.model)
+    api(projects.core.common)
+    api(projects.core.domain)
+    api(projects.core.designsystem)
+    implementation(projects.core.data)
+    implementation(projects.core.network)
+    implementation(projects.core.database)
+    implementation(projects.core.datastore)
+    testImplementation(projects.core.testing)
 
     // ── Platform / BOM ─────────────────────────────────────────────────────
     implementation(platform(libs.androidx.compose.bom))
@@ -199,13 +201,8 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // ── Persistence ────────────────────────────────────────────────────────
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.datastore.preferences)
 
     // ── Networking ─────────────────────────────────────────────────────────
-    implementation(libs.bundles.networking)
 
     // ── Images ─────────────────────────────────────────────────────────────
     implementation(libs.coil.compose)
@@ -216,6 +213,7 @@ dependencies {
 
     // ── Unit tests (JVM, no device needed) ─────────────────────────────────
     testImplementation(libs.bundles.unit.test)
+    testImplementation(projects.core.testing)
     testImplementation(libs.androidx.room.testing)
 
     // ── Instrumented tests (device / emulator) ─────────────────────────────

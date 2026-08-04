@@ -40,3 +40,11 @@ rootProject.name = "SkyCast"
 
 include(":app")
 include(":core:model")
+include(":core:common")
+include(":core:domain")
+include(":core:network")
+include(":core:database")
+include(":core:datastore")
+include(":core:data")
+include(":core:designsystem")
+include(":core:testing")
