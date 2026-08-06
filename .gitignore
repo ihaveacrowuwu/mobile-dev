@@ -102,6 +102,9 @@ lint-results*.xml
 .idea/*
 !.idea/codeStyles/
 !.idea/runConfigurations/
+# Android Studio writes a second .idea/ inside android/ holding purely local state
+# (caches, deployment targets, migration markers). Nothing there is shareable.
+android/.idea/
 *.iml
 *.ipr
 *.iws
