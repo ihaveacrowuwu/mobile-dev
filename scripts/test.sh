@@ -85,6 +85,9 @@ else
     test
   )
   (( RUN_UI )) || args+=(-only-testing:SkyCastTests)
+  # ScreenshotUITests writes PNGs into docs/screenshots/ and takes a couple of minutes. It is a
+  # deliberate, separately-invoked utility (scripts/screenshots-ios.sh), never part of a test run.
+  args+=(-skip-testing:SkyCastUITests/ScreenshotUITests)
 
   if set -o pipefail && xcodebuild "${args[@]}" 2>&1 | "$formatter"; then
     pass "iOS tests ($SIMULATOR_NAME)"

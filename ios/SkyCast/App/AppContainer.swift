@@ -47,7 +47,7 @@ final class AppContainer {
 
         let local = LocalDataStore(modelContainer: modelContainer)
         let api = OpenWeatherAPIClient()
-        let monitor = NetworkMonitor()
+        let monitor = Self.liveNetworkMonitor()
 
         return AppContainer(
             modelContainer: modelContainer,
@@ -83,6 +83,27 @@ final class AppContainer {
             locationRepository: LocationRepositoryImpl(api: api, local: local),
             settingsStore: SettingsStore(defaults: defaults)
         )
+    }
+
+    /// The network monitor for the live graph.
+    ///
+    /// Honours a **debug-only** `-SkyCastForceOffline` launch argument, which reports the device as
+    /// permanently offline. Two reasons it exists:
+    ///
+    /// 1. The iOS Simulator has no aeroplane mode, so the offline path, the single most valuable
+    ///    thing to put in front of a user tester (see `docs/user-testing/task-scenarios.md`, T6),
+    ///    is otherwise unreachable without unplugging the whole Mac.
+    /// 2. It makes the offline and error screenshots in `docs/screenshots/` reproducible rather
+    ///    than a matter of catching the app at the right moment.
+    ///
+    /// Compiled out of release builds entirely, so a shipped binary cannot be forced offline.
+    private static func liveNetworkMonitor() -> any NetworkMonitoring {
+        #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-SkyCastForceOffline") {
+                return StaticNetworkMonitor(online: false)
+            }
+        #endif
+        return NetworkMonitor()
     }
 
     /// Builds an in-memory container, or crashes with a message that identifies the cause.
