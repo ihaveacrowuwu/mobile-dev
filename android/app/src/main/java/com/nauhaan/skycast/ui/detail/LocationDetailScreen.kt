@@ -33,12 +33,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.common.AppError
+import com.nauhaan.skycast.core.designsystem.component.BackgroundIntensity
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.SavedLocation
+import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
 import com.nauhaan.skycast.ui.common.previewWeather
 import com.nauhaan.skycast.ui.common.toDetails
@@ -102,66 +105,73 @@ internal fun LocationDetailContent(
             return@Scaffold
         }
 
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
+        WeatherBackground(
+            condition = uiState.weather?.condition ?: WeatherCondition.UNKNOWN,
+            isDaytime = uiState.weather?.isDaytime ?: true,
+            intensity = BackgroundIntensity.SUBTLE,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                if (uiState.showsStaleBanner) {
-                    val message = uiState.error
-                        ?.let { stringResource(it.toPresentation().messageRes) }
-                        ?: stringResource(R.string.banner_data_may_be_out_of_date)
-                    StaleDataBanner(message = message, onRetry = onRefresh)
-                }
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    if (uiState.showsStaleBanner) {
+                        val message = uiState.error
+                            ?.let { stringResource(it.toPresentation().messageRes) }
+                            ?: stringResource(R.string.banner_data_may_be_out_of_date)
+                        StaleDataBanner(message = message, onRetry = onRefresh)
+                    }
 
-                // Identity first, and unconditionally. Which place this is comes from Room, so it
-                // is known before any network call, hiding it behind a spinner would blank a
-                // screen whose most important fact is already in hand. This is the same
-                // offline-first rule the Today tab follows, applied to a pushed screen.
-                uiState.location?.let { location ->
-                    LocationIdentity(location = location, modifier = Modifier.padding(Spacing.md))
-                }
+                    // Identity first, and unconditionally. Which place this is comes from Room, so it
+                    // is known before any network call, and hiding it behind a spinner would blank a
+                    // screen whose most important fact is already in hand. This is the same
+                    // offline-first rule the Today tab follows, applied to a pushed screen.
+                    uiState.location?.let { location ->
+                        LocationIdentity(location = location, modifier = Modifier.padding(Spacing.md))
+                    }
 
-                uiState.weather?.let { weather ->
-                    // No onClick: this *is* the detail screen, so there is nowhere to push.
-                    CurrentConditionsHeader(
-                        weather = weather,
-                        unit = uiState.preferences.temperatureUnit,
-                        // The identity block above already names the place.
-                        showsLocationName = false,
-                        modifier = Modifier.padding(Spacing.md),
-                    )
+                    uiState.weather?.let { weather ->
+                        // No onClick: this *is* the detail screen, so there is nowhere to push.
+                        CurrentConditionsHeader(
+                            weather = weather,
+                            unit = uiState.preferences.temperatureUnit,
+                            // The identity block above already names the place.
+                            showsLocationName = false,
+                            modifier = Modifier.padding(Spacing.md),
+                        )
 
-                    WeatherDetailGrid(
-                        details = weather.toDetails(
-                            preferences = uiState.preferences,
-                            humidityLabel = stringResource(R.string.detail_humidity),
-                            windLabel = stringResource(R.string.detail_wind),
-                            pressureLabel = stringResource(R.string.detail_pressure),
-                            visibilityLabel = stringResource(R.string.detail_visibility),
-                            sunriseLabel = stringResource(R.string.detail_sunrise),
-                            sunsetLabel = stringResource(R.string.detail_sunset),
-                        ),
-                        modifier = Modifier.padding(horizontal = Spacing.md),
-                    )
+                        WeatherDetailGrid(
+                            details = weather.toDetails(
+                                preferences = uiState.preferences,
+                                humidityLabel = stringResource(R.string.detail_humidity),
+                                windLabel = stringResource(R.string.detail_wind),
+                                pressureLabel = stringResource(R.string.detail_pressure),
+                                visibilityLabel = stringResource(R.string.detail_visibility),
+                                sunriseLabel = stringResource(R.string.detail_sunrise),
+                                sunsetLabel = stringResource(R.string.detail_sunset),
+                            ),
+                            modifier = Modifier.padding(horizontal = Spacing.md),
+                        )
 
-                    ObservedAtFooter(
-                        observedAt = weather.observedAt,
-                        modifier = Modifier.padding(Spacing.md),
-                    )
-                }
+                        ObservedAtFooter(
+                            observedAt = weather.observedAt,
+                            modifier = Modifier.padding(Spacing.md),
+                        )
+                    }
 
-                // Inline, not full-screen: the identity block above is real content, so a
-                // full-screen loader or error over the top of it would be a lie.
-                if (uiState.weather == null) {
-                    WeatherStatusNotice(
-                        error = uiState.error,
-                        onRetry = onRefresh,
-                        modifier = Modifier.padding(Spacing.lg),
-                    )
+                    // Inline, not full-screen: the identity block above is real content, so a
+                    // full-screen loader or error over the top of it would be a lie.
+                    if (uiState.weather == null) {
+                        WeatherStatusNotice(
+                            error = uiState.error,
+                            onRetry = onRefresh,
+                            modifier = Modifier.padding(Spacing.lg),
+                        )
+                    }
                 }
             }
         }

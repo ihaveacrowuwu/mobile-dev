@@ -186,6 +186,15 @@ struct DayDetailContent: View {
                 }
             }
         }
+        // A List paints its own background, so the wash needs to sit behind it rather than under
+        // its rows, hence `scrollContentBackground(.hidden)`.
+        .scrollContentBackground(.hidden)
+        .weatherBackground(
+            condition: day.condition,
+            // A day summary covers the whole day, so daytime is the honest choice.
+            isDaytime: true,
+            intensity: .subtle
+        )
     }
 }
 

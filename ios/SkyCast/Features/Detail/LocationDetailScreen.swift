@@ -199,8 +199,13 @@ struct LocationDetailContent: View {
                 .padding(Spacing.md)
             }
         }
-        // See TodayScreen: the tiles need the grouped background to read against.
-        .background(Color.skyBackground)
+        // The weather background supplies the grouped base the tiles read against, plus a hint
+        // of the condition, see TodayScreen.
+        .weatherBackground(
+            condition: state.weather?.condition ?? .unknown,
+            isDaytime: state.weather?.isDaytime ?? true,
+            intensity: .subtle
+        )
         .scrollEdgeEffectStyle(.soft, for: .all)
         .refreshable { await onRefresh() }
     }

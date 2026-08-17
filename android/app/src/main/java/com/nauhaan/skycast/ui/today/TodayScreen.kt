@@ -48,9 +48,11 @@ import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
+import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
 import com.nauhaan.skycast.ui.common.toDetails
@@ -176,27 +178,37 @@ private fun TodayPager(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        LocationSwitcher(
-            uiState = uiState,
-            onSelectPage = onSelectPage,
-            modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        )
+    // The background follows the place on screen, so swiping from a clear Malé to an overcast
+    // London visibly changes the weather of the whole screen, not just the numbers on it.
+    val selected = uiState.selected?.weather?.data
 
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            HorizontalPager(state = pagerState) { page ->
-                TodayPage(
-                    page = uiState.pages[page],
-                    uiState = uiState,
-                    isSelected = page == uiState.selectedIndex,
-                    onRefresh = onRefresh,
-                    onDismissBanner = onDismissBanner,
-                    onOpenDetail = onOpenDetail,
-                )
+    WeatherBackground(
+        condition = selected?.condition ?: WeatherCondition.UNKNOWN,
+        isDaytime = selected?.isDaytime ?: true,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            LocationSwitcher(
+                uiState = uiState,
+                onSelectPage = onSelectPage,
+                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            )
+
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                HorizontalPager(state = pagerState) { page ->
+                    TodayPage(
+                        page = uiState.pages[page],
+                        uiState = uiState,
+                        isSelected = page == uiState.selectedIndex,
+                        onRefresh = onRefresh,
+                        onDismissBanner = onDismissBanner,
+                        onOpenDetail = onOpenDetail,
+                    )
+                }
             }
         }
     }

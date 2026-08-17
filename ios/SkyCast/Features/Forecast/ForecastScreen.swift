@@ -116,6 +116,13 @@ struct ForecastContent: View {
             }
         }
         .refreshable { await onRefresh() }
+        // Subtle here: enough that the tabs feel like one app, not so much that a five-day list
+        // competes with the forecast for attention.
+        .weatherBackground(
+            condition: forecast.days.first?.condition ?? .unknown,
+            isDaytime: true,
+            intensity: .subtle
+        )
     }
 }
 

@@ -111,7 +111,12 @@ struct TodayContent: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
         }
-        .background(Color.skyBackground)
+        // Follows the place on screen, so swiping from a clear Malé to an overcast London changes
+        // the weather of the whole screen, not just the numbers on it.
+        .weatherBackground(
+            condition: state.weather?.condition ?? .unknown,
+            isDaytime: state.weather?.isDaytime ?? true
+        )
     }
 
     private var selectionBinding: Binding<Int> {

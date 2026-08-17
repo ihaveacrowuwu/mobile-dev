@@ -31,14 +31,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
+import com.nauhaan.skycast.core.designsystem.component.BackgroundIntensity
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherConditionBadge
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.ForecastDay
 import com.nauhaan.skycast.domain.model.TemperatureUnit
+import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.toPresentation
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
@@ -89,35 +92,44 @@ internal fun ForecastContent(
             )
         }
 
-        else -> PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
+        // A whisper of the same treatment Today wears in full: enough that the tabs feel like
+        // one app, not so much that a five-day list competes with the forecast for attention.
+        else -> WeatherBackground(
+            condition = uiState.forecast?.days?.firstOrNull()?.condition ?: WeatherCondition.UNKNOWN,
+            isDaytime = true,
+            intensity = BackgroundIntensity.SUBTLE,
             modifier = modifier.fillMaxSize(),
         ) {
-            LazyColumn {
-                if (uiState.showsStaleBanner) {
-                    item {
-                        val message = uiState.error
-                            ?.let { stringResource(it.toPresentation().messageRes) }
-                            ?: stringResource(R.string.banner_data_may_be_out_of_date)
-                        StaleDataBanner(message = message, onRetry = onRefresh)
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                LazyColumn {
+                    if (uiState.showsStaleBanner) {
+                        item {
+                            val message = uiState.error
+                                ?.let { stringResource(it.toPresentation().messageRes) }
+                                ?: stringResource(R.string.banner_data_may_be_out_of_date)
+                            StaleDataBanner(message = message, onRetry = onRefresh)
+                        }
                     }
-                }
-                uiState.forecast?.let { forecast ->
-                    item {
-                        Text(
-                            text = forecast.locationName,
-                            style = MaterialTheme.typography.titleLargeEmphasized,
-                            modifier = Modifier.padding(Spacing.md),
-                        )
-                    }
-                    items(forecast.days, key = { it.date.toEpochDay() }) { day ->
-                        ForecastDayRow(
-                            day = day,
-                            unit = uiState.preferences.temperatureUnit,
-                            onClick = { onOpenDay(forecast.locationId, day.date.toEpochDay()) },
-                        )
-                        HorizontalDivider()
+                    uiState.forecast?.let { forecast ->
+                        item {
+                            Text(
+                                text = forecast.locationName,
+                                style = MaterialTheme.typography.titleLargeEmphasized,
+                                modifier = Modifier.padding(Spacing.md),
+                            )
+                        }
+                        items(forecast.days, key = { it.date.toEpochDay() }) { day ->
+                            ForecastDayRow(
+                                day = day,
+                                unit = uiState.preferences.temperatureUnit,
+                                onClick = { onOpenDay(forecast.locationId, day.date.toEpochDay()) },
+                            )
+                            HorizontalDivider()
+                        }
                     }
                 }
             }

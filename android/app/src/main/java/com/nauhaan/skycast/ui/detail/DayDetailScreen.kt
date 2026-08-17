@@ -34,9 +34,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
+import com.nauhaan.skycast.core.designsystem.component.BackgroundIntensity
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
+import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherConditionBadge
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
@@ -109,34 +111,42 @@ internal fun DayDetailContent(uiState: DayDetailUiState, onNavigateBack: () -> U
 
             uiState.day == null -> LoadingView(modifier = Modifier.padding(innerPadding))
 
-            else -> LazyColumn(modifier = Modifier.padding(innerPadding)) {
-                item {
-                    DaySummary(
-                        locationName = uiState.locationName,
-                        day = uiState.day,
-                        unit = uiState.preferences.temperatureUnit,
-                        modifier = Modifier.padding(Spacing.md),
-                    )
-                }
-                item {
-                    Text(
-                        text = stringResource(R.string.day_detail_hourly_heading),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(
-                            start = Spacing.md,
-                            end = Spacing.md,
-                            bottom = Spacing.sm,
-                        ),
-                    )
-                }
-                items(uiState.day.hourly, key = { it.time.epochSecond }) { hour ->
-                    HourlyRow(
-                        hour = hour,
-                        zoneOffset = uiState.zoneOffset,
-                        temperatureUnit = uiState.preferences.temperatureUnit,
-                        windUnit = uiState.preferences.windSpeedUnit,
-                    )
-                    HorizontalDivider()
+            else -> WeatherBackground(
+                condition = uiState.day.condition,
+                // A day summary covers the whole day, so daytime is the honest choice.
+                isDaytime = true,
+                intensity = BackgroundIntensity.SUBTLE,
+                modifier = Modifier.padding(innerPadding),
+            ) {
+                LazyColumn {
+                    item {
+                        DaySummary(
+                            locationName = uiState.locationName,
+                            day = uiState.day,
+                            unit = uiState.preferences.temperatureUnit,
+                            modifier = Modifier.padding(Spacing.md),
+                        )
+                    }
+                    item {
+                        Text(
+                            text = stringResource(R.string.day_detail_hourly_heading),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(
+                                start = Spacing.md,
+                                end = Spacing.md,
+                                bottom = Spacing.sm,
+                            ),
+                        )
+                    }
+                    items(uiState.day.hourly, key = { it.time.epochSecond }) { hour ->
+                        HourlyRow(
+                            hour = hour,
+                            zoneOffset = uiState.zoneOffset,
+                            temperatureUnit = uiState.preferences.temperatureUnit,
+                            windUnit = uiState.preferences.windSpeedUnit,
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }
