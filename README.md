@@ -107,18 +107,17 @@ implemented:
 
 ## Screenshots
 
-> **Screenshots are pending.** Capture them with
-> [`scripts/screenshots.sh`](scripts/screenshots.sh), which enforces the exact file names
-> these links expect:
+> Regenerate every screenshot with the two scripts below, one command per platform, writing the
+> exact filenames these links expect. See
+> [`docs/screenshots/README.md`](docs/screenshots/README.md) for what each image must show.
 >
 > ```bash
-> ./scripts/screenshots.sh android 01-today
-> ./scripts/screenshots.sh ios 01-today
+> ./scripts/screenshots-ios.sh
+> ./scripts/screenshots-android.sh
 > ```
 >
-> See [`docs/screenshots/README.md`](docs/screenshots/README.md) for the full checklist.
-> The brief docks up to **15 marks** if the README has no screenshots, so this section must
-> be filled in before submission.
+> The brief docks up to **15 marks** if the README has no screenshots, so this section is not
+> optional decoration.
 
 | Screen | iOS | Android |
 | --- | --- | --- |
@@ -131,6 +130,7 @@ implemented:
 | **Offline banner** | ![iOS Offline](docs/screenshots/ios/07-offline-banner.png) | ![Android Offline](docs/screenshots/android/07-offline-banner.png) |
 | **Error state** | ![iOS Error](docs/screenshots/ios/08-error-state.png) | ![Android Error](docs/screenshots/android/08-error-state.png) |
 | **Dark mode** | ![iOS Dark](docs/screenshots/ios/09-dark-mode.png) | ![Android Dark](docs/screenshots/android/09-dark-mode.png) |
+| **Day detail** | ![iOS Day detail](docs/screenshots/ios/10-day-detail.png) | ![Android Day detail](docs/screenshots/android/10-day-detail.png) |
 
 ---
 
