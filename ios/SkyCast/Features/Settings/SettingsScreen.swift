@@ -16,18 +16,15 @@ struct SettingsScreen: View {
     var body: some View {
         Form {
             Section("Units") {
-                // Picker in .inline style renders as a proper radio group and announces
-                // "1 of 2" to VoiceOver automatically.
-                Picker("Temperature", selection: temperatureUnit) {
-                    ForEach(TemperatureUnit.allCases) { unit in
-                        Text(unit.displayName).tag(unit)
-                    }
-                }
-                Picker("Wind speed", selection: windSpeedUnit) {
-                    ForEach(WindSpeedUnit.allCases) { unit in
-                        Text(unit.symbol).tag(unit)
-                    }
-                }
+                // A Picker renders as a menu or radio group depending on context and announces
+                // "2 of 5" to VoiceOver.
+                //
+                // Each row reads its options straight off the unit's own `allCases` and
+                // `displayName`, so adding a unit needs no change here.
+                UnitPicker(title: "Temperature", selection: temperatureUnit)
+                UnitPicker(title: "Wind speed", selection: windSpeedUnit)
+                UnitPicker(title: "Pressure", selection: pressureUnit)
+                UnitPicker(title: "Visibility", selection: visibilityUnit)
             }
 
             Section("Appearance") {
@@ -84,11 +81,43 @@ struct SettingsScreen: View {
         )
     }
 
+    private var pressureUnit: Binding<PressureUnit> {
+        Binding(
+            get: { settings.preferences.pressureUnit },
+            set: { settings.setPressureUnit($0) }
+        )
+    }
+
+    private var visibilityUnit: Binding<VisibilityUnit> {
+        Binding(
+            get: { settings.preferences.visibilityUnit },
+            set: { settings.setVisibilityUnit($0) }
+        )
+    }
+
     private var themeMode: Binding<ThemeMode> {
         Binding(
             get: { settings.preferences.themeMode },
             set: { settings.setThemeMode($0) }
         )
+    }
+}
+
+/// A settings row for choosing one of a unit type's cases.
+///
+/// Generic over ``DisplayUnit`` so every unit list is rendered the same way and adding a case
+/// cannot leave this screen out of step, the Android counterpart's hand-written mapping produced
+/// exactly that compile error when Kelvin was added.
+private struct UnitPicker<Unit: DisplayUnit>: View where Unit.AllCases: RandomAccessCollection {
+    let title: String
+    @Binding var selection: Unit
+
+    var body: some View {
+        Picker(title, selection: $selection) {
+            ForEach(Unit.allCases) { unit in
+                Text(unit.displayName).tag(unit)
+            }
+        }
     }
 }
 

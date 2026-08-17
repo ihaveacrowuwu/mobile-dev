@@ -62,8 +62,14 @@
     <string name="settings_section_units">Units</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_storage">Storage</string>
-    <string name="unit_celsius">Celsius (°C)</string>
-    <string name="unit_fahrenheit">Fahrenheit (°F)</string>
+    <!--
+      Unit *names* are not here: they come from DisplayUnit.displayName so that adding a unit
+      cannot leave the settings screen out of step. Only the group headings are translatable.
+    -->
+    <string name="settings_temperature">Temperature</string>
+    <string name="settings_wind_speed">Wind speed</string>
+    <string name="settings_pressure">Pressure</string>
+    <string name="settings_visibility">Visibility</string>
     <string name="theme_system">Follow system</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>

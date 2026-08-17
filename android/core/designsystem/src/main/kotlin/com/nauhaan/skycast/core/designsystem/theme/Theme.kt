@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import com.nauhaan.skycast.domain.model.ThemeMode
 
@@ -49,10 +50,16 @@ fun SkyCastTheme(
         else -> SkyCastLightColorScheme
     }
 
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        shapes = SkyCastShapes,
-        typography = SkyCastTypography,
-        content = content,
-    )
+    // The weather palette follows light/dark but ignores dynamic colour, so the wallpaper drives
+    // the app's chrome but not the weather colours. See WeatherPalette.
+    val weatherPalette = if (darkTheme) DarkWeatherPalette else LightWeatherPalette
+
+    CompositionLocalProvider(LocalWeatherPalette provides weatherPalette) {
+        MaterialExpressiveTheme(
+            colorScheme = colorScheme,
+            shapes = SkyCastShapes,
+            typography = SkyCastTypography,
+            content = content,
+        )
+    }
 }

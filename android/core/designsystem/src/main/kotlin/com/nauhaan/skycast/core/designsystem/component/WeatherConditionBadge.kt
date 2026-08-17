@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
+import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
 import com.nauhaan.skycast.domain.model.WeatherCondition
 
 /**
@@ -101,14 +102,13 @@ private fun WeatherCondition.expressiveShape(): RoundedPolygon = when (this) {
 /**
  * Icon for a condition, varying by time of day where it matters.
  *
- * [isDaytime] is not decoration: a sun icon at 4am is simply wrong. Clear and cloudy skies are
- * the two conditions where night genuinely changes the symbol; rain and snow look the same at any
- * hour.
+ * Clear and cloudy skies are the two conditions where night changes the symbol; rain and snow look
+ * the same at any hour.
  *
  * Kept in step with `WeatherCondition.symbolName(isDaytime:)` on iOS.
  *
  * `internal`, not `private`, so `WeatherConditionIconTest` can assert the day/night divergence
- * directly. A test that could only check "an icon exists" is what let the original bug through.
+ * directly.
  */
 internal fun WeatherCondition.icon(isDaytime: Boolean): ImageVector = when (this) {
     WeatherCondition.CLEAR -> if (isDaytime) Icons.Filled.WbSunny else Icons.Filled.NightsStay
@@ -121,46 +121,52 @@ internal fun WeatherCondition.icon(isDaytime: Boolean): ImageVector = when (this
     WeatherCondition.UNKNOWN -> Icons.Filled.QuestionMark
 }
 
+/**
+ * Container colour for a condition.
+ *
+ * From the weather palette rather than the colour scheme. Scheme roles all derive from one tonal
+ * palette, the wallpaper's, under Material You, so a sun, a rain cloud and fog came out in
+ * near-identical tints and the colour carried no information at all.
+ */
 @Composable
 private fun WeatherCondition.containerColour(isDaytime: Boolean): Color = when (this) {
     // Clear skies read warm by day and cool by night, the one condition where time of
     // day genuinely changes the impression.
     WeatherCondition.CLEAR ->
-        if (isDaytime) {
-            MaterialTheme.colorScheme.tertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.secondaryContainer
-        }
+        if (isDaytime) weatherPalette.sunContainer else weatherPalette.moonContainer
 
-    WeatherCondition.THUNDERSTORM -> MaterialTheme.colorScheme.errorContainer
-    WeatherCondition.RAIN, WeatherCondition.DRIZZLE -> MaterialTheme.colorScheme.primaryContainer
-    WeatherCondition.SNOW, WeatherCondition.MIST, WeatherCondition.CLOUDS ->
-        MaterialTheme.colorScheme.secondaryContainer
+    WeatherCondition.CLOUDS ->
+        if (isDaytime) weatherPalette.cloudContainer else weatherPalette.moonContainer
 
+    WeatherCondition.RAIN -> weatherPalette.rainContainer
+    WeatherCondition.DRIZZLE -> weatherPalette.drizzleContainer
+    WeatherCondition.THUNDERSTORM -> weatherPalette.thunderContainer
+    WeatherCondition.SNOW -> weatherPalette.snowContainer
+    WeatherCondition.MIST -> weatherPalette.mistContainer
     WeatherCondition.UNKNOWN -> MaterialTheme.colorScheme.surfaceVariant
 }
 
+/** The matching `on` colour, paired with its container to clear WCAG AA. */
 @Composable
 private fun WeatherCondition.contentColour(isDaytime: Boolean): Color = when (this) {
     WeatherCondition.CLEAR ->
-        if (isDaytime) {
-            MaterialTheme.colorScheme.onTertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        }
+        if (isDaytime) weatherPalette.onSunContainer else weatherPalette.onMoonContainer
 
-    WeatherCondition.THUNDERSTORM -> MaterialTheme.colorScheme.onErrorContainer
-    WeatherCondition.RAIN, WeatherCondition.DRIZZLE -> MaterialTheme.colorScheme.onPrimaryContainer
-    WeatherCondition.SNOW, WeatherCondition.MIST, WeatherCondition.CLOUDS ->
-        MaterialTheme.colorScheme.onSecondaryContainer
+    WeatherCondition.CLOUDS ->
+        if (isDaytime) weatherPalette.onCloudContainer else weatherPalette.onMoonContainer
 
+    WeatherCondition.RAIN -> weatherPalette.onRainContainer
+    WeatherCondition.DRIZZLE -> weatherPalette.onDrizzleContainer
+    WeatherCondition.THUNDERSTORM -> weatherPalette.onThunderContainer
+    WeatherCondition.SNOW -> weatherPalette.onSnowContainer
+    WeatherCondition.MIST -> weatherPalette.onMistContainer
     WeatherCondition.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 private val BadgeSize: Dp = 96.dp
 
 @OptIn(ExperimentalLayoutApi::class)
-@Preview(name = "Condition badges, every shape", showBackground = true)
+@Preview(name = "Condition badges: every shape", showBackground = true)
 @Composable
 private fun WeatherConditionBadgePreview() {
     SkyCastTheme {

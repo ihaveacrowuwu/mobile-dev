@@ -138,7 +138,7 @@ internal fun TodayContent(
 
                         WeatherDetailGrid(
                             details = weather.toDetails(
-                                windUnit = uiState.preferences.windSpeedUnit,
+                                preferences = uiState.preferences,
                                 humidityLabel = stringResource(R.string.detail_humidity),
                                 windLabel = stringResource(R.string.detail_wind),
                                 pressureLabel = stringResource(R.string.detail_pressure),

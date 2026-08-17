@@ -6,9 +6,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.nauhaan.skycast.domain.model.PressureUnit
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.UserPreferences
+import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -38,6 +40,8 @@ constructor(private val dataStore: DataStore<Preferences>) {
                 UserPreferences(
                     temperatureUnit = prefs.readEnum(Keys.TEMPERATURE_UNIT, TemperatureUnit.CELSIUS),
                     windSpeedUnit = prefs.readEnum(Keys.WIND_SPEED_UNIT, WindSpeedUnit.METRES_PER_SECOND),
+                    pressureUnit = prefs.readEnum(Keys.PRESSURE_UNIT, PressureUnit.HECTOPASCALS),
+                    visibilityUnit = prefs.readEnum(Keys.VISIBILITY_UNIT, VisibilityUnit.KILOMETRES),
                     themeMode = prefs.readEnum(Keys.THEME_MODE, ThemeMode.SYSTEM),
                     useDynamicColour = prefs[Keys.USE_DYNAMIC_COLOUR] ?: true,
                 )
@@ -46,6 +50,10 @@ constructor(private val dataStore: DataStore<Preferences>) {
     suspend fun setTemperatureUnit(unit: TemperatureUnit) = edit(Keys.TEMPERATURE_UNIT, unit.name)
 
     suspend fun setWindSpeedUnit(unit: WindSpeedUnit) = edit(Keys.WIND_SPEED_UNIT, unit.name)
+
+    suspend fun setPressureUnit(unit: PressureUnit) = edit(Keys.PRESSURE_UNIT, unit.name)
+
+    suspend fun setVisibilityUnit(unit: VisibilityUnit) = edit(Keys.VISIBILITY_UNIT, unit.name)
 
     suspend fun setThemeMode(mode: ThemeMode) = edit(Keys.THEME_MODE, mode.name)
 
@@ -73,6 +81,8 @@ constructor(private val dataStore: DataStore<Preferences>) {
     private object Keys {
         val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
         val WIND_SPEED_UNIT = stringPreferencesKey("wind_speed_unit")
+        val PRESSURE_UNIT = stringPreferencesKey("pressure_unit")
+        val VISIBILITY_UNIT = stringPreferencesKey("visibility_unit")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val USE_DYNAMIC_COLOUR = booleanPreferencesKey("use_dynamic_colour")
     }

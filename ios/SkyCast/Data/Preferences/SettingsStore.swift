@@ -33,6 +33,16 @@ final class SettingsStore: SettingsRepository {
         defaults.set(unit.rawValue, forKey: Keys.windSpeedUnit)
     }
 
+    func setPressureUnit(_ unit: PressureUnit) {
+        preferences.pressureUnit = unit
+        defaults.set(unit.rawValue, forKey: Keys.pressureUnit)
+    }
+
+    func setVisibilityUnit(_ unit: VisibilityUnit) {
+        preferences.visibilityUnit = unit
+        defaults.set(unit.rawValue, forKey: Keys.visibilityUnit)
+    }
+
     func setThemeMode(_ mode: ThemeMode) {
         preferences.themeMode = mode
         defaults.set(mode.rawValue, forKey: Keys.themeMode)
@@ -55,6 +65,10 @@ final class SettingsStore: SettingsRepository {
                 .flatMap(TemperatureUnit.init(rawValue:)) ?? .celsius,
             windSpeedUnit: defaults.string(forKey: Keys.windSpeedUnit)
                 .flatMap(WindSpeedUnit.init(rawValue:)) ?? .metresPerSecond,
+            pressureUnit: defaults.string(forKey: Keys.pressureUnit)
+                .flatMap(PressureUnit.init(rawValue:)) ?? .hectopascals,
+            visibilityUnit: defaults.string(forKey: Keys.visibilityUnit)
+                .flatMap(VisibilityUnit.init(rawValue:)) ?? .kilometres,
             themeMode: defaults.string(forKey: Keys.themeMode)
                 .flatMap(ThemeMode.init(rawValue:)) ?? .system
         )
@@ -63,8 +77,10 @@ final class SettingsStore: SettingsRepository {
     private enum Keys {
         static let temperatureUnit = "settings.temperatureUnit"
         static let windSpeedUnit = "settings.windSpeedUnit"
+        static let pressureUnit = "settings.pressureUnit"
+        static let visibilityUnit = "settings.visibilityUnit"
         static let themeMode = "settings.themeMode"
 
-        static let all = [temperatureUnit, windSpeedUnit, themeMode]
+        static let all = [temperatureUnit, windSpeedUnit, pressureUnit, visibilityUnit, themeMode]
     }
 }

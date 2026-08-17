@@ -8,33 +8,41 @@ import SwiftUI
 /// through **depth and material**. Forcing one platform to imitate the other would produce
 /// something that looks wrong on both.
 ///
-/// ## Rendering mode, and why it is not `.multicolor`
+/// ## Colour, and two attempts that were wrong
 ///
-/// `.multicolor` was the first choice: SF Symbols then supplies semantically correct colours,
-/// yellow sun, blue rain, rather than us hardcoding a palette. It fails a contrast check, though,
-/// and a screenshot is what exposed it. Several conditions have no coloured element at all:
-/// `cloud.fill`, `cloud.moon.fill` and `moon.stars.fill` render **white**, which is invisible on a
-/// light background. In the light-mode day-detail screenshot the 1 am and 4 am rows appeared to
-/// have no icon whatsoever.
+/// `.multicolor` came first: SF Symbols supplies semantically correct colours, yellow sun, blue
+/// rain, rather than us hardcoding a palette. It fails contrast. Several conditions have no
+/// coloured element at all: `cloud.fill`, `cloud.moon.fill` and `moon.stars.fill` render **white**,
+/// invisible on a light surface. A light-mode screenshot showed hourly rows with no icon at all.
 ///
-/// `.hierarchical` with the semantic accent colour gives every one of the eight conditions a
-/// legible silhouette in both appearances, at the cost of the sun no longer being yellow. Contrast
-/// is not negotiable and colour charm is, WCAG AA.
+/// `.hierarchical` tinted with the app accent fixed contrast and lost the meaning: every condition
+/// became the same blue, so the colour said nothing.
+///
+/// What is here now is a **palette** from ``WeatherPalette``: each condition gets its own hue,
+/// drawn on a matching container that guarantees WCAG AA in both appearances. Warm for sun, cool
+/// for night, blue for rain, legible *and* meaningful, which neither previous attempt managed.
 struct ConditionBadge: View {
     let condition: WeatherCondition
     let isDaytime: Bool
     var size: CGFloat = 64
 
+    private var colours: (container: Color, content: Color) {
+        WeatherPalette.colours(for: condition, isDaytime: isDaytime)
+    }
+
     var body: some View {
         ScaledSymbol(condition.symbolName(isDaytime: isDaytime), baseSize: size)
             .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(Color.skyAccent)
-            // Glass gives the badge depth without competing with the symbol for attention.
-            .skyGlass(.badge)
+            .foregroundStyle(colours.content)
+            .padding(size * containerPaddingRatio)
+            .background(colours.container, in: .circle)
             // Decorative: the text beside it already names the condition, so announcing
             // the symbol would repeat it for VoiceOver users.
             .accessibilityHidden(true)
     }
+
+    /// Proportional to the symbol so the badge keeps its shape as Dynamic Type scales it.
+    private let containerPaddingRatio: CGFloat = 0.28
 }
 
 #Preview("Every condition") {

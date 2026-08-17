@@ -2,9 +2,11 @@ package com.nauhaan.skycast.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nauhaan.skycast.domain.model.PressureUnit
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.UserPreferences
+import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
 import com.nauhaan.skycast.domain.repository.SettingsRepository
 import com.nauhaan.skycast.domain.repository.WeatherRepository
@@ -50,6 +52,14 @@ constructor(
 
     fun setWindSpeedUnit(unit: WindSpeedUnit) = viewModelScope.launch {
         settingsRepository.setWindSpeedUnit(unit)
+    }
+
+    fun setPressureUnit(unit: PressureUnit) = viewModelScope.launch {
+        settingsRepository.setPressureUnit(unit)
+    }
+
+    fun setVisibilityUnit(unit: VisibilityUnit) = viewModelScope.launch {
+        settingsRepository.setVisibilityUnit(unit)
     }
 
     fun setThemeMode(mode: ThemeMode) = viewModelScope.launch {

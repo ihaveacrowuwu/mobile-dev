@@ -64,7 +64,7 @@ struct LocationTimeZoneTests {
         let weather = londonWeather(offsetSeconds: 3_600)
 
         let details = Dictionary(
-            uniqueKeysWithValues: weather.details(windUnit: .metresPerSecond).map { ($0.label, $0.value) }
+            uniqueKeysWithValues: weather.details(preferences: UserPreferences()).map { ($0.label, $0.value) }
         )
 
         // London's own clock. A device five hours ahead would say 09:49.
@@ -129,7 +129,7 @@ struct LocationTimeZoneTests {
 
     private func sunriseLabel(offsetSeconds: Int) -> String? {
         londonWeather(offsetSeconds: offsetSeconds)
-            .details(windUnit: .metresPerSecond)
+            .details(preferences: UserPreferences())
             .first { $0.label == "Sunrise" }?
             .value
     }

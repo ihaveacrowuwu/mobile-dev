@@ -111,16 +111,64 @@ struct UnitConversionTests {
         #expect(abs(WindSpeedUnit.milesPerHour.convertFromMetresPerSecond(tenMetresPerSecond) - 22.369) < 0.01)
     }
 
-    /// Guards against adding an enum case and forgetting its label, which would render as
-    /// an empty string next to the temperature.
-    @Test("Every unit exposes a non-empty symbol")
-    func everyUnitHasSymbol() {
-        for unit in TemperatureUnit.allCases {
-            #expect(!unit.symbol.isEmpty)
+    @Test("Celsius to kelvin uses absolute zero")
+    func celsiusToKelvin() {
+        #expect(abs(TemperatureUnit.kelvin.convertFromCelsius(0) - 273.15) < 0.001)
+        // Absolute zero. Not a temperature London will reach, but the definition the scale rests on.
+        #expect(abs(TemperatureUnit.kelvin.convertFromCelsius(-273.15)) < 0.001)
+    }
+
+    @Test("Knots follow from the definition of the nautical mile")
+    func knots() {
+        // A nautical mile is exactly 1852 m, so 1 m/s is 3600/1852 kt.
+        #expect(abs(WindSpeedUnit.knots.convertFromMetresPerSecond(1) - 1.943_844) < 0.001)
+        // 10 m/s is a fresh breeze, about 19 kt, a number any sailor would recognise.
+        #expect(abs(WindSpeedUnit.knots.convertFromMetresPerSecond(10) - 19.438) < 0.01)
+    }
+
+    @Test(
+        "Beaufort force follows the standard scale boundaries",
+        arguments: [
+            (0.0, 0), (1.0, 1), (3.0, 2), (5.0, 3), (7.0, 4), (10.0, 5), (12.0, 6),
+            (16.0, 7), (19.0, 8), (23.0, 9), (26.0, 10), (30.0, 11), (40.0, 12),
+        ]
+    )
+    func beaufort(metresPerSecond: Double, expectedForce: Int) {
+        #expect(WindSpeedUnit.beaufort.convertFromMetresPerSecond(metresPerSecond) == Double(expectedForce))
+    }
+
+    @Test("Pressure conversions match the aviation reference values")
+    func pressure() {
+        // The ICAO standard atmosphere: 1013.25 hPa is 29.92 inHg, the altimeter setting every
+        // pilot knows by heart. If this drifts, the number looks subtly wrong to the one kind of
+        // user most likely to check it.
+        #expect(abs(PressureUnit.inchesOfMercury.convertFromHectopascals(1_013.25) - 29.92) < 0.01)
+        #expect(abs(PressureUnit.millimetresOfMercury.convertFromHectopascals(1_013.25) - 760) < 0.1)
+        #expect(PressureUnit.hectopascals.convertFromHectopascals(1_013.25) == 1_013.25)
+    }
+
+    @Test("Visibility conversions use the exact nautical mile")
+    func visibility() {
+        #expect(VisibilityUnit.kilometres.convertFromMetres(10_000) == 10)
+        #expect(abs(VisibilityUnit.miles.convertFromMetres(10_000) - 6.214) < 0.01)
+        // 1852 m is one nautical mile by definition, so this must be exactly 1.
+        #expect(VisibilityUnit.nauticalMiles.convertFromMetres(1_852) == 1)
+    }
+
+    /// Guards against adding an enum case and forgetting its labels, which would render as an
+    /// empty string next to the value, or as a blank row in Settings.
+    @Test("Every unit exposes a non-empty symbol and display name")
+    func everyUnitHasLabels() {
+        func check(_ units: [any DisplayUnit]) {
+            for unit in units {
+                #expect(!unit.symbol.isEmpty)
+                #expect(!unit.displayName.isEmpty)
+            }
         }
-        for unit in WindSpeedUnit.allCases {
-            #expect(!unit.symbol.isEmpty)
-        }
+        check(Array(TemperatureUnit.allCases))
+        check(Array(WindSpeedUnit.allCases))
+        check(Array(PressureUnit.allCases))
+        check(Array(VisibilityUnit.allCases))
     }
 }
 

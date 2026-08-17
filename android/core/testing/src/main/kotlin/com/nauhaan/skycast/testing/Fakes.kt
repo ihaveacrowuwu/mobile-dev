@@ -5,10 +5,12 @@ import com.nauhaan.skycast.core.common.DispatcherProvider
 import com.nauhaan.skycast.core.common.NetworkMonitor
 import com.nauhaan.skycast.domain.model.Forecast
 import com.nauhaan.skycast.domain.model.LocationSearchResult
+import com.nauhaan.skycast.domain.model.PressureUnit
 import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.UserPreferences
+import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.Weather
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
@@ -26,13 +28,11 @@ import java.time.ZoneOffset
 /**
  * Hand-written test doubles.
  *
- * These are **fakes**, not mocks: each one is a tiny working implementation whose state
- * a test can drive directly. Fakes read better than `every { ... } returns ...` stacks
- * and they cannot drift out of sync with the interface, because the compiler checks them.
+ * These are **fakes**, not mocks: each one is a tiny working implementation whose state a test can
+ * drive directly, and the compiler checks them against the interface.
  *
- * They are also the payoff of the layering: because view models depend only on `domain`
- * interfaces, these fakes are all a view model test needs. No Robolectric, no device, no
- * network.
+ * Because view models depend only on `domain` interfaces, these fakes are all a view model test
+ * needs. No Robolectric, no device, no network.
  */
 
 class FakeWeatherRepository : WeatherRepository {
@@ -127,6 +127,14 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setWindSpeedUnit(unit: WindSpeedUnit) {
         preferences.value = preferences.value.copy(windSpeedUnit = unit)
+    }
+
+    override suspend fun setPressureUnit(unit: PressureUnit) {
+        preferences.value = preferences.value.copy(pressureUnit = unit)
+    }
+
+    override suspend fun setVisibilityUnit(unit: VisibilityUnit) {
+        preferences.value = preferences.value.copy(visibilityUnit = unit)
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {

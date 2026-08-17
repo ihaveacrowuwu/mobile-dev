@@ -1,9 +1,11 @@
 package com.nauhaan.skycast.data.repository
 
 import com.nauhaan.skycast.data.preferences.UserPreferencesDataSource
+import com.nauhaan.skycast.domain.model.PressureUnit
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.UserPreferences
+import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
 import com.nauhaan.skycast.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +29,10 @@ constructor(private val dataSource: UserPreferencesDataSource) :
     override suspend fun setTemperatureUnit(unit: TemperatureUnit) = dataSource.setTemperatureUnit(unit)
 
     override suspend fun setWindSpeedUnit(unit: WindSpeedUnit) = dataSource.setWindSpeedUnit(unit)
+
+    override suspend fun setPressureUnit(unit: PressureUnit) = dataSource.setPressureUnit(unit)
+
+    override suspend fun setVisibilityUnit(unit: VisibilityUnit) = dataSource.setVisibilityUnit(unit)
 
     override suspend fun setThemeMode(mode: ThemeMode) = dataSource.setThemeMode(mode)
 

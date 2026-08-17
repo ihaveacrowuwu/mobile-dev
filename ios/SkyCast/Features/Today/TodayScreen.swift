@@ -103,7 +103,7 @@ struct TodayContent: View {
                         )
 
                         WeatherDetailGrid(
-                            details: weather.details(windUnit: state.preferences.windSpeedUnit)
+                            details: weather.details(preferences: state.preferences)
                         )
                     }
                 }

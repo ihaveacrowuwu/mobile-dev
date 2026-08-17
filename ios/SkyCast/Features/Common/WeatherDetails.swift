@@ -6,23 +6,56 @@ import Foundation
 /// many decimal places, which unit symbol, what time format.
 ///
 /// Unlike the Android counterpart (`ui/common/WeatherDetails.kt`), the labels are written inline
-/// rather than passed in. Android has to hoist them because `stringResource` needs a `Context`
-/// and this function deliberately has none; on iOS a plain `String` literal is already a
-/// localisation key, so the indirection would buy nothing.
+/// rather than passed in. Android has to hoist them because `stringResource` needs a `Context` and
+/// this function deliberately has none; on iOS a plain `String` literal is already a localisation
+/// key, so the indirection would buy nothing.
 extension Weather {
-    func details(windUnit: WindSpeedUnit) -> [WeatherDetail] {
+    func details(preferences: UserPreferences) -> [WeatherDetail] {
+        let windUnit = preferences.windSpeedUnit
         let wind = windUnit.convertFromMetresPerSecond(windSpeedMetresPerSecond)
+        // Beaufort is a force, not a speed: "5 Bft", never "5.0 Bft".
+        let windText = windUnit.isWholeNumber
+            ? "\(Int(wind.rounded())) \(windUnit.symbol)"
+            : "\(wind.oneDecimalPlace) \(windUnit.symbol)"
+
+        let pressureUnit = preferences.pressureUnit
+        let pressure = pressureUnit.convertFromHectopascals(Double(pressureHpa))
+        let pressureText = "\(pressure.formatted(places: pressureUnit.decimalPlaces)) \(pressureUnit.symbol)"
+
+        let visibilityUnit = preferences.visibilityUnit
+        let visibility = visibilityUnit.convertFromMetres(Double(visibilityMetres))
+
         return [
-            WeatherDetail(label: "Humidity", value: "\(humidityPercent)%"),
-            WeatherDetail(label: "Wind", value: "\(wind.oneDecimalPlace) \(windUnit.symbol)"),
-            WeatherDetail(label: "Pressure", value: "\(pressureHpa) hPa"),
-            // The API reports metres; people read kilometres.
+            WeatherDetail(
+                label: "Humidity",
+                value: "\(humidityPercent)%",
+                kind: .humidity,
+                // Humidity is already a percentage, so its fraction is itself.
+                fraction: Double(humidityPercent) / 100
+            ),
+            WeatherDetail(
+                label: "Wind",
+                value: windText,
+                kind: .wind,
+                fraction: windSpeedMetresPerSecond / Self.strongWindMetresPerSecond
+            ),
+            WeatherDetail(
+                label: "Pressure",
+                value: pressureText,
+                kind: .pressure,
+                // Scaled across the range a barometer realistically covers, so the indicator moves
+                // meaningfully instead of sitting in the same spot every day.
+                fraction: (Double(pressureHpa) - Self.lowPressureHpa) / Self.pressureRangeHpa
+            ),
             WeatherDetail(
                 label: "Visibility",
-                value: "\((Double(visibilityMetres) / metresPerKilometre).oneDecimalPlace) km"
+                value: "\(visibility.oneDecimalPlace) \(visibilityUnit.symbol)",
+                kind: .visibility,
+                // 10 km is the value OpenWeather reports for "clear", so it is effectively the top.
+                fraction: Double(visibilityMetres) / Self.clearVisibilityMetres
             ),
-            WeatherDetail(label: "Sunrise", value: localTime(sunrise)),
-            WeatherDetail(label: "Sunset", value: localTime(sunset)),
+            WeatherDetail(label: "Sunrise", value: localTime(sunrise), kind: .sunrise),
+            WeatherDetail(label: "Sunset", value: localTime(sunset), kind: .sunset),
         ]
     }
 
@@ -36,13 +69,22 @@ extension Weather {
         formatter.timeZone = timeZone
         return formatter.string(from: date)
     }
-}
 
-private let metresPerKilometre = 1_000.0
+    /// Roughly a strong gale: the point past which the wind indicator reads as full.
+    private static let strongWindMetresPerSecond = 25.0
+    private static let lowPressureHpa = 950.0
+    private static let pressureRangeHpa = 130.0
+    private static let clearVisibilityMetres = 10_000.0
+}
 
 private extension Double {
     /// One decimal place, which is as much precision as these readings support.
     var oneDecimalPlace: Double {
         (self * 10).rounded() / 10
+    }
+
+    /// Formats to a fixed number of decimals. 0 gives a bare integer, not "1013.0".
+    func formatted(places: Int) -> String {
+        places == 0 ? "\(Int(rounded()))" : String(format: "%.\(places)f", self)
     }
 }

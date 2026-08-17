@@ -27,8 +27,11 @@ import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
+import com.nauhaan.skycast.domain.model.DisplayUnit
+import com.nauhaan.skycast.domain.model.PressureUnit
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
+import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
 
 /**
@@ -50,6 +53,8 @@ fun SettingsScreen(
         uiState = uiState,
         onTemperatureUnitChange = viewModel::setTemperatureUnit,
         onWindSpeedUnitChange = viewModel::setWindSpeedUnit,
+        onPressureUnitChange = viewModel::setPressureUnit,
+        onVisibilityUnitChange = viewModel::setVisibilityUnit,
         onThemeModeChange = viewModel::setThemeMode,
         onDynamicColourChange = viewModel::setUseDynamicColour,
         onClearCache = { viewModel.clearCache() },
@@ -63,6 +68,8 @@ internal fun SettingsContent(
     uiState: SettingsUiState,
     onTemperatureUnitChange: (TemperatureUnit) -> Unit,
     onWindSpeedUnitChange: (WindSpeedUnit) -> Unit,
+    onPressureUnitChange: (PressureUnit) -> Unit,
+    onVisibilityUnitChange: (VisibilityUnit) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onDynamicColourChange: (Boolean) -> Unit,
     onClearCache: () -> Unit,
@@ -82,40 +89,33 @@ internal fun SettingsContent(
     ) {
         SectionHeader(stringResource(R.string.settings_section_units))
 
-        // selectableGroup() tells TalkBack these radio buttons are one choice, so it
-        // announces "1 of 2" rather than reading two unrelated controls.
-        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md)) {
-            Column(modifier = Modifier.selectableGroup()) {
-                TemperatureUnit.entries.forEach { unit ->
-                    RadioRow(
-                        label = stringResource(
-                            when (unit) {
-                                TemperatureUnit.CELSIUS -> R.string.unit_celsius
-                                TemperatureUnit.FAHRENHEIT -> R.string.unit_fahrenheit
-                            },
-                        ),
-                        selected = uiState.preferences.temperatureUnit == unit,
-                        onSelect = { onTemperatureUnitChange(unit) },
-                    )
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        ) {
-            Column(modifier = Modifier.selectableGroup()) {
-                WindSpeedUnit.entries.forEach { unit ->
-                    RadioRow(
-                        label = unit.symbol,
-                        selected = uiState.preferences.windSpeedUnit == unit,
-                        onSelect = { onWindSpeedUnitChange(unit) },
-                    )
-                }
-            }
-        }
+        // One generic group per unit type, driven by `DisplayUnit.displayName`. Reading the name
+        // off the unit keeps the list and the UI in step by construction, at the cost of unit names
+        // not being translatable.
+        UnitGroup(
+            title = stringResource(R.string.settings_temperature),
+            units = TemperatureUnit.entries,
+            selected = uiState.preferences.temperatureUnit,
+            onSelect = onTemperatureUnitChange,
+        )
+        UnitGroup(
+            title = stringResource(R.string.settings_wind_speed),
+            units = WindSpeedUnit.entries,
+            selected = uiState.preferences.windSpeedUnit,
+            onSelect = onWindSpeedUnitChange,
+        )
+        UnitGroup(
+            title = stringResource(R.string.settings_pressure),
+            units = PressureUnit.entries,
+            selected = uiState.preferences.pressureUnit,
+            onSelect = onPressureUnitChange,
+        )
+        UnitGroup(
+            title = stringResource(R.string.settings_visibility),
+            units = VisibilityUnit.entries,
+            selected = uiState.preferences.visibilityUnit,
+            onSelect = onVisibilityUnitChange,
+        )
 
         SectionHeader(stringResource(R.string.settings_section_appearance))
 
@@ -171,6 +171,45 @@ internal fun SettingsContent(
     }
 }
 
+/**
+ * A labelled group of mutually exclusive unit choices.
+ *
+ * `selectableGroup()` tells TalkBack the rows are one choice, so it announces "2 of 5" rather than
+ * reading five unrelated controls.
+ */
+@Composable
+private fun <T> UnitGroup(
+    title: String,
+    units: List<T>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) where T : DisplayUnit {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.md, vertical = Spacing.xs),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = Spacing.md, bottom = Spacing.xs),
+        )
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.selectableGroup()) {
+                units.forEach { unit ->
+                    RadioRow(
+                        label = unit.displayName,
+                        selected = selected == unit,
+                        onSelect = { onSelect(unit) },
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
@@ -210,6 +249,8 @@ private fun SettingsContentPreview() {
             uiState = SettingsUiState(isLoading = false),
             onTemperatureUnitChange = {},
             onWindSpeedUnitChange = {},
+            onPressureUnitChange = {},
+            onVisibilityUnitChange = {},
             onThemeModeChange = {},
             onDynamicColourChange = {},
             onClearCache = {},

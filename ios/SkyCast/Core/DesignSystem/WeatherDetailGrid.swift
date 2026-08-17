@@ -2,28 +2,71 @@ import SwiftUI
 
 /// One labelled reading, e.g. "Humidity" / "69%".
 ///
-/// `value` is an already-formatted display string: how many decimal places, which unit symbol
-/// and what time format are presentation decisions, so they happen in the feature layer
+/// `value` is an already-formatted display string: how many decimal places, which unit symbol and
+/// what time format are presentation decisions, so they happen in the feature layer
 /// (`Features/Common/WeatherDetails.swift`) and the design system just renders what it is given.
 ///
 /// The Android counterpart is `core/designsystem/component/WeatherDetail.kt`.
 struct WeatherDetail: Identifiable, Equatable {
     let label: String
     let value: String
+    let kind: WeatherDetailKind
+    /// Where this reading sits on its own scale, 0–1, or `nil` for readings that have no scale.
+    ///
+    /// Sunrise and sunset are times, not magnitudes, so they get no indicator. Everything else does:
+    /// the bar is what turns "1014 hPa" from a number into an impression, for the large majority of
+    /// people who could not say from memory whether that is high or low.
+    var fraction: Double?
 
     var id: String {
         label
     }
 }
 
-/// The secondary readings, humidity, wind, pressure, visibility, sunrise, sunset.
+/// Which reading a tile shows.
 ///
-/// A `LazyVGrid` with an **adaptive** column so the tiles reflow instead of clipping when the
-/// user turns Dynamic Type up. A fixed two-column grid looked fine at the default size and broke
-/// at accessibility sizes, which is exactly the failure the UI/UX criterion penalises.
+/// An enum rather than a colour or symbol passed in by the caller, so the design system owns how
+/// each metric looks and a feature cannot give humidity two different tints on two screens.
+enum WeatherDetailKind: CaseIterable {
+    case humidity
+    case wind
+    case pressure
+    case visibility
+    case sunrise
+    case sunset
+
+    var symbolName: String {
+        switch self {
+        case .humidity: "humidity.fill"
+        case .wind: "wind"
+        case .pressure: "barometer"
+        case .visibility: "eye.fill"
+        case .sunrise: "sunrise.fill"
+        case .sunset: "sunset.fill"
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .humidity: WeatherPalette.humidity
+        case .wind: WeatherPalette.wind
+        case .pressure: WeatherPalette.pressure
+        case .visibility: WeatherPalette.visibility
+        case .sunrise: WeatherPalette.sunrise
+        case .sunset: WeatherPalette.sunset
+        }
+    }
+}
+
+/// The secondary readings: humidity, wind, pressure, visibility, sunrise, sunset.
 ///
-/// No glass. These tiles sit inside a page of content rather than floating over it, and glass
-/// inside a glass container is the rule most often broken.
+/// A `LazyVGrid` with an **adaptive** column, so the tiles reflow instead of clipping when the user
+/// turns Dynamic Type up. A fixed two-column grid breaks at accessibility sizes.
+///
+/// Each tile carries its metric's colour and, where the reading has a scale, an indicator showing
+/// where on that scale it sits.
+///
+/// No glass: these tiles sit inside a page of content rather than floating over it.
 struct WeatherDetailGrid: View {
     let details: [WeatherDetail]
 
@@ -33,20 +76,7 @@ struct WeatherDetailGrid: View {
             spacing: Spacing.sm
         ) {
             ForEach(details) { detail in
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Text(detail.label)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(detail.value)
-                        .font(.headline)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Spacing.md)
-                .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
-                // One announcement per tile. Without this, VoiceOver reads "Humidity" and "69%"
-                // as two unrelated fragments and the pairing is lost.
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(detail.label), \(detail.value)")
+                WeatherDetailTile(detail: detail)
             }
         }
     }
@@ -56,15 +86,82 @@ struct WeatherDetailGrid: View {
     private let minimumTileWidth: CGFloat = 150
 }
 
+private struct WeatherDetailTile: View {
+    let detail: WeatherDetail
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Label {
+                Text(detail.label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } icon: {
+                Image(systemName: detail.kind.symbolName)
+                    .font(.caption)
+                    .foregroundStyle(detail.kind.accent)
+            }
+
+            Text(detail.value)
+                .font(.headline)
+
+            if let fraction = detail.fraction {
+                MetricBar(fraction: fraction, colour: detail.kind.accent)
+                    .padding(.top, Spacing.xxs)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.md)
+        .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
+        // One announcement per tile. Without this, VoiceOver reads "Humidity" and "69%" as two
+        // unrelated fragments and the pairing is lost. The bar is decorative, it says the same
+        // thing as the value.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(detail.label), \(detail.value)")
+    }
+}
+
+/// A slim bar showing where a reading sits on its scale.
+private struct MetricBar: View {
+    let fraction: Double
+    let colour: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.primary.opacity(trackOpacity))
+                Capsule()
+                    .fill(colour)
+                    .frame(width: proxy.size.width * fraction.clamped())
+            }
+        }
+        .frame(height: barHeight)
+        // The value is already read out by the tile; an animating bar adds nothing for VoiceOver.
+        .accessibilityHidden(true)
+        // Length is geometry, so it animates, but only when the value genuinely changes, not on
+        // every re-render.
+        .animation(.smooth, value: fraction)
+    }
+
+    private let barHeight: CGFloat = 4
+    private let trackOpacity: Double = 0.12
+}
+
+private extension Double {
+    func clamped() -> Double {
+        min(max(self, 0), 1)
+    }
+}
+
 #Preview {
     ScrollView {
         WeatherDetailGrid(details: [
-            WeatherDetail(label: "Humidity", value: "69%"),
-            WeatherDetail(label: "Wind", value: "4.5 m/s"),
-            WeatherDetail(label: "Pressure", value: "1009 hPa"),
-            WeatherDetail(label: "Visibility", value: "10.0 km"),
-            WeatherDetail(label: "Sunrise", value: "05:27"),
-            WeatherDetail(label: "Sunset", value: "20:46"),
+            WeatherDetail(label: "Humidity", value: "69%", kind: .humidity, fraction: 0.69),
+            WeatherDetail(label: "Wind", value: "8.7 kt", kind: .wind, fraction: 0.18),
+            WeatherDetail(label: "Pressure", value: "29.92 inHg", kind: .pressure, fraction: 0.45),
+            WeatherDetail(label: "Visibility", value: "5.4 NM", kind: .visibility, fraction: 1),
+            WeatherDetail(label: "Sunrise", value: "05:27", kind: .sunrise),
+            WeatherDetail(label: "Sunset", value: "20:46", kind: .sunset),
         ])
         .padding(Spacing.md)
     }
