@@ -51,9 +51,6 @@ enum SkyTypography {
 
     /// Base point size for the large illustrative symbols in the error and empty states.
     static let stateSymbolBaseSize: CGFloat = 56
-
-    /// Base point size for the smaller placeholder-screen symbol.
-    static let placeholderSymbolBaseSize: CGFloat = 44
 }
 
 /// The hero temperature, at a size that scales with Dynamic Type.

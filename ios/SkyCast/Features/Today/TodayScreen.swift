@@ -14,6 +14,10 @@ import SwiftUI
 struct TodayScreen: View {
     @Environment(AppContainer.self) private var container
     @State private var viewModel: TodayViewModel?
+    /// The pushed detail destination. `nil` means nothing is pushed; driving the stack from a
+    /// value rather than a `NavigationLink` inside the hero keeps the hero reusable on the
+    /// detail screen itself, where there is nowhere further to push.
+    @State private var detailLocationID: Int64?
 
     var body: some View {
         Group {
@@ -21,13 +25,17 @@ struct TodayScreen: View {
                 TodayContent(
                     state: viewModel.state,
                     onRefresh: { await viewModel.refresh() },
-                    onDismissBanner: viewModel.dismissBanner
+                    onDismissBanner: viewModel.dismissBanner,
+                    onOpenDetail: { detailLocationID = $0 }
                 )
             } else {
                 LoadingView()
             }
         }
         .navigationTitle("Today")
+        .navigationDestination(item: $detailLocationID) { locationID in
+            LocationDetailScreen(locationID: locationID)
+        }
         .task {
             // @Environment is not available during init, so the view model is built here.
             if viewModel == nil {
@@ -48,6 +56,7 @@ struct TodayContent: View {
     let state: TodayUiState
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
+    let onOpenDetail: (Int64) -> Void
 
     var body: some View {
         // Exactly one branch renders. The ordering encodes the offline-first rules from
@@ -87,18 +96,15 @@ struct TodayContent: View {
                     if let weather = state.weather {
                         CurrentConditionsHero(
                             weather: weather,
-                            unit: state.preferences.temperatureUnit
+                            unit: state.preferences.temperatureUnit,
+                            // Tapping the hero pushes the full detail screen, the push half of
+                            // the navigation hierarchy, reachable from Today.
+                            onTap: { onOpenDetail(weather.locationID) }
                         )
 
-                        // TODO(nauhaan): replace with the real detail grid, humidity, wind,
-                        //  pressure, visibility, sunrise/sunset. Tracked for the Functionality
-                        //  criterion; the plumbing above is already final.
-                        Text("Humidity, wind, pressure and sunrise details will appear here.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                            .skyGlass(.hero)
+                        WeatherDetailGrid(
+                            details: weather.details(windUnit: state.preferences.windSpeedUnit)
+                        )
                     }
                 }
                 .padding(.horizontal, Spacing.md)
@@ -113,77 +119,49 @@ struct TodayContent: View {
     }
 }
 
-/// The hero reading: place, condition badge, and one very large temperature.
-private struct CurrentConditionsHero: View {
-    let weather: Weather
-    let unit: TemperatureUnit
-
-    private var temperature: Int {
-        Int(unit.convertFromCelsius(weather.temperatureCelsius).rounded())
-    }
-
-    private var feelsLike: Int {
-        Int(unit.convertFromCelsius(weather.feelsLikeCelsius).rounded())
-    }
-
-    var body: some View {
-        VStack(spacing: Spacing.sm) {
-            Text(weather.locationName)
-                .font(.title2.weight(.semibold))
-
-            ConditionBadge(condition: weather.condition, isDaytime: weather.isDaytime)
-
-            HStack(alignment: .top, spacing: 0) {
-                // Scales with Dynamic Type; see ScaledHeroTemperature.
-                ScaledHeroTemperature(text: "\(temperature)")
-                Text(unit.symbol)
-                    .font(.title2)
-                    .padding(.top, Spacing.md)
-            }
-
-            Text(weather.description)
-                .font(.body)
-                .foregroundStyle(.secondary)
-
-            Text("Feels like \(feelsLike)\(unit.symbol)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .skyGlass(.hero)
-        // One combined announcement. Without this a VoiceOver user hears "London", "22",
-        // "°C", "Clear sky", "Feels like 21°C" as five disconnected fragments.
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(weather.locationName), \(temperature)\(unit.symbol), "
-                + "\(weather.description), feels like \(feelsLike)\(unit.symbol)"
-        )
-    }
-}
-
 // MARK: - Previews
 // One per state, so every branch is reviewable without a device.
 
 #Preview("Loading") {
     NavigationStack {
-        TodayContent(state: TodayUiState(isLoading: true), onRefresh: {}, onDismissBanner: {})
+        TodayContent(
+            state: TodayUiState(isLoading: true),
+            onRefresh: {},
+            onDismissBanner: {},
+            onOpenDetail: { _ in }
+        )
     }
 }
 
 #Preview("Empty") {
     NavigationStack {
-        TodayContent(state: TodayUiState(hasNoLocation: true), onRefresh: {}, onDismissBanner: {})
+        TodayContent(
+            state: TodayUiState(hasNoLocation: true),
+            onRefresh: {},
+            onDismissBanner: {},
+            onOpenDetail: { _ in }
+        )
     }
 }
 
 #Preview("Offline, no cache") {
     NavigationStack {
-        TodayContent(state: TodayUiState(error: .offline), onRefresh: {}, onDismissBanner: {})
+        TodayContent(
+            state: TodayUiState(error: .offline),
+            onRefresh: {},
+            onDismissBanner: {},
+            onOpenDetail: { _ in }
+        )
     }
 }
 
 #Preview("No API key") {
     NavigationStack {
-        TodayContent(state: TodayUiState(error: .unauthorized), onRefresh: {}, onDismissBanner: {})
+        TodayContent(
+            state: TodayUiState(error: .unauthorized),
+            onRefresh: {},
+            onDismissBanner: {},
+            onOpenDetail: { _ in }
+        )
     }
 }
