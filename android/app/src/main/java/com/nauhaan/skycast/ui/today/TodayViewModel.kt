@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +26,7 @@ import javax.inject.Inject
 class TodayViewModel
 @Inject
 constructor(
-    observeTodayWeather: ObserveTodayWeatherUseCase,
+    private val observeTodayWeather: ObserveTodayWeatherUseCase,
     private val weatherRepository: WeatherRepository,
 ) : ViewModel() {
     /** Transient, screen-local UI state that no repository owns. */
@@ -43,24 +43,40 @@ constructor(
      */
     private val manualRefreshError = MutableStateFlow<AppError?>(null)
 
+    /**
+     * Which saved place is on screen.
+     *
+     * Screen state, not stored state: the user's *primary* location is a persisted preference and
+     * lives in the database, while "the page I happened to swipe to" belongs to this session only.
+     * Seeded from the primary so the app opens where the user expects.
+     */
+    private val selectedIndex = MutableStateFlow(0)
+
+    init {
+        viewModelScope.launch {
+            selectedIndex.value = observeTodayWeather.primaryIndex().first()
+        }
+    }
+
     val uiState: StateFlow<TodayUiState> =
         combine(
-            observeTodayWeather().map { it },
+            observeTodayWeather(),
+            selectedIndex,
             bannerDismissed,
             manualRefreshInFlight,
             manualRefreshError,
-        ) { today, dismissed, manualRefresh, refreshError ->
+        ) { board, index, dismissed, manualRefresh, refreshError ->
             TodayUiState(
-                location = today.location,
-                weather = today.weather.data,
-                preferences = today.preferences,
-                isLoading = today.weather.isLoading,
-                isRefreshing = today.weather.isRefreshing || manualRefresh,
-                isStale = today.weather.isStale,
-                // The stream's error wins when it has one; otherwise a failed manual attempt.
-                error = today.weather.error ?: refreshError,
-                hasNoLocation = today.hasNoLocation,
+                pages = board.entries,
+                // Clamped rather than trusted: deleting the last location while it is on screen
+                // would otherwise leave the index pointing past the end of the list.
+                selectedIndex = index.coerceIn(0, (board.entries.size - 1).coerceAtLeast(0)),
+                preferences = board.preferences,
+                isLoading = board.entries.any { it.weather.isLoading },
+                isRefreshing = board.entries.any { it.weather.isRefreshing } || manualRefresh,
+                hasNoLocation = board.hasNoLocation,
                 isBannerDismissed = dismissed,
+                refreshError = refreshError,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -70,6 +86,11 @@ constructor(
             initialValue = TodayUiState(isLoading = true),
         )
 
+    /** Called when the user swipes the pager or picks a place from the menu. */
+    fun selectPage(index: Int) {
+        selectedIndex.value = index
+    }
+
     /** Pull-to-refresh and the Retry button both land here. */
     fun refresh() {
         val location = uiState.value.location ?: return
@@ -77,8 +98,6 @@ constructor(
             manualRefreshInFlight.value = true
             // A new attempt makes a dismissed banner relevant again.
             bannerDismissed.value = false
- iOS surfaced it; this
-            // is the parity fix.
             manualRefreshError.value = weatherRepository.refresh(location)
             manualRefreshInFlight.value = false
         }

@@ -38,6 +38,7 @@ import kotlin.math.roundToInt
  * fragments. `onClickLabel` then describes the tap action, so the merge does not hide the fact
  * that the block is interactive.
  *
+ * @param showsLocationName `false` where the surrounding screen already names the place.
  * @param onClick `null` makes the block inert. Today passes a lambda to push the detail screen;
  *   the detail screen itself has nowhere further to go.
  *
@@ -48,6 +49,7 @@ fun CurrentConditionsHeader(
     weather: Weather,
     unit: TemperatureUnit,
     modifier: Modifier = Modifier,
+    showsLocationName: Boolean = true,
     onClick: (() -> Unit)? = null,
 ) {
     val displayed = unit.convertFromCelsius(weather.temperatureCelsius).roundToInt()
@@ -83,12 +85,18 @@ fun CurrentConditionsHeader(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
-        Text(
-            text = weather.locationName,
-            // Expressive's emphasized title role: this is the screen's anchor label.
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            textAlign = TextAlign.Center,
-        )
+        // Hidden where the screen already names the place above, Today has a location switcher
+        // and the detail screen an identity block, and "London" twice within a hundred pixels
+        // reads as a mistake. The spoken announcement still includes it either way, since a
+        // screen-reader user has no such visual context.
+        if (showsLocationName) {
+            Text(
+                text = weather.locationName,
+                // Expressive's emphasized title role: this is the screen's anchor label.
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                textAlign = TextAlign.Center,
+            )
+        }
         WeatherConditionBadge(
             condition = weather.condition,
             isDaytime = weather.isDaytime,

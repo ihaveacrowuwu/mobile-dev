@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -58,8 +59,80 @@ class TodayViewModelTest {
     }
 
     @Test
-    fun `with no saved location the empty state shows, not an error`() = runTest {
+    fun `every saved location becomes a page, in the order the list gives them`() = runTest {
+        val london = sampleLocation(id = 1, isPrimary = true)
+        val male = sampleLocation(id = 2, isPrimary = false).copy(name = "Malé")
+        locationRepository.savedLocations.value = listOf(london, male)
+        locationRepository.primaryLocation.value = london
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.pages.size)
+        assertEquals(listOf("London", "Malé"), viewModel.uiState.value.pages.map { it.location.name })
+        assertTrue(viewModel.uiState.value.showsPageIndicator)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `the selected index survives a location being deleted`() = runTest {
+        val london = sampleLocation(id = 1, isPrimary = true)
+        val male = sampleLocation(id = 2).copy(name = "Malé")
+        locationRepository.savedLocations.value = listOf(london, male)
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.selectPage(1)
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.selectedIndex)
+
+        // Deleting the place that is on screen must not leave the index pointing past the end,
+        // `pages[selectedIndex]` would throw, taking the whole screen down.
+        locationRepository.savedLocations.value = listOf(london)
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.selectedIndex)
+        assertNotNull(viewModel.uiState.value.selected)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `a single location shows no page indicator`() = runTest {
+        givenOneSavedLocation()
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        // Dots that can never change should not look interactive.
+        assertFalse(viewModel.uiState.value.showsPageIndicator)
+
+        collectJob.cancel()
+    }
+
+    /**
+     * The Today screen pages over **every** saved location, so a test that sets only the primary
+     * one leaves the board empty and every assertion fails for the wrong reason.
+     */
+    private fun givenOneSavedLocation() {
+        val location = sampleLocation()
+        locationRepository.savedLocations.value = listOf(location)
+        locationRepository.primaryLocation.value = location
+    }
+
+    private fun givenNoSavedLocations() {
+        locationRepository.savedLocations.value = emptyList()
         locationRepository.primaryLocation.value = null
+    }
+
+    @Test
+    fun `with no saved location the empty state shows, not an error`() = runTest {
+        givenNoSavedLocations()
 
         viewModel.uiState.test {
             // Skip the synthetic initial value emitted by stateIn.
@@ -75,7 +148,7 @@ class TodayViewModelTest {
 
     @Test
     fun `cached weather renders without a blocking loader`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.success(sampleWeather())
 
         viewModel.uiState.test {
@@ -91,7 +164,7 @@ class TodayViewModelTest {
 
     @Test
     fun `a failed refresh keeps the cached data and shows a banner instead of an error screen`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.failure(
             error = AppError.Offline,
             cached = sampleWeather(),
@@ -112,7 +185,7 @@ class TodayViewModelTest {
 
     @Test
     fun `an error with no cache shows the full-screen error state`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.failure(AppError.Offline)
 
         viewModel.uiState.test {
@@ -126,7 +199,7 @@ class TodayViewModelTest {
 
     @Test
     fun `dismissing the banner hides it without discarding the data`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.failure(
             error = AppError.Offline,
             cached = sampleWeather(),
@@ -147,7 +220,7 @@ class TodayViewModelTest {
 
     @Test
     fun `refresh delegates to the repository and re-arms the banner`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.success(sampleWeather())
 
         // stateIn uses WhileSubscribed, so the flow is cold until something collects.
@@ -174,7 +247,7 @@ class TodayViewModelTest {
 
     @Test
     fun `a failed manual refresh surfaces the error so the banner appears`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         // A *successful* cached read: the stream carries no error and nothing is stale, so the
         // only thing that can put a banner on screen is the failed refresh itself.
         weatherRepository.currentWeather.value = DataState.success(sampleWeather())
@@ -200,7 +273,7 @@ class TodayViewModelTest {
 
     @Test
     fun `a later successful refresh clears the previous failure`() = runTest {
-        locationRepository.primaryLocation.value = sampleLocation()
+        givenOneSavedLocation()
         weatherRepository.currentWeather.value = DataState.success(sampleWeather())
         weatherRepository.refreshError = AppError.Offline
 
@@ -226,7 +299,7 @@ class TodayViewModelTest {
 
     @Test
     fun `refresh is a no-op when there is no location to refresh`() = runTest {
-        locationRepository.primaryLocation.value = null
+        givenNoSavedLocations()
 
         val collectJob = launch { viewModel.uiState.collect { } }
         advanceUntilIdle()

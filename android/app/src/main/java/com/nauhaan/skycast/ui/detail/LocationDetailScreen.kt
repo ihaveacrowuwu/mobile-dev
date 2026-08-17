@@ -130,6 +130,8 @@ internal fun LocationDetailContent(
                     CurrentConditionsHeader(
                         weather = weather,
                         unit = uiState.preferences.temperatureUnit,
+                        // The identity block above already names the place.
+                        showsLocationName = false,
                         modifier = Modifier.padding(Spacing.md),
                     )
 

@@ -29,9 +29,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
@@ -136,20 +137,15 @@ private fun MetricBar(fraction: Float, colour: Color, modifier: Modifier = Modif
             .fillMaxWidth()
             .height(BarHeight)
             .clip(MaterialTheme.shapes.extraSmall)
-            .background(weatherPalette.metricTrack),
-    ) {
-        // A plain Layout rather than fillMaxWidth(fraction): fraction 0 must render nothing at
-        // all, and `fillMaxWidth(0f)` is an error rather than an empty box.
-        Layout(
-            content = {},
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(colour),
-        ) { _, constraints ->
-            val width = (constraints.maxWidth * animated).toInt().coerceAtLeast(0)
-            layout(width, constraints.maxHeight) {}
-        }
-    }
+            .background(weatherPalette.metricTrack)
+            // Drawn rather than laid out. A child `Layout` sized to a fraction of `maxWidth`
+            // crashed the app: `FlowRow` with weights measures intrinsics, during which
+            // `maxWidth` is infinite, and `Infinity * fraction` overflowed the size limit.
+            // `drawBehind` runs after measurement with a real size, so intrinsics cannot reach it.
+            .drawBehind {
+                drawRect(color = colour, size = Size(size.width * animated, size.height))
+            },
+    )
 }
 
 private fun WeatherDetailKind.icon(): ImageVector = when (this) {

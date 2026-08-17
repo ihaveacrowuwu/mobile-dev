@@ -34,6 +34,11 @@
     -->
     <string name="today_conditions_accessibility">%1$s, %2$d%3$s, %4$s, feels like %5$d%3$s</string>
     <string name="today_open_detail_action">Open full details</string>
+    <string name="today_hourly_heading">Through the day</string>
+    <string name="today_hourly_now">Now</string>
+    <string name="today_hourly_accessibility">%1$s, %2$d%3$s</string>
+    <string name="today_select_location">Choose a place</string>
+    <string name="today_showing_location">Showing %1$s, %2$d of %3$d</string>
 
     <!-- ── Banners ──────────────────────────────────────────────────────── -->
     <string name="banner_data_may_be_out_of_date">Showing saved data, it may be out of date.</string>
