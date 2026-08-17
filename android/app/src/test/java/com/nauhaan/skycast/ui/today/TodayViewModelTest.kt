@@ -173,6 +173,58 @@ class TodayViewModelTest {
     }
 
     @Test
+    fun `a failed manual refresh surfaces the error so the banner appears`() = runTest {
+        locationRepository.primaryLocation.value = sampleLocation()
+        // A *successful* cached read: the stream carries no error and nothing is stale, so the
+        // only thing that can put a banner on screen is the failed refresh itself.
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+        weatherRepository.refreshError = AppError.Offline
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+        // Nothing to complain about yet.
+        assertFalse(viewModel.uiState.value.showsStaleBanner)
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        // The regression this guards: `refresh()` returns the error and the view model must
+        // surface it, so pulling to refresh while offline is visible rather than silent.
+        assertEquals(AppError.Offline, viewModel.uiState.value.error)
+        assertTrue(viewModel.uiState.value.showsStaleBanner)
+        // And the data is still there, which is the other half of the promise.
+        assertTrue(viewModel.uiState.value.showsContent)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `a later successful refresh clears the previous failure`() = runTest {
+        locationRepository.primaryLocation.value = sampleLocation()
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+        weatherRepository.refreshError = AppError.Offline
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showsStaleBanner)
+
+        // Back online.
+        weatherRepository.refreshError = null
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        // A stale error outliving its cause is its own bug: the banner would then claim the
+        // app is offline while it is happily fetching.
+        assertNull(viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.showsStaleBanner)
+
+        collectJob.cancel()
+    }
+
+    @Test
     fun `refresh is a no-op when there is no location to refresh`() = runTest {
         locationRepository.primaryLocation.value = null
 

@@ -65,6 +65,9 @@ constructor(
 
     private val manualRefreshInFlight = MutableStateFlow(false)
 
+    /** See `TodayViewModel.manualRefreshError`, a failed manual refresh is otherwise silent. */
+    private val manualRefreshError = MutableStateFlow<AppError?>(null)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<LocationDetailUiState> =
         flow { emit(locationRepository.getById(locationId)) }
@@ -80,7 +83,9 @@ constructor(
             .combine(settingsRepository.observePreferences()) { (state, location), preferences ->
                 Triple(state, location, preferences)
             }
-            .combine(manualRefreshInFlight) { (state, location, preferences), manualRefresh ->
+            .combine(manualRefreshInFlight) { triple, manualRefresh -> triple to manualRefresh }
+            .combine(manualRefreshError) { (triple, manualRefresh), refreshError ->
+                val (state, location, preferences) = triple
                 LocationDetailUiState(
                     location = location,
                     weather = state.data,
@@ -88,7 +93,7 @@ constructor(
                     isLoading = state.isLoading,
                     isRefreshing = state.isRefreshing || manualRefresh,
                     isStale = state.isStale,
-                    error = state.error,
+                    error = state.error ?: refreshError,
                     isMissing = location == null,
                 )
             }
@@ -102,7 +107,7 @@ constructor(
         val location = uiState.value.location ?: return
         viewModelScope.launch {
             manualRefreshInFlight.value = true
-            weatherRepository.refresh(location)
+            manualRefreshError.value = weatherRepository.refresh(location)
             manualRefreshInFlight.value = false
         }
     }

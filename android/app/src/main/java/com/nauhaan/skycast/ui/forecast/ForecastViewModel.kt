@@ -61,6 +61,13 @@ constructor(
 ) : ViewModel() {
     private val manualRefreshInFlight = MutableStateFlow(false)
 
+    /**
+     * The error from the most recent **manual** refresh. See `TodayViewModel` for why this is
+     * kept apart from the observed `DataState.error`: a failed pull-to-refresh does not
+     * necessarily make the stream re-emit, so without this the failure is silent.
+     */
+    private val manualRefreshError = MutableStateFlow<AppError?>(null)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<ForecastUiState> =
         locationRepository
@@ -79,7 +86,9 @@ constructor(
             .combine(settingsRepository.observePreferences()) { (state, location), preferences ->
                 Triple(state, location, preferences)
             }
-            .combine(manualRefreshInFlight) { (state, location, preferences), manualRefresh ->
+            .combine(manualRefreshInFlight) { triple, manualRefresh -> triple to manualRefresh }
+            .combine(manualRefreshError) { (triple, manualRefresh), refreshError ->
+                val (state, location, preferences) = triple
                 ForecastUiState(
                     location = location,
                     forecast = state.data,
@@ -87,7 +96,7 @@ constructor(
                     isLoading = state.isLoading,
                     isRefreshing = state.isRefreshing || manualRefresh,
                     isStale = state.isStale,
-                    error = state.error,
+                    error = state.error ?: refreshError,
                     hasNoLocation = location == null,
                 )
             }
@@ -101,7 +110,7 @@ constructor(
         val location = uiState.value.location ?: return
         viewModelScope.launch {
             manualRefreshInFlight.value = true
-            weatherRepository.refresh(location)
+            manualRefreshError.value = weatherRepository.refresh(location)
             manualRefreshInFlight.value = false
         }
     }

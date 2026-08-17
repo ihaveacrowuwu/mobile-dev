@@ -2,6 +2,7 @@ package com.nauhaan.skycast.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.domain.repository.WeatherRepository
 import com.nauhaan.skycast.domain.usecase.ObserveTodayWeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,12 +33,23 @@ constructor(
     private val bannerDismissed = MutableStateFlow(false)
     private val manualRefreshInFlight = MutableStateFlow(false)
 
+    /**
+     * The error from the most recent **manual** refresh.
+     *
+     * Separate from the observed `DataState.error` because a pull-to-refresh that fails does not
+     * necessarily make the stream re-emit: with a cache inside its TTL there is nothing new to
+     * publish, so the failure would be swallowed and the user would see the spinner vanish with
+     * no explanation. Cleared as soon as an attempt succeeds.
+     */
+    private val manualRefreshError = MutableStateFlow<AppError?>(null)
+
     val uiState: StateFlow<TodayUiState> =
         combine(
             observeTodayWeather().map { it },
             bannerDismissed,
             manualRefreshInFlight,
-        ) { today, dismissed, manualRefresh ->
+            manualRefreshError,
+        ) { today, dismissed, manualRefresh, refreshError ->
             TodayUiState(
                 location = today.location,
                 weather = today.weather.data,
@@ -45,7 +57,8 @@ constructor(
                 isLoading = today.weather.isLoading,
                 isRefreshing = today.weather.isRefreshing || manualRefresh,
                 isStale = today.weather.isStale,
-                error = today.weather.error,
+                // The stream's error wins when it has one; otherwise a failed manual attempt.
+                error = today.weather.error ?: refreshError,
                 hasNoLocation = today.hasNoLocation,
                 isBannerDismissed = dismissed,
             )
@@ -64,7 +77,9 @@ constructor(
             manualRefreshInFlight.value = true
             // A new attempt makes a dismissed banner relevant again.
             bannerDismissed.value = false
-            weatherRepository.refresh(location)
+ iOS surfaced it; this
+            // is the parity fix.
+            manualRefreshError.value = weatherRepository.refresh(location)
             manualRefreshInFlight.value = false
         }
     }
