@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
+import java.time.ZoneOffset
 
 /**
  * Hand-written test doubles.
@@ -168,7 +169,14 @@ fun sampleLocation(id: Long = 1L, name: String = "London", isPrimary: Boolean = 
     isPrimary = isPrimary,
 )
 
-fun sampleWeather(locationId: Long = 1L, temperatureCelsius: Double = 22.0, cachedAt: Instant = TestInstant): Weather =
+fun sampleWeather(
+    locationId: Long = 1L,
+    temperatureCelsius: Double = 22.0,
+    cachedAt: Instant = TestInstant,
+    // Overridable so a test can assert that sunrise/sunset render in the *location's* zone
+    // rather than the JVM's, which is the one thing a UTC-only fixture cannot distinguish.
+    zoneOffset: ZoneOffset = ZoneOffset.UTC,
+): Weather =
     Weather(
         locationId = locationId,
         locationName = "London",
@@ -189,4 +197,5 @@ fun sampleWeather(locationId: Long = 1L, temperatureCelsius: Double = 22.0, cach
         sunset = TestInstant.plusSeconds(8 * 60 * 60),
         observedAt = TestInstant,
         cachedAt = cachedAt,
+        zoneOffset = zoneOffset,
     )

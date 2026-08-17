@@ -1,6 +1,7 @@
 package com.nauhaan.skycast.domain.model
 
 import java.time.Instant
+import java.time.ZoneOffset
 
 /**
  * Current weather conditions for a single location.
@@ -29,6 +30,15 @@ data class Weather(
     val sunrise: Instant,
     val sunset: Instant,
     val observedAt: Instant,
+    /**
+     * The **observed location's** UTC offset, not the device's.
+     *
+     * Carried through the domain because sunrise and sunset are only meaningful as a wall
+     * clock in the place they happen: rendering London's sunrise in a Maldivian phone's
+     * timezone reports 09:49 for an event that London calls 04:49. Every `Instant` in this
+     * model is unambiguous on its own; this is what turns one back into a local time.
+     */
+    val zoneOffset: ZoneOffset,
     /** When this record was written to the local cache. Drives staleness. */
     val cachedAt: Instant,
 ) {

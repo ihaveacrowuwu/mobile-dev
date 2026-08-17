@@ -48,7 +48,7 @@ composeBom = "2026.01.01"
 #
 # Expressive first becomes public API in 1.5.0. That line is alpha, so this is a
 # deliberate stability trade-off taken to get the current Material design language
-#, Material 3 Expressive.
+#: Material 3 Expressive.
 #
 # alpha14 specifically, not the newest alpha. It carries the complete Expressive
 # surface we use: MaterialExpressiveTheme, MotionScheme, emphasized type roles,
@@ -82,6 +82,10 @@ desugarJdkLibs = "2.1.5"
 # ── Testing ────────────────────────────────────────────────────────────────
 junit = "4.13.2"
 androidxTestJunit = "1.2.1"
+# androidx.test:runner and :core, needed by any module whose instrumented tests do not also
+# pull in Espresso (which bundles them transitively). :core:database is one such module.
+androidxTestRunner = "1.6.2"
+androidxTestCore = "1.6.1"
 espresso = "3.6.1"
 mockk = "1.14.7"
 turbine = "1.2.1"
@@ -153,6 +157,8 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 
 # ── Instrumented testing (device) ──────────────────────────────────────────
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }

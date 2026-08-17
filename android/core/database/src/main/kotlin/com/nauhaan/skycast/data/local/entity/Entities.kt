@@ -34,8 +34,13 @@ data class SavedLocationEntity(
 /**
  * Cached current conditions, one row per saved location.
  *
- * `onDelete = CASCADE` means removing a location automatically drops its cache,
- * no orphan rows and no manual cleanup code to forget.
+ * `onDelete = CASCADE` means removing a location automatically drops its cache, so there are no
+ * orphan rows and no manual cleanup code.
+ *
+ * `location_id` is the primary key, and is the natural one: there is exactly one row per location.
+ * Room implements upsert as "INSERT, and on a uniqueness conflict UPDATE … **WHERE id = ?**", so
+ * with the natural key as the primary key the conflict and the update target the same column.
+ * `SkyCastDatabaseTest.upsertWeatherReplacesTheRow` guards it.
  */
 @Entity(
     tableName = "cached_weather",
@@ -47,11 +52,9 @@ data class SavedLocationEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["location_id"], unique = true)],
 )
 data class CachedWeatherEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    @ColumnInfo(name = "location_id") val locationId: Long,
+    @PrimaryKey @ColumnInfo(name = "location_id") val locationId: Long,
     @ColumnInfo(name = "location_name") val locationName: String,
     @ColumnInfo(name = "condition_id") val conditionId: Int,
     val description: String,
@@ -70,6 +73,13 @@ data class CachedWeatherEntity(
     @ColumnInfo(name = "sunset_epoch") val sunsetEpochSeconds: Long,
     @ColumnInfo(name = "observed_at_epoch") val observedAtEpochSeconds: Long,
     @ColumnInfo(name = "cached_at_epoch") val cachedAtEpochSeconds: Long,
+    /**
+     * The location's UTC offset in seconds. Defaults to 0 so the v1→v2 migration needs no
+     * backfill: a cached row written before this column existed reads as UTC, and is
+     * replaced by a correct one at the next refresh (within the 10-minute TTL).
+     */
+    @ColumnInfo(name = "timezone_offset_seconds", defaultValue = "0")
+    val timezoneOffsetSeconds: Int = 0,
 )
 
 /**
@@ -87,10 +97,11 @@ data class CachedWeatherEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["location_id", "time_epoch"], unique = true)],
+    // Composite natural key, for the same reason CachedWeatherEntity uses one: a surrogate id
+    // beside a unique index makes @Upsert a silent no-op on the second write.
+    primaryKeys = ["location_id", "time_epoch"],
 )
 data class CachedForecastReadingEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "location_id") val locationId: Long,
     @ColumnInfo(name = "location_name") val locationName: String,
     @ColumnInfo(name = "time_epoch") val timeEpochSeconds: Long,
@@ -101,4 +112,7 @@ data class CachedForecastReadingEntity(
     @ColumnInfo(name = "precipitation_probability") val precipitationProbability: Double,
     @ColumnInfo(name = "wind_speed_mps") val windSpeedMetresPerSecond: Double,
     @ColumnInfo(name = "cached_at_epoch") val cachedAtEpochSeconds: Long,
+    /** See [CachedWeatherEntity.timezoneOffsetSeconds]. */
+    @ColumnInfo(name = "timezone_offset_seconds", defaultValue = "0")
+    val timezoneOffsetSeconds: Int = 0,
 )

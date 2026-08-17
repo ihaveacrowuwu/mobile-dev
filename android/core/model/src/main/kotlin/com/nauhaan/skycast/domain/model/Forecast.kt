@@ -3,6 +3,7 @@ package com.nauhaan.skycast.domain.model
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * A multi-day forecast for one location, already grouped into days.
@@ -16,6 +17,14 @@ data class Forecast(
     val locationName: String,
     val days: List<ForecastDay>,
     val cachedAt: Instant,
+    /**
+     * The forecast location's UTC offset. See [Weather.zoneOffset].
+     *
+     * Also what keeps [days] stable: the grouping into calendar days must use the same zone
+     * whether the forecast just arrived from the API or was rebuilt from cache, or a day's
+     * boundary, and therefore the identity of a day-detail route, shifts between the two.
+     */
+    val zoneOffset: ZoneOffset,
 ) {
     fun isStale(now: Instant, ttl: Duration = FORECAST_TTL): Boolean = cachedAt.plus(ttl).isBefore(now)
 

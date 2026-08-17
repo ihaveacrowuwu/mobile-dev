@@ -38,7 +38,7 @@ abstract class SkyCastDatabase : RoomDatabase() {
     abstract fun weatherCacheDao(): WeatherCacheDao
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 3
         const val NAME = "skycast.db"
     }
 }

@@ -53,6 +53,7 @@ object WeatherMapper {
             sunset = Instant.ofEpochSecond(system.sunsetEpochSeconds),
             observedAt = Instant.ofEpochSecond(observedAtEpochSeconds),
             cachedAt = cachedAt,
+            zoneOffset = safeOffset(timezoneOffsetSeconds),
         )
     }
 
@@ -63,11 +64,8 @@ object WeatherMapper {
      * Male' viewed from London must still be grouped by Maldivian days.
      */
     fun ForecastResponseDto.toDomain(locationId: Long, locationName: String, cachedAt: Instant): Forecast {
-        // A malformed offset from the API must not crash the mapper; fall back to UTC.
-        val zone =
-            runCatching {
-                ZoneId.ofOffset("UTC", ZoneOffset.ofTotalSeconds(city.timezoneOffsetSeconds))
-            }.getOrDefault(ZoneId.of("UTC"))
+        val offset = safeOffset(city.timezoneOffsetSeconds)
+        val zone: ZoneId = offset
 
         val days =
             readings
@@ -114,6 +112,7 @@ object WeatherMapper {
             locationName = locationName.ifBlank { city.name },
             days = days,
             cachedAt = cachedAt,
+            zoneOffset = offset,
         )
     }
 
@@ -147,6 +146,7 @@ object WeatherMapper {
         sunsetEpochSeconds = sunset.epochSecond,
         observedAtEpochSeconds = observedAt.epochSecond,
         cachedAtEpochSeconds = cachedAt.epochSecond,
+        timezoneOffsetSeconds = zoneOffset.totalSeconds,
     )
 
     fun Forecast.toEntities(): List<CachedForecastReadingEntity> = days.flatMap { day ->
@@ -162,6 +162,7 @@ object WeatherMapper {
                 precipitationProbability = hour.precipitationProbability,
                 windSpeedMetresPerSecond = hour.windSpeedMetresPerSecond,
                 cachedAtEpochSeconds = cachedAt.epochSecond,
+                timezoneOffsetSeconds = zoneOffset.totalSeconds,
             )
         }
     }
@@ -188,12 +189,21 @@ object WeatherMapper {
         sunset = Instant.ofEpochSecond(sunsetEpochSeconds),
         observedAt = Instant.ofEpochSecond(observedAtEpochSeconds),
         cachedAt = Instant.ofEpochSecond(cachedAtEpochSeconds),
+        zoneOffset = safeOffset(timezoneOffsetSeconds),
     )
 
-    /** Rebuilds the day grouping from cached rows, in the device's timezone. */
+    /**
+     * Rebuilds the day grouping from cached rows.
+     *
+     * Groups in the **location's** timezone, exactly as the remote path above does. Using the
+     * device's zone here instead would make a day's boundary depend on
+     * which path served the read, so the `epochDay` captured from a freshly-fetched list could
+     * fail to resolve against the same forecast reloaded from cache.
+     */
     fun List<CachedForecastReadingEntity>.toDomainForecast(): Forecast? {
         val first = firstOrNull() ?: return null
-        val zone = ZoneId.systemDefault()
+        val offset = safeOffset(first.timezoneOffsetSeconds)
+        val zone: ZoneId = offset
 
         val days =
             groupBy { Instant.ofEpochSecond(it.timeEpochSeconds).atZone(zone).toLocalDate() }
@@ -233,6 +243,7 @@ object WeatherMapper {
             locationName = first.locationName,
             days = days,
             cachedAt = Instant.ofEpochSecond(first.cachedAtEpochSeconds),
+            zoneOffset = offset,
         )
     }
 
@@ -269,6 +280,15 @@ object WeatherMapper {
         sortOrder = sortOrder,
         isPrimary = isPrimary,
     )
+
+    /**
+     * Builds a [ZoneOffset] from a raw seconds value, falling back to UTC.
+     *
+     * `ZoneOffset.ofTotalSeconds` throws outside ±18 hours. A malformed offset from the API, or
+     * a corrupted cache row, must not crash the mapper, and UTC is the only defensible default.
+     */
+    private fun safeOffset(totalSeconds: Int): ZoneOffset =
+        runCatching { ZoneOffset.ofTotalSeconds(totalSeconds) }.getOrDefault(ZoneOffset.UTC)
 
     /** Local noon: the hour whose reading best characterises a whole day. */
     private const val MIDDAY_HOUR = 12
