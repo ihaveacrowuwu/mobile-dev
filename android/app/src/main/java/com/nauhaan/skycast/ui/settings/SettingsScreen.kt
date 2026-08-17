@@ -30,7 +30,6 @@ import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.TemperatureUnit
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
-import com.nauhaan.skycast.ui.common.PlaceholderScreen
 
 /**
  * The Settings tab.
@@ -200,17 +199,6 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit, mod
             onClick = onSelect,
             role = Role.RadioButton,
         ),
-    )
-}
-
-/** Dependency licences and attribution, see `docs/licensing.md` (MO4). */
-@Composable
-fun AboutScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    PlaceholderScreen(
-        title = stringResource(R.string.settings_about),
-        plannedContent = stringResource(R.string.placeholder_about),
-        onNavigateBack = onNavigateBack,
-        modifier = modifier,
     )
 }
 

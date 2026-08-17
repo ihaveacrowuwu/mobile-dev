@@ -1,31 +1,20 @@
 package com.nauhaan.skycast.ui.today
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,13 +23,12 @@ import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
-import com.nauhaan.skycast.core.designsystem.component.WeatherConditionBadge
+import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
-import com.nauhaan.skycast.domain.model.TemperatureUnit
-import com.nauhaan.skycast.domain.model.WeatherCondition
+import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
-import kotlin.math.roundToInt
 
 /**
  * The Today tab.
@@ -140,12 +128,7 @@ internal fun TodayContent(
 
                     uiState.weather?.let { weather ->
                         CurrentConditionsHeader(
-                            locationName = weather.locationName,
-                            description = weather.description,
-                            condition = weather.condition,
-                            isDaytime = weather.isDaytime,
-                            temperature = weather.temperatureCelsius,
-                            feelsLike = weather.feelsLikeCelsius,
+                            weather = weather,
                             unit = uiState.preferences.temperatureUnit,
                             // Tapping the hero block pushes the full detail screen, the
                             // push half of the navigation hierarchy, reachable from Today.
@@ -153,102 +136,21 @@ internal fun TodayContent(
                             modifier = Modifier.padding(Spacing.md),
                         )
 
-                        // TODO(nauhaan): replace with the real detail grid, humidity,
-                        //  wind, pressure, visibility, sunrise/sunset. Tracked for the
-                        //  Functionality criterion; the plumbing above is already final.
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Spacing.md),
-                        ) {
-                            Text(
-                                text = stringResource(R.string.today_details_placeholder),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(Spacing.md),
-                            )
-                        }
+                        WeatherDetailGrid(
+                            details = weather.toDetails(
+                                windUnit = uiState.preferences.windSpeedUnit,
+                                humidityLabel = stringResource(R.string.detail_humidity),
+                                windLabel = stringResource(R.string.detail_wind),
+                                pressureLabel = stringResource(R.string.detail_pressure),
+                                visibilityLabel = stringResource(R.string.detail_visibility),
+                                sunriseLabel = stringResource(R.string.detail_sunrise),
+                                sunsetLabel = stringResource(R.string.detail_sunset),
+                            ),
+                            modifier = Modifier.padding(horizontal = Spacing.md),
+                        )
                     }
                 }
             }
-    }
-}
-
-/**
- * The hero reading: place, condition, and one very large temperature.
- *
- * `clearAndSetSemantics` merges the whole block into a single TalkBack announcement.
- * Without it a screen-reader user hears "London" … "22" … "degrees" … "feels like" as
- * four disconnected fragments. `onClickLabel` then describes the tap action, so the
- * merge does not hide the fact that the block is interactive.
- */
-@Composable
-private fun CurrentConditionsHeader(
-    locationName: String,
-    description: String,
-    condition: WeatherCondition,
-    isDaytime: Boolean,
-    temperature: Double,
-    feelsLike: Double,
-    unit: TemperatureUnit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val displayed = unit.convertFromCelsius(temperature).roundToInt()
-    val displayedFeelsLike = unit.convertFromCelsius(feelsLike).roundToInt()
-    val announcement =
-        stringResource(
-            R.string.today_conditions_accessibility,
-            locationName,
-            displayed,
-            unit.symbol,
-            description,
-            displayedFeelsLike,
-        )
-    val openDetailLabel = stringResource(R.string.today_open_detail_action)
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClickLabel = openDetailLabel, onClick = onClick)
-            .clearAndSetSemantics {
-                contentDescription = announcement
-                onClick(label = openDetailLabel) {
-                    onClick()
-                    true
-                }
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-    ) {
-        Text(
-            text = locationName,
-            // Expressive's emphasized title role: this is the screen's anchor label.
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            textAlign = TextAlign.Center,
-        )
-        WeatherConditionBadge(
-            condition = condition,
-            isDaytime = isDaytime,
-            modifier = Modifier.padding(vertical = Spacing.sm),
-        )
-        Row(verticalAlignment = Alignment.Top) {
-            Text(text = "$displayed", style = MaterialTheme.typography.displayLargeEmphasized)
-            Text(
-                text = unit.symbol,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = Spacing.md),
-            )
-        }
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(R.string.today_feels_like, displayedFeelsLike, unit.symbol),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

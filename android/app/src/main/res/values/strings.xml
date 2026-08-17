@@ -27,7 +27,6 @@
     <string name="today_empty_title">No locations yet</string>
     <string name="today_empty_message">Add a place and SkyCast will keep its forecast ready, even offline.</string>
     <string name="today_feels_like">Feels like %1$d%2$s</string>
-    <string name="today_details_placeholder">Humidity, wind, pressure and sunrise details will appear here.</string>
     <!--
       One combined announcement for the hero block. Without it a screen-reader user
       hears the place, the number, the unit and the description as four disconnected
@@ -74,21 +73,70 @@
     <string name="settings_clear_cache_summary">Removes saved forecasts. Your locations are kept.</string>
     <string name="settings_about">About &amp; licences</string>
 
+    <!-- ── Detail readings ──────────────────────────────────────────────── -->
+    <string name="detail_humidity">Humidity</string>
+    <string name="detail_wind">Wind</string>
+    <string name="detail_pressure">Pressure</string>
+    <string name="detail_visibility">Visibility</string>
+    <string name="detail_sunrise">Sunrise</string>
+    <string name="detail_sunset">Sunset</string>
+
+    <!-- ── Forecast ─────────────────────────────────────────────────────── -->
+    <!--
+      No unit symbol: TemperatureUnit.symbol is already "°C"/"°F", so appending it produced
+      "25° / 17°°C". The unit is established by the hero reading on Today, and a bare degree sign
+      is what every weather app shows in a forecast row. The accessibility string below still
+      spells the unit out, because a screen-reader user has no hero on screen to infer it from.
+    -->
+    <string name="forecast_high_low">%1$d° / %2$d°</string>
+    <!-- One combined TalkBack announcement per row: date, condition, high, low, rain chance. -->
+    <string name="forecast_day_accessibility">%1$s, %2$s, high %3$d%4$s, low %5$d%4$s, %6$d%% chance of rain</string>
+
+    <!-- ── Locations ────────────────────────────────────────────────────── -->
+    <string name="locations_empty_title">No saved places</string>
+    <string name="locations_empty_message">Search for a city to start tracking its weather.</string>
+    <!-- %1$s is the place name, so TalkBack says which row the control belongs to. -->
+    <string name="locations_set_primary">Show %1$s on the Today tab</string>
+    <string name="locations_is_primary">%1$s is shown on the Today tab</string>
+    <string name="locations_delete">Remove %1$s</string>
+
+    <!-- ── Add location (search) ────────────────────────────────────────── -->
+    <string name="add_location_field_label">City name</string>
+    <string name="add_location_placeholder">e.g. London</string>
+    <string name="add_location_clear">Clear search</string>
+    <string name="add_location_prompt">Type at least two letters to search.</string>
+    <string name="add_location_no_results">No places found for “%1$s”.</string>
+
     <!-- ── Detail screens ───────────────────────────────────────────────── -->
     <string name="detail_location_title">Location details</string>
     <string name="detail_day_title">Day details</string>
+    <string name="detail_missing_title">Place no longer saved</string>
+    <string name="detail_missing_message">It looks like this location was removed. Go back to see your list.</string>
+    <!-- Latitude, longitude. Four decimal places is roughly 11 m: more precision than a city needs. -->
+    <string name="detail_coordinates">%1$.4f, %2$.4f</string>
+    <string name="detail_observed_at">Observed %1$s</string>
 
+    <string name="day_detail_hourly_heading">Hour by hour</string>
+    <string name="day_detail_high_low">High %1$d%3$s · Low %2$d%3$s</string>
+    <string name="day_detail_wind">%1$.1f %2$s</string>
+    <string name="day_detail_missing_title">Day not available</string>
+    <string name="day_detail_missing_message">This day has rolled out of the five-day forecast window.</string>
+    <string name="day_detail_hour_accessibility">%1$s, %2$d%3$s</string>
     <!--
-      ── Placeholders ──────────────────────────────────────────────────────
-      Temporary. Each string is deleted as its screen is implemented; none should
-      remain in the final submission.
+      "%%" rather than the word "percent": TalkBack reads the symbol as "percent" anyway, and
+      Android Lint flags "%d percent" as a plurals candidate, correctly, since English needs
+      "1 percent" but this phrasing cannot express that. Matches forecast_day_accessibility.
     -->
-    <string name="placeholder_forecast">A five-day forecast list, tappable through to a 3-hourly breakdown.</string>
-    <string name="placeholder_locations">Your saved places, reorderable, swipe to delete.</string>
-    <string name="placeholder_add_location">Search for a city by name and save it.</string>
-    <string name="placeholder_location_detail">Full conditions for location #%1$d.</string>
-    <string name="placeholder_day_detail">Hour-by-hour readings for day %1$d at location #%2$d.</string>
-    <string name="placeholder_about">Weather data by OpenWeather. Open-source licences listed here.</string>
-    <string name="placeholder_action_open_day">Open a day (demo navigation)</string>
-    <string name="placeholder_action_open_location">Open a location (demo navigation)</string>
+    <string name="day_detail_rain_accessibility">%1$d%% chance of rain</string>
+
+    <!-- ── About &amp; licences (MO4) ──────────────────────────────────────── -->
+    <string name="about_data_heading">Data</string>
+    <string name="about_data_source">Weather data provided by OpenWeather</string>
+    <string name="about_data_url">openweathermap.org</string>
+    <string name="about_licences_heading">Licences</string>
+    <string name="about_build_heading">Build</string>
+    <string name="about_version">Version</string>
+    <string name="about_api_key_configured">API key configured</string>
+    <string name="about_yes">Yes</string>
+    <string name="about_no">No</string>
 </resources>

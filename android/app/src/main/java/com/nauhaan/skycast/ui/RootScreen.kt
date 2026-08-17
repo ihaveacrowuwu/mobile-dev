@@ -1,6 +1,7 @@
 package com.nauhaan.skycast.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -62,7 +63,13 @@ fun RootScreen(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         SkyCastNavHost(
             navigator = navigator,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding)
+                // `padding` applies the insets but does not mark them handled, so a pushed
+                // screen's own Scaffold adds the status-bar inset a second time and its app bar
+                // sits a status bar's height too low. `consumeWindowInsets` is what tells
+                // descendants these are already accounted for.
+                .consumeWindowInsets(innerPadding),
         )
     }
 }

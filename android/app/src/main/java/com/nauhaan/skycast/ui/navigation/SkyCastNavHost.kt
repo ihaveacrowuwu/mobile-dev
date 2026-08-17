@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import com.nauhaan.skycast.ui.detail.DayDetailScreen
 import com.nauhaan.skycast.ui.detail.LocationDetailScreen
 import com.nauhaan.skycast.ui.forecast.ForecastScreen
@@ -112,22 +111,15 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
 
         // ── Pushed destinations ────────────────────────────────────────────
 
-        composable<Route.LocationDetail> { backStackEntry ->
-            // toRoute() deserialises the typed arguments, no string keys, no casts.
-            val route: Route.LocationDetail = backStackEntry.toRoute()
-            LocationDetailScreen(
-                locationId = route.locationId,
-                onNavigateBack = navigator::navigateBack,
-            )
+        // Neither pushed destination is handed its arguments here. Both view models read the
+        // typed route from their own SavedStateHandle via toRoute(), so argument decoding lives
+        // with the code that needs it and the composables stay previewable.
+        composable<Route.LocationDetail> {
+            LocationDetailScreen(onNavigateBack = navigator::navigateBack)
         }
 
-        composable<Route.DayDetail> { backStackEntry ->
-            val route: Route.DayDetail = backStackEntry.toRoute()
-            DayDetailScreen(
-                locationId = route.locationId,
-                epochDay = route.epochDay,
-                onNavigateBack = navigator::navigateBack,
-            )
+        composable<Route.DayDetail> {
+            DayDetailScreen(onNavigateBack = navigator::navigateBack)
         }
 
         composable<Route.AddLocation> {

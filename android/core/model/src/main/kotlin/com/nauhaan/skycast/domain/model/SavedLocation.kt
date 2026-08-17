@@ -37,4 +37,13 @@ data class LocationSearchResult(
 ) {
     val displayName: String
         get() = listOfNotNull(name, state, countryCode).joinToString(", ")
+
+    /**
+     * Stable identity for list keys. Coordinates identify a place uniquely; the geocoding API
+     * returns no id for search hits, and the name alone is not unique, "London, GB" and
+     * "London, CA" both come back for the query "London".
+     *
+     * Mirrors `LocationSearchResult.id` on iOS.
+     */
+    val id: String get() = "$latitude,$longitude"
 }
