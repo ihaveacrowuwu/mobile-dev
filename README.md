@@ -97,12 +97,11 @@ implemented:
 | **About & licences** | In-app attribution for OpenWeather and dependency licences (MO4). | ✅ Built |
 | **Accessibility** | VoiceOver/TalkBack labels, combined announcements for grouped readings, Dynamic Type / font scaling, 44–48 pt touch targets. | ✅ Built |
 | **Graceful missing-key state** | With no API key the app still builds and runs, showing setup instructions rather than crashing or failing to compile. | ✅ Built |
-| **Forecast list** | Five-day list, tappable through to a 3-hourly breakdown. Repository and cache already implemented. | 🚧 Placeholder |
-| **Locations management** | Add by search, reorder, swipe to delete, set primary. Repository, geocoding and cascade deletes already implemented. | 🚧 Placeholder |
-| **Location detail** | Full conditions: humidity, wind, pressure, visibility, sunrise/sunset. | 🚧 Placeholder |
-
-🚧 = the destination is reachable, navigable and back-navigable; only its content is
-outstanding. The data layer beneath each one is complete and unit-tested.
+| **Forecast list** | Five days for the primary location, each row tappable through to the 3-hourly breakdown. | ✅ Built |
+| **Day detail** | Hour-by-hour readings for one forecast day: temperature, wind, chance of rain, with day/night artwork per reading. | ✅ Built |
+| **Locations management** | Add by geocoding search (debounced, 400 ms), set which place Today shows, remove a place. The last remaining place cannot be deleted. | ✅ Built |
+| **Location detail** | Full conditions for any saved place: humidity, wind, pressure, visibility, sunrise/sunset, coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
+| **Correct local times** | Sunrise, sunset and hourly readings are shown in the **observed location's** time zone, not the device's, and the forecast's day grouping is identical whether served from the network or the cache. | ✅ Built |
 
 ---
 
