@@ -172,15 +172,45 @@ struct TodayViewModelTests {
 }
 
 private extension TodayViewModel {
-    /// Yields until the view model's start-up task has drained.
+    /// Waits until the view model's start-up task has produced a settled state.
     ///
-    /// `start()` launches an unstructured `Task`, so a test must give the runtime a chance
-    /// to run it. Yielding a few times is enough because the fakes never actually suspend
-    /// on I/O, and it beats an arbitrary `sleep`, which would make the suite slow *and*
-    /// flaky.
-    func waitForIdle(iterations: Int = 20) async {
-        for _ in 0..<iterations {
+    /// `start()` launches an *unstructured* `Task`, and the cooperative scheduler makes no promise
+    /// about how many yields it takes for that task to reach a given await point, so a fixed number
+    /// of yields is not a synchronisation primitive.
+    ///
+    /// Waiting for **quiescence** is deterministic: the state must first move off its initial value
+    /// (proving the task ran at all) and then stop changing for several consecutive yields (proving
+    /// a multi-emission stream has drained, not merely produced its first element). It fails loudly
+    /// rather than asserting against a half-initialised state.
+    func waitForIdle() async {
+        let initial = state
+        var previous = state
+        var stablePolls = 0
+
+        for _ in 0..<maximumPolls {
             await Task.yield()
+
+            if state != previous {
+                previous = state
+                stablePolls = 0
+                continue
+            }
+            // Stability before the first change means nothing has been scheduled yet.
+            guard state != initial else { continue }
+
+            stablePolls += 1
+            if stablePolls >= requiredStablePolls {
+                return
+            }
         }
+        Issue.record("View model never settled after \(maximumPolls) yields; state: \(state)")
     }
 }
+
+/// Generous, because a too-low bound costs a flaky failure while a too-high one costs nothing,
+/// the loop exits as soon as the state is quiescent, so a passing test never waits the full run.
+private let maximumPolls = 2_000
+
+/// Enough consecutive unchanged polls to distinguish "the stream has drained" from "the next
+/// element has not been scheduled yet".
+private let requiredStablePolls = 50

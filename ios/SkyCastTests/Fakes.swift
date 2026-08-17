@@ -170,7 +170,10 @@ enum Fixtures {
     static func weather(
         locationID: Int64 = 1,
         temperatureCelsius: Double = 22,
-        cachedAt: Date = Fixtures.now
+        cachedAt: Date = Fixtures.now,
+        // Overridable so a test can assert that sunrise and sunset render in the *location's*
+        // zone rather than the device's, which a UTC-only fixture cannot distinguish.
+        timeZoneOffsetSeconds: Int = 0
     )
         -> Weather
     {
@@ -193,7 +196,8 @@ enum Fixtures {
             sunrise: Fixtures.now.addingTimeInterval(-6 * 3_600),
             sunset: Fixtures.now.addingTimeInterval(8 * 3_600),
             observedAt: Fixtures.now,
-            cachedAt: cachedAt
+            cachedAt: cachedAt,
+            timeZoneOffsetSeconds: timeZoneOffsetSeconds
         )
     }
 

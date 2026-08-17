@@ -39,7 +39,8 @@ enum WeatherMapper {
             sunrise: Date(timeIntervalSince1970: TimeInterval(dto.system.sunriseEpochSeconds)),
             sunset: Date(timeIntervalSince1970: TimeInterval(dto.system.sunsetEpochSeconds)),
             observedAt: Date(timeIntervalSince1970: TimeInterval(dto.observedAtEpochSeconds)),
-            cachedAt: cachedAt
+            cachedAt: cachedAt,
+            timeZoneOffsetSeconds: dto.timezoneOffsetSeconds
         )
     }
 
@@ -95,7 +96,8 @@ enum WeatherMapper {
             locationID: locationID,
             locationName: locationName.isEmpty ? dto.city.name : locationName,
             days: days,
-            cachedAt: cachedAt
+            cachedAt: cachedAt,
+            timeZoneOffsetSeconds: dto.city.timezoneOffsetSeconds
         )
     }
 
@@ -131,7 +133,8 @@ enum WeatherMapper {
             sunrise: weather.sunrise,
             sunset: weather.sunset,
             observedAt: weather.observedAt,
-            cachedAt: weather.cachedAt
+            cachedAt: weather.cachedAt,
+            timeZoneOffsetSeconds: weather.timeZoneOffsetSeconds
         )
     }
 
@@ -148,7 +151,8 @@ enum WeatherMapper {
                     temperatureCelsius: hour.temperatureCelsius,
                     precipitationProbability: hour.precipitationProbability,
                     windSpeedMetresPerSecond: hour.windSpeedMetresPerSecond,
-                    cachedAt: forecast.cachedAt
+                    cachedAt: forecast.cachedAt,
+                    timeZoneOffsetSeconds: forecast.timeZoneOffsetSeconds
                 )
             }
         }
@@ -189,15 +193,20 @@ enum WeatherMapper {
             sunrise: model.sunrise,
             sunset: model.sunset,
             observedAt: model.observedAt,
-            cachedAt: model.cachedAt
+            cachedAt: model.cachedAt,
+            timeZoneOffsetSeconds: model.timeZoneOffsetSeconds
         )
     }
 
-    /// Rebuilds the day grouping from cached records, in the device's timezone.
+    /// Rebuilds the day grouping from cached records.
+    ///
+    /// Groups in the **location's** timezone, exactly as the remote path above does. Using
+    /// `Calendar.current` here would make a day's boundary depend on which path served the read.
     static func forecast(from readings: [PersistentForecastReading]) -> Forecast? {
         guard let first = readings.first else { return nil }
 
-        let calendar = Calendar.current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: first.timeZoneOffsetSeconds) ?? .gmt
         let grouped = Dictionary(grouping: readings) { calendar.startOfDay(for: $0.time) }
 
         let days: [ForecastDay] = grouped.keys.sorted().compactMap { day in
@@ -236,7 +245,8 @@ enum WeatherMapper {
             locationID: first.locationID,
             locationName: first.locationName,
             days: days,
-            cachedAt: first.cachedAt
+            cachedAt: first.cachedAt,
+            timeZoneOffsetSeconds: first.timeZoneOffsetSeconds
         )
     }
 

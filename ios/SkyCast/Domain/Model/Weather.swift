@@ -30,9 +30,24 @@ struct Weather: Equatable, Sendable, Identifiable {
     let observedAt: Date
     /// When this record was written to the local cache. Drives staleness.
     let cachedAt: Date
+    /// Seconds the **observed location** is offset from UTC, not the device.
+    ///
+    /// Carried through the domain because sunrise and sunset are only meaningful as a wall
+    /// clock in the place they happen: rendering London's sunrise in a Maldivian phone's
+    /// timezone reports 09:49 for an event London calls 04:49. Every `Date` here is an
+    /// unambiguous instant on its own; this is what turns one back into a local time.
+    let timeZoneOffsetSeconds: Int
 
     var id: Int64 {
         locationID
+    }
+
+    /// The observed location's time zone, for formatting ``sunrise`` and ``sunset``.
+    ///
+    /// Falls back to UTC: `TimeZone(secondsFromGMT:)` returns `nil` outside ±18 hours, and a
+    /// malformed value from the API must not take a whole screen down.
+    var timeZone: TimeZone {
+        TimeZone(secondsFromGMT: timeZoneOffsetSeconds) ?? .gmt
     }
 
     /// True while the sun is up at the observed location, which picks the day/night art.

@@ -79,6 +79,13 @@ final class PersistentWeather {
     var sunset: Date
     var observedAt: Date
     var cachedAt: Date
+    /// The location's UTC offset in seconds.
+    ///
+    /// Defaulted, so SwiftData migrates an existing store lightweightly rather than needing a
+    /// `VersionedSchema`: a record written before this property existed reads as UTC and is
+    /// replaced by a correct one at the next refresh, within the 10-minute TTL. Both models here
+    /// are caches, so there is no user data at risk.
+    var timeZoneOffsetSeconds: Int = 0
 
     var location: PersistentSavedLocation?
 
@@ -101,7 +108,8 @@ final class PersistentWeather {
         sunrise: Date,
         sunset: Date,
         observedAt: Date,
-        cachedAt: Date
+        cachedAt: Date,
+        timeZoneOffsetSeconds: Int
     ) {
         self.locationID = locationID
         self.locationName = locationName
@@ -122,6 +130,7 @@ final class PersistentWeather {
         self.sunset = sunset
         self.observedAt = observedAt
         self.cachedAt = cachedAt
+        self.timeZoneOffsetSeconds = timeZoneOffsetSeconds
     }
 }
 
@@ -139,6 +148,8 @@ final class PersistentForecastReading {
     var precipitationProbability: Double
     var windSpeedMetresPerSecond: Double
     var cachedAt: Date
+    /// See ``PersistentWeather/timeZoneOffsetSeconds``.
+    var timeZoneOffsetSeconds: Int = 0
 
     var location: PersistentSavedLocation?
 
@@ -152,7 +163,8 @@ final class PersistentForecastReading {
         temperatureCelsius: Double,
         precipitationProbability: Double,
         windSpeedMetresPerSecond: Double,
-        cachedAt: Date
+        cachedAt: Date,
+        timeZoneOffsetSeconds: Int
     ) {
         self.locationID = locationID
         self.locationName = locationName
@@ -164,6 +176,7 @@ final class PersistentForecastReading {
         self.precipitationProbability = precipitationProbability
         self.windSpeedMetresPerSecond = windSpeedMetresPerSecond
         self.cachedAt = cachedAt
+        self.timeZoneOffsetSeconds = timeZoneOffsetSeconds
     }
 }
 

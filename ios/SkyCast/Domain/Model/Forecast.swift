@@ -9,6 +9,17 @@ struct Forecast: Equatable, Sendable {
     let locationName: String
     let days: [ForecastDay]
     let cachedAt: Date
+    /// See ``Weather/timeZoneOffsetSeconds``.
+    ///
+    /// Also what keeps ``days`` stable: the grouping into calendar days must use the same zone
+    /// whether the forecast just arrived from the API or was rebuilt from cache, or a day's
+    /// boundary, and therefore the identity of a day-detail route, shifts between the two.
+    let timeZoneOffsetSeconds: Int
+
+    /// The forecast location's time zone. Falls back to UTC, as ``Weather/timeZone`` does.
+    var timeZone: TimeZone {
+        TimeZone(secondsFromGMT: timeZoneOffsetSeconds) ?? .gmt
+    }
 
     func isStale(now: Date, ttl: TimeInterval = Forecast.forecastTTL) -> Bool {
         cachedAt.addingTimeInterval(ttl) < now
