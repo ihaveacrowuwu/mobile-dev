@@ -174,7 +174,9 @@ struct LocationDetailContent: View {
                         // to push.
                         CurrentConditionsHero(
                             weather: weather,
-                            unit: state.preferences.temperatureUnit
+                            unit: state.preferences.temperatureUnit,
+                            // The identity block above already names the place.
+                            showsLocationName: false
                         )
 
                         WeatherDetailGrid(

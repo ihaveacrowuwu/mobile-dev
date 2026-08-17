@@ -10,6 +10,11 @@ import SwiftUI
 struct CurrentConditionsHero: View {
     let weather: Weather
     let unit: TemperatureUnit
+    /// `false` where the surrounding screen already names the place, Today has a location
+    /// switcher and the detail screen an identity block, and "London" twice within a hundred
+    /// points reads as a mistake. The spoken announcement still includes it either way, since a
+    /// VoiceOver user has no such visual context.
+    var showsLocationName = true
     /// `nil` makes the block inert. The Today tab passes a closure to push the detail screen;
     /// the detail screen itself has nowhere further to go.
     var onTap: (() -> Void)?
@@ -48,9 +53,11 @@ struct CurrentConditionsHero: View {
 
     private var reading: some View {
         VStack(spacing: Spacing.sm) {
-            Text(weather.locationName)
-                .font(.title2.weight(.semibold))
-                .multilineTextAlignment(.center)
+            if showsLocationName {
+                Text(weather.locationName)
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+            }
 
             ConditionBadge(condition: weather.condition, isDaytime: weather.isDaytime)
 
