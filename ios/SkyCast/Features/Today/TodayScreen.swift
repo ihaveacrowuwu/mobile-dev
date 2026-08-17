@@ -111,6 +111,10 @@ struct TodayContent: View {
                 .padding(.vertical, Spacing.md)
             }
         }
+        // The grouped background is what `Color.skySurface` is designed to sit on. Without it the
+        // page is plain white, the detail tiles are white-on-white, and in the light-mode
+        // screenshot they had no visible surface at all, the readings floated in space.
+        .background(Color.skyBackground)
         // Liquid Glass: softens where content meets the navigation bar and the minimised
         // tab bar, instead of the hard clip that a plain ScrollView would produce.
         .scrollEdgeEffectStyle(.soft, for: .all)

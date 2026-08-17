@@ -197,6 +197,8 @@ struct LocationDetailContent: View {
                 .padding(Spacing.md)
             }
         }
+        // See TodayScreen: the tiles need the grouped background to read against.
+        .background(Color.skyBackground)
         .scrollEdgeEffectStyle(.soft, for: .all)
         .refreshable { await onRefresh() }
     }
