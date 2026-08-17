@@ -254,12 +254,21 @@ private struct HourlyRow: View {
                 .font(.subheadline)
                 .monospacedDigit()
                 // A fixed width keeps the temperature column aligned down the list; without it
-                // "9 AM" and "12 PM" push everything sideways.
-                .frame(width: timeColumnWidth, alignment: .leading)
+                // "9 AM" and "12 PM" push everything sideways. `fixedSize` stops it wrapping when
+                // the locale's short time is wider than the column, 64 pt broke "10:00 AM" across
+                // two lines, which a screenshot caught.
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: timeColumnWidth, alignment: .leading)
 
-            Image(systemName: hour.condition.symbolName(isDaytime: isDaytime))
-                .symbolRenderingMode(.multicolor)
-                .accessibilityHidden(true)
+            // ConditionBadge rather than a bare Image: several night symbols are near-white, and
+            // on a light List row they disappeared entirely. The badge's material gives every
+            // condition a background to read against, and matches the hero and forecast rows.
+            ConditionBadge(
+                condition: hour.condition,
+                isDaytime: isDaytime,
+                size: hourlyBadgeSize
+            )
 
             Text("\(temperature)\(temperatureUnit.symbol)")
                 .font(.headline)
@@ -299,7 +308,9 @@ private struct HourlyRow: View {
         return text
     }
 
-    private let timeColumnWidth: CGFloat = 64
+    private let timeColumnWidth: CGFloat = 72
+    /// Small enough for a list row; the badge's own padding takes it to a comfortable size.
+    private let hourlyBadgeSize: CGFloat = 22
     private let dawnHour = 6
     private let duskHour = 20
 }

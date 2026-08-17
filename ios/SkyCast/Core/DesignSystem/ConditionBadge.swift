@@ -8,9 +8,18 @@ import SwiftUI
 /// through **depth and material**. Forcing one platform to imitate the other would produce
 /// something that looks wrong on both.
 ///
-/// The symbol itself uses `.symbolRenderingMode(.multicolor)` so SF Symbols supplies the
-/// semantically correct colours, yellow sun, blue rain, rather than us hardcoding a
-/// palette that then fails in dark mode.
+/// ## Rendering mode, and why it is not `.multicolor`
+///
+/// `.multicolor` was the first choice: SF Symbols then supplies semantically correct colours,
+/// yellow sun, blue rain, rather than us hardcoding a palette. It fails a contrast check, though,
+/// and a screenshot is what exposed it. Several conditions have no coloured element at all:
+/// `cloud.fill`, `cloud.moon.fill` and `moon.stars.fill` render **white**, which is invisible on a
+/// light background. In the light-mode day-detail screenshot the 1 am and 4 am rows appeared to
+/// have no icon whatsoever.
+///
+/// `.hierarchical` with the semantic accent colour gives every one of the eight conditions a
+/// legible silhouette in both appearances, at the cost of the sun no longer being yellow. Contrast
+/// is not negotiable and colour charm is, WCAG AA.
 struct ConditionBadge: View {
     let condition: WeatherCondition
     let isDaytime: Bool
@@ -18,9 +27,9 @@ struct ConditionBadge: View {
 
     var body: some View {
         ScaledSymbol(condition.symbolName(isDaytime: isDaytime), baseSize: size)
-            .symbolRenderingMode(.multicolor)
-            // Glass gives the badge depth without a coloured fill, so the symbol's own
-            // colours stay accurate.
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(Color.skyAccent)
+            // Glass gives the badge depth without competing with the symbol for attention.
             .skyGlass(.badge)
             // Decorative: the text beside it already names the condition, so announcing
             // the symbol would repeat it for VoiceOver users.

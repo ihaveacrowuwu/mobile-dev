@@ -48,100 +48,141 @@ final class ScreenshotUITests: XCTestCase {
 
     // MARK: - Captures
 
-    /// The five tab-reachable screens plus both pushed destinations, in README order.
+    /// Every tab-reachable screen plus both pushed destinations, in README order.
     func testCaptureEveryScreen() throws {
         app.launch()
-
+        // A clean install has no cache, so the hero would otherwise be captured mid-spinner.
+        settle(seconds: 8)
         try capture("01-today")
 
-        tab("Forecast").tap()
+        selectTab(.forecast)
         try capture("02-forecast")
+        tapFirstForecastRow()
+        try capture("10-day-detail")
+        back()
 
-        // The first forecast row, if the network supplied one. Guarded rather than asserted: this
-        // test's job is to produce screenshots, and failing the whole run because a five-day
-        // forecast has not arrived would be the wrong trade.
-        let firstDay = app.buttons.containing(NSPredicate(format: "label CONTAINS 'high'")).firstMatch
-        if firstDay.waitForExistence(timeout: 10) {
-            firstDay.tap()
-            try capture("10-day-detail")
-            back()
-        }
-
-        tab("Locations").tap()
+        selectTab(.locations)
         try capture("03-locations")
+        tapFirstLocationRow()
+        try capture("06-location-detail")
+        back()
 
-        let londonRow = app.buttons["London, England, GB, shown on the Today tab"]
-        if londonRow.waitForExistence(timeout: 5) {
-            londonRow.tap()
-            try capture("06-location-detail")
-            back()
-        }
-
-        app.buttons["Add location"].tap()
-        XCTAssertTrue(app.navigationBars["Add location"].waitForExistence(timeout: 5))
+        tapAddLocation()
         try capture("04-add-location")
         back()
 
-        tab("Settings").tap()
+        selectTab(.settings)
         try capture("05-settings")
     }
 
-    /// The offline banner over cached content, and the full-screen error with no cache.
+    /// The offline banner, sitting over content the cache still has.
     ///
-    /// Both are forced with the debug-only `-SkyCastForceOffline` launch argument. The Simulator has
-    /// no aeroplane mode, so without it these two states could only be captured by unplugging the
-    /// Mac at the right moment, see `AppContainer.liveNetworkMonitor()`.
-    func testCaptureOfflineStates() throws {
-        // First, a normal launch to warm the cache, so the banner has content to sit over.
+    /// Forced with the debug-only `-SkyCastForceOffline` launch argument: the Simulator has no
+    /// aeroplane mode, so this state would otherwise need the Mac unplugged at the right moment.
+    /// See `AppContainer.liveNetworkMonitor()`.
+    func testCaptureOfflineBannerOverCache() throws {
+        // Online first, to warm the cache so the banner has something to sit over.
         app.launch()
-        XCTAssertTrue(tab("Today").waitForExistence(timeout: 10))
-        // Give the initial fetch time to land before going offline.
-        Thread.sleep(forTimeInterval: 6)
+        settle(seconds: 8)
         app.terminate()
 
         app.launchArguments = ["-SkyCastForceOffline"]
         app.launch()
-        XCTAssertTrue(tab("Today").waitForExistence(timeout: 10))
-        // Pull to refresh so the failure is fresh rather than inherited.
+        settle(seconds: 3)
+        // Refresh so the failure is this run's, not one inherited from the previous launch.
         pullToRefresh()
         try capture("07-offline-banner")
+    }
 
-        // Forecast for a location whose forecast was never cached shows the full-screen error
-        // rather than a banner: there is nothing to put a banner over.
-        tab("Forecast").tap()
+    /// The full-screen error, with no cache to fall back on.
+    ///
+    /// Must run against a **freshly installed** app, the calling script uninstalls first. With a
+    /// warm cache the correct behaviour is the banner above, not an error screen, so capturing this
+    /// after the other test produced a "08-error-state" that was really just the cached list.
+    func testCaptureOfflineErrorFromColdStart() throws {
+        app.launchArguments = ["-SkyCastForceOffline"]
+        app.launch()
+        settle(seconds: 5)
         try capture("08-error-state")
     }
 
-    /// Dark mode. The whole design is re-checked here, not merely tinted.
+    /// Dark mode. Appearance is set by the calling script, which runs this after switching.
     func testCaptureDarkMode() throws {
         app.launch()
-        // The simulator's appearance is set by the calling script; this capture just records
-        // whatever it is currently in, and the script runs it twice.
         try capture("09-dark-mode")
     }
 
     // MARK: - Helpers
 
-    /// A tab-bar button, located by label scoped to the tab bar, see `NavigationFlowUITests`.
-    private func tab(_ title: String) -> XCUIElement {
-        app.tabBars.buttons[title]
+    /// The four tabs, as fractions across the tab bar.
+    ///
+    /// Coordinate taps rather than element queries. Locating the
+    /// FAB, the first forecast row and the London row by label and predicate; when one of those
+    /// queries failed to match, XCUITest neither failed nor progressed and the run sat on the first
+    /// screen indefinitely. A normalised coordinate always resolves, so a wrong guess produces a
+    /// visibly wrong screenshot, which is a diagnosable failure rather than a hang.
+    private enum Tab: CGFloat {
+        case today = 0.16
+        case forecast = 0.38
+        case locations = 0.62
+        case settings = 0.85
+    }
+
+    private func selectTab(_ tab: Tab) {
+        tapNormalised(x: tab.rawValue, y: 0.955)
+    }
+
+    /// The first saved location, immediately below the navigation title.
+    private func tapFirstLocationRow() {
+        tapNormalised(x: 0.5, y: 0.24)
+    }
+
+    /// The first forecast row.
+    ///
+    /// Deeper than the Locations row because the Forecast list carries a section header for the
+    /// place name. Both were 0.24 at first, and the forecast tap landed on the card's top edge and
+    /// navigated nowhere, which produced a "day detail" screenshot byte-identical to the forecast
+    /// list. Comparing file sizes is what caught it.
+    private func tapFirstForecastRow() {
+        tapNormalised(x: 0.5, y: 0.31)
+    }
+
+    /// The `+` in the navigation bar of the Locations tab.
+    private func tapAddLocation() {
+        tapNormalised(x: 0.93, y: 0.105)
     }
 
     private func back() {
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // The leading navigation-bar button. Queried rather than tapped by coordinate because a
+        // wrong tap here would silently leave the run one screen deep, poisoning every later shot.
+        let backButton = app.navigationBars.buttons.element(boundBy: 0)
+        if backButton.waitForExistence(timeout: 5) {
+            backButton.tap()
+        }
+        settle(seconds: 1)
+    }
+
+    private func tapNormalised(x: CGFloat, y: CGFloat) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)).tap()
+        settle(seconds: 1)
     }
 
     private func pullToRefresh() {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
         start.press(forDuration: 0.1, thenDragTo: end)
+        settle(seconds: 2)
+    }
+
+    private func settle(seconds: TimeInterval) {
+        Thread.sleep(forTimeInterval: seconds)
     }
 
     private func capture(_ name: String) throws {
         let directory = outputDirectory
-        // Let animations and any in-flight glass transition settle, so a capture never catches a
+        // Let animations and any in-flight glass transition finish, so no capture catches a
         // half-drawn frame.
-        Thread.sleep(forTimeInterval: 1.5)
+        settle(seconds: 1.5)
 
         let png = XCUIScreen.main.screenshot().pngRepresentation
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
