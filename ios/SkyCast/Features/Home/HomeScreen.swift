@@ -95,6 +95,7 @@ struct HomeContent: View {
                         onRefresh: onRefresh,
                         onDismissBanner: onDismissBanner,
                         onOpenDetail: onOpenDetail,
+                        onSelectPage: onSelectPage,
                         chromeInsets: proxy.safeAreaInsets
                     )
                     .tag(index)
@@ -109,21 +110,10 @@ struct HomeContent: View {
         // Hiding it leaves only the toolbar items.
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                LocationMenu(state: state, onSelectPage: onSelectPage)
-            }
-            if state.showsPageIndicator, let current = state.location {
+            if state.showsPageIndicator {
                 ToolbarItem(placement: .topBarTrailing) {
-                    PageIndicator(
-                        count: state.pages.count,
-                        selectedIndex: state.selectedIndex,
-                        currentName: current.name
-                    )
+                    LocationMenu(state: state, onSelectPage: onSelectPage)
                 }
-                // Opts the indicator out of the toolbar's shared glass. Left in, the system gave it
-                // the same floating capsule as the menu beside it, which reads as a button, and it
-                // is not one: it reports position and cannot be pressed.
-                .sharedBackgroundVisibility(.hidden)
             }
         }
         // Follows the place on screen, so swiping from a clear Malé to an overcast London changes
@@ -147,6 +137,7 @@ private struct HomePageView: View {
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
     let onOpenDetail: (Int64) -> Void
+    let onSelectPage: (Int) -> Void
     /// The insets the pager gave up so content could run behind the bars; see
     /// ``HomeContent/pager``. Re-applied here as content padding.
     let chromeInsets: EdgeInsets
@@ -168,6 +159,8 @@ private struct HomePageView: View {
                     }
 
                     if let weather = page.weather.data {
+                        PlaceHeading(location: page.location)
+
                         CurrentConditionsHero(
                             weather: weather,
                             unit: state.preferences.temperatureUnit,
@@ -177,6 +170,19 @@ private struct HomePageView: View {
                             // the navigation hierarchy, reachable from Home.
                             onTap: { onOpenDetail(weather.locationID) }
                         )
+
+                        // Between the reading and the strip, centred: the indicator belongs to the
+                        // pager, so it sits directly under what paging changes rather than off in a
+                        // corner of the chrome.
+                        if state.showsPageIndicator, let current = state.location {
+                            PageScrubber(
+                                count: state.pages.count,
+                                selection: Binding(get: { state.selectedIndex }, set: onSelectPage),
+                                announcement: "Showing \(current.name), "
+                                    + "\(state.selectedIndex + 1) of \(state.pages.count)"
+                            )
+                            .frame(height: Self.scrubberHeight)
+                        }
 
                         HourlyStrip(
                             // Every page draws its own strip, including the ones off-screen. The
@@ -208,83 +214,66 @@ private struct HomePageView: View {
 
     /// Enough to scroll the last tile out from under the minimised tab bar.
     private static let tabBarClearance: CGFloat = 56
+
+    /// `UIPageControl` sizes itself; this only reserves the row.
+    private static let scrubberHeight: CGFloat = 28
 }
 
-/// The place currently shown, and a menu of the others.
+/// A menu of the saved places, for jumping straight to one.
 ///
-/// Lives in the toolbar, so it is a floating glass control rather than a strip of the page, see
-/// ``HomeContent/pager``.
+/// Icon-only, and only present when there is more than one place. The name used to live in this
+/// button, which made the most important word on the screen the smallest: it is now the page's
+/// heading, so all this has to do is offer the list. Shown as a `Picker` so the place on screen
+/// carries a tick, which a column of identical buttons cannot.
 private struct LocationMenu: View {
     let state: HomeUiState
     let onSelectPage: (Int) -> Void
 
     var body: some View {
-        if let current = state.location {
-            Menu {
-                // A picker rather than plain buttons: the menu then shows a tick beside the place
-                // on screen, which a list of identical-looking buttons cannot.
-                Picker("Place", selection: Binding(get: { state.selectedIndex }, set: onSelectPage)) {
-                    ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
-                        Text(page.location.displayName).tag(index)
-                    }
-                }
-            } label: {
-                // An HStack rather than a `Label`, which puts its icon first: a disclosure
-                // chevron belongs after the thing it discloses.
-                HStack(spacing: Spacing.xs) {
-                    Text(current.name)
-                        .font(.headline)
-                    Image(systemName: "chevron.down")
-                        .font(.caption.weight(.semibold))
+        Menu {
+            Picker("Place", selection: Binding(get: { state.selectedIndex }, set: onSelectPage)) {
+                ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
+                    Text(page.location.displayName).tag(index)
                 }
             }
-            .accessibilityLabel("Choose a place, showing \(current.name)")
+        } label: {
+            Image(systemName: "list.bullet")
         }
+        .accessibilityLabel("Choose a place, showing \(state.location?.name ?? "")")
     }
 }
 
-/// Which page of how many, over the page rather than in the chrome.
+/// The place, as the page's heading.
 ///
-/// Dots up to a handful of places, then a count. A row of dots is the familiar carousel affordance
-/// and reads instantly at three or four, but it degrades badly: at a dozen saved places it becomes
-/// a line of specks nobody can count, and it grows without bound. "7 of 12" costs the same space
-/// whatever the number.
-///
-/// Deliberately not a control. It reports position; the menu in the toolbar is how you move.
-/// Eight-point dots would fail the 44-point minimum touch target for no gain.
-private struct PageIndicator: View {
-    let count: Int
-    let selectedIndex: Int
-    let currentName: String
+/// The region line beneath it disambiguates saved places that share a name.
+private struct PlaceHeading: View {
+    let location: SavedLocation
+
+    private var region: String? {
+        let parts = location.displayName
+            .split(separator: ",")
+            .dropFirst()
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
 
     var body: some View {
-        Group {
-            if count <= Self.dotLimit {
-                HStack(spacing: Spacing.xs) {
-                    ForEach(0..<count, id: \.self) { index in
-                        Circle()
-                            .fill(index == selectedIndex ? Color.skyAccent : Color.secondary.opacity(0.35))
-                            .frame(width: diameter(for: index), height: diameter(for: index))
-                    }
-                }
-            } else {
-                Text("\(selectedIndex + 1) of \(count)")
-                    .font(.caption.weight(.medium))
-                    .monospacedDigit()
+        VStack(spacing: Spacing.xxs) {
+            Text(location.name)
+                .font(.largeTitle.weight(.semibold))
+                .minimumScaleFactor(0.6)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+            if let region {
+                Text(region)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
-        // One announcement for the whole indicator; individual dots mean nothing aloud.
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Showing \(currentName), \(selectedIndex + 1) of \(count)")
+        .frame(maxWidth: .infinity)
+        // One announcement: a place and where it is, not two fragments.
+        .accessibilityElement(children: .combine)
     }
-
-    private func diameter(for index: Int) -> CGFloat {
-        index == selectedIndex ? 8 : 6
-    }
-
-    /// Six is about where counting dots stops being faster than reading a number.
-    private static let dotLimit = 6
 }
 
 // MARK: - Previews

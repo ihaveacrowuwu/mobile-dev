@@ -1,10 +1,7 @@
 package com.nauhaan.skycast.ui.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,19 +9,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AddLocationAlt
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,25 +32,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
+import com.nauhaan.skycast.core.designsystem.component.PageScrubber
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
 import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherSurfaceTint
+import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
@@ -195,10 +193,12 @@ private fun HomePager(
         modifier = modifier.fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            LocationSwitcher(
+            LocationMenu(
                 uiState = uiState,
                 onSelectPage = onSelectPage,
-                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
             )
 
             PullToRefreshBox(
@@ -214,6 +214,7 @@ private fun HomePager(
                         onRefresh = onRefresh,
                         onDismissBanner = onDismissBanner,
                         onOpenDetail = onOpenDetail,
+                        onSelectPage = onSelectPage,
                     )
                 }
             }
@@ -230,6 +231,7 @@ private fun HomePage(
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onOpenDetail: (Long) -> Unit,
+    onSelectPage: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val weather = page.weather.data
@@ -254,6 +256,11 @@ private fun HomePage(
             return@Column
         }
 
+        PlaceHeading(
+            location = page.location,
+            modifier = Modifier.padding(horizontal = Spacing.md),
+        )
+
         CurrentConditionsHeader(
             weather = weather,
             unit = uiState.preferences.temperatureUnit,
@@ -263,6 +270,25 @@ private fun HomePage(
             onClick = { onOpenDetail(weather.locationId) },
             modifier = Modifier.padding(Spacing.md),
         )
+
+        // Between the reading and the strip, centred: the indicator belongs to the pager, so it
+        // sits directly under what paging changes rather than off in a corner of the chrome.
+        if (uiState.showsPageIndicator) {
+            PageScrubber(
+                count = uiState.pages.size,
+                selectedIndex = uiState.selectedIndex,
+                onSelect = onSelectPage,
+                contentDescription = stringResource(
+                    R.string.home_showing_location,
+                    page.location.name,
+                    uiState.selectedIndex + 1,
+                    uiState.pages.size,
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = Spacing.sm),
+            )
+        }
 
         HourlyStrip(
             // Every page draws its own strip, including the ones off-screen. The slice is cheap,
@@ -286,91 +312,88 @@ private fun HomePage(
 }
 
 /**
- * The place currently shown, with a menu of the others and a page indicator.
+ * A menu of the saved places, for jumping straight to one.
  *
- * The dots are not interactive, they report position, and the menu beside them is the control.
- * Making six-pixel dots a tap target would fail the 48 dp minimum for no gain.
+ * Icon-only, and only present when there is more than one place.
  */
 @Composable
-private fun LocationSwitcher(uiState: HomeUiState, onSelectPage: (Int) -> Unit, modifier: Modifier = Modifier) {
+private fun LocationMenu(uiState: HomeUiState, onSelectPage: (Int) -> Unit, modifier: Modifier = Modifier) {
+    if (!uiState.showsPageIndicator) return
     var isMenuOpen by remember { mutableStateOf(false) }
-    val current = uiState.location ?: return
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Box {
-            TextButton(onClick = { isMenuOpen = true }) {
-                Text(text = current.name, style = MaterialTheme.typography.titleMedium)
-                Icon(
-                    imageVector = Icons.Filled.ExpandMore,
-                    contentDescription = stringResource(R.string.home_select_location),
+    Box(modifier = modifier) {
+        IconButton(onClick = { isMenuOpen = true }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.List,
+                contentDescription = stringResource(R.string.home_select_location),
+            )
+        }
+        DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
+            uiState.pages.forEachIndexed { index, entry ->
+                DropdownMenuItem(
+                    text = { Text(entry.location.displayName) },
+                    // A tick beside the place on screen; a column of identical rows cannot say
+                    // which one you are looking at.
+                    trailingIcon = {
+                        if (index == uiState.selectedIndex) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                    onClick = {
+                        onSelectPage(index)
+                        isMenuOpen = false
+                    },
                 )
             }
-            DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
-                uiState.pages.forEachIndexed { index, entry ->
-                    DropdownMenuItem(
-                        text = { Text(entry.location.displayName) },
-                        onClick = {
-                            onSelectPage(index)
-                            isMenuOpen = false
-                        },
-                    )
-                }
-            }
-        }
-
-        if (uiState.showsPageIndicator) {
-            PageDots(
-                count = uiState.pages.size,
-                selectedIndex = uiState.selectedIndex,
-                currentName = current.name,
-            )
         }
     }
 }
 
+/**
+ * The place, as the page's heading.
+ *
+ * Large and at the top of the content, because it is the single most important word on the screen
+ * and it spent a while as the smallest, a label inside a text button in the corner.
+ *
+ * The region line beneath it earns its space when two saved places share a name, which is common
+ * enough (there are more than twenty Londons) that "London" alone can be genuinely ambiguous.
+ */
 @Composable
-private fun PageDots(count: Int, selectedIndex: Int, currentName: String, modifier: Modifier = Modifier) {
-    val announcement = stringResource(
-        R.string.home_showing_location,
-        currentName,
-        selectedIndex + 1,
-        count,
-    )
+private fun PlaceHeading(location: SavedLocation, modifier: Modifier = Modifier) {
+    val region = location.displayName
+        .split(",")
+        .drop(1)
+        .joinToString(", ") { it.trim() }
+        .takeIf { it.isNotBlank() }
 
-    Row(
+    Column(
         modifier = modifier
-            .padding(end = Spacing.sm)
-            // One announcement for the whole indicator; individual dots mean nothing aloud.
-            .clearAndSetSemantics { contentDescription = announcement },
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
+            .fillMaxWidth()
+            .clearAndSetSemantics {
+                contentDescription = listOfNotNull(location.name, region).joinToString(". ")
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        repeat(count) { index ->
-            val isSelected = index == selectedIndex
-            Box(
-                modifier = Modifier
-                    .size(if (isSelected) SelectedDotSize else DotSize)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                    ),
+        Text(
+            text = location.name,
+            // The emphasized display role: this is the one place on Home that earns it, alongside
+            // the temperature. Two per screen is the ceiling Material 3 sets.
+            style = MaterialTheme.typography.headlineLargeEmphasized,
+            textAlign = TextAlign.Center,
+        )
+        if (region != null) {
+            Text(
+                text = region,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
-
-private val DotSize = 6.dp
-private val SelectedDotSize = 8.dp
-
-// ── Previews: one per state, so every branch is reviewable without a device ──
 
 @Preview(name = "Loading", showBackground = true)
 @Composable
