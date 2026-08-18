@@ -65,6 +65,12 @@ final class ScreenshotUITests: XCTestCase {
 
         selectTab(.metar)
         try capture("02-metar")
+
+        selectTab(.moon)
+        // The phase drawing settles instantly, it is computed, not fetched, but the tab transition
+        // itself needs a beat before the capture.
+        settle(seconds: 2)
+        try capture("11-moon")
         // The day-detail screen is now reached from a place's detail screen, captured below.
 
         selectTab(.locations)
@@ -135,15 +141,61 @@ final class ScreenshotUITests: XCTestCase {
     /// queries failed to match, XCUITest neither failed nor progressed and the run sat on the first
     /// screen indefinitely. A normalised coordinate always resolves, so a wrong guess produces a
     /// visibly wrong screenshot, which is a diagnosable failure rather than a hang.
-    private enum Tab: CGFloat {
-        case home = 0.16
-        case metar = 0.38
-        case locations = 0.62
-        case settings = 0.85
+    /// Horizontal centre of each tab, as a fraction of screen width.
+    ///
+    /// The five tab-bar destinations, addressed by their label.
+    ///
+    /// Was a table of normalised x-fractions, and that cost two silent mis-captures. The four-tab
+    /// fractions put `locations` on the new Moon button; measured five-tab fractions then still missed
+    /// `settings`, because that tap follows a `back()` and the bar is animating back in when it lands.
+    /// A coordinate tap that hits nothing is indistinguishable from success, the capture is written
+    /// either way, showing whatever screen was already up.
+    ///
+    /// Querying `app.tabBars.buttons[label]` waits for the button to exist and fails loudly if it
+    /// never does, which is what `NavigationFlowUITests` has always done. Coordinates remain below
+    /// only for content the accessibility tree does not name uniquely, like a specific list row.
+    private enum Tab: String {
+        case home = "Home"
+        case metar = "METAR"
+        case moon = "Moon"
+        case locations = "Locations"
+        case settings = "Settings"
     }
 
     private func selectTab(_ tab: Tab) {
-        tapNormalised(x: tab.rawValue, y: 0.955)
+        let button = app.tabBars.buttons[tab.rawValue]
+        if !button.waitForExistence(timeout: 2) {
+            // The real cause of the Settings mis-capture, and it took a screenshot of the tab bar to
+            // see it: `tabBarMinimizeBehavior(.onScrollDown)` collapses the bar to a single pill
+            // showing only the current tab, so the other four buttons are not in the accessibility
+            // tree at all. Any earlier `scrollDown()` leaves it that way. Scrolling back up expands
+            // it, which is exactly what a user does.
+            app.swipeDown()
+            _ = button.waitForExistence(timeout: 5)
+        }
+        XCTAssertTrue(
+            button.exists,
+            "The \(tab.rawValue) tab never appeared, so this capture would have stored the previous screen"
+        )
+        button.tap()
+        // The tab must actually be selected before anything is captured. Without this the Settings
+        // capture stored the Locations screen for two runs.
+        XCTAssertTrue(
+            waitForSelection(of: button),
+            "Tapping \(tab.rawValue) did not select it"
+        )
+    }
+
+    /// Polls until the tab reports itself selected, or gives up.
+    private func waitForSelection(of button: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if button.isSelected {
+                return true
+            }
+            usleep(100_000)
+        }
+        return button.isSelected
     }
 
     /// The first saved location, immediately below the navigation title.

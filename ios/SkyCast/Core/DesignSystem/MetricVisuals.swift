@@ -106,16 +106,47 @@ struct WindCompass: View {
 
 /// The sun's day, as an arc from sunrise to sunset with a marker at now.
 ///
-/// This replaces two tiles that each showed a bare time. "05:50" and "20:18" are facts the reader
-/// has to do arithmetic on before they mean anything; an arc with the sun three quarters along it
-/// answers "how much daylight is left?" without any. The length of the day comes along for free as
-/// the caption, so a third tile disappears too.
+/// The length of the day is the caption.
 struct SunPathCard: View {
     /// 0 at sunrise, 1 at sunset. Outside that range the sun is down and the marker is hidden.
     let progress: Double
     let sunriseLabel: String
     let sunsetLabel: String
     let daylightLabel: String
+    /// Spoken instead of the drawing.
+    let announcement: String
+
+    var body: some View {
+        SkyPathCard(
+            progress: progress,
+            riseLabel: sunriseLabel,
+            setLabel: sunsetLabel,
+            centreLabel: daylightLabel,
+            riseSymbol: "sunrise.fill",
+            setSymbol: "sunset.fill",
+            riseColour: WeatherPalette.sunrise,
+            setColour: WeatherPalette.sunset,
+            markerColour: WeatherPalette.sunrise,
+            announcement: announcement
+        )
+    }
+}
+
+/// An arc from a rise to a set, with a marker at the body's current position.
+///
+/// Shared by the sun card and the moon card, which differ only in times, colours and symbols.
+struct SkyPathCard: View {
+    /// 0 at the rise, 1 at the set. Outside that range the body is below the horizon and the marker
+    /// is hidden.
+    let progress: Double
+    let riseLabel: String
+    let setLabel: String
+    let centreLabel: String
+    let riseSymbol: String
+    let setSymbol: String
+    let riseColour: Color
+    let setColour: Color
+    let markerColour: Color
     /// Spoken instead of the drawing.
     let announcement: String
 
@@ -130,17 +161,17 @@ struct SunPathCard: View {
             GeometryReader { proxy in
                 let size = proxy.size
                 ZStack(alignment: .topLeading) {
-                    SunArc()
+                    SkyArc()
                         .stroke(
                             Color.primary.opacity(trackOpacity),
                             style: StrokeStyle(lineWidth: 2, dash: [4, 4])
                         )
 
-                    SunArc()
+                    SkyArc()
                         .trim(from: 0, to: min(max(progress, 0), 1))
                         .stroke(
                             .linearGradient(
-                                colors: [WeatherPalette.sunrise, WeatherPalette.sunset],
+                                colors: [riseColour, setColour],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
@@ -149,22 +180,22 @@ struct SunPathCard: View {
 
                     if isUp {
                         Circle()
-                            .fill(WeatherPalette.sunrise)
+                            .fill(markerColour)
                             .frame(width: markerDiameter, height: markerDiameter)
-                            .position(SunArc.point(at: progress, in: size))
+                            .position(SkyArc.point(at: progress, in: size))
                     }
                 }
             }
             .frame(height: arcHeight)
 
             HStack {
-                label(sunriseLabel, systemImage: "sunrise.fill")
+                label(riseLabel, systemImage: riseSymbol, colour: riseColour)
                 Spacer()
-                Text(daylightLabel)
+                Text(centreLabel)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
                 Spacer()
-                label(sunsetLabel, systemImage: "sunset.fill")
+                label(setLabel, systemImage: setSymbol, colour: setColour)
             }
         }
         .padding(Spacing.md)
@@ -182,13 +213,13 @@ struct SunPathCard: View {
         .accessibilityLabel(announcement)
     }
 
-    private func label(_ text: String, systemImage: String) -> some View {
+    private func label(_ text: String, systemImage: String, colour: Color) -> some View {
         Label {
             Text(text).font(.caption).monospacedDigit()
         } icon: {
             Image(systemName: systemImage)
                 .font(.caption)
-                .foregroundStyle(systemImage.hasPrefix("sunrise") ? WeatherPalette.sunrise : WeatherPalette.sunset)
+                .foregroundStyle(colour)
         }
     }
 
@@ -198,8 +229,10 @@ struct SunPathCard: View {
     private let tintOpacity: Double = 0.45
 }
 
-/// A shallow arc across the tile, flat enough to read as a horizon rather than a rainbow.
-private struct SunArc: Shape {
+/// A shallow arc across a tile, flat enough to read as a horizon rather than a rainbow.
+///
+/// Shared by the sun card and the moon card.
+struct SkyArc: Shape {
     func path(in rect: CGRect) -> Path {
         Path { path in
             path.move(to: CGPoint(x: 0, y: rect.maxY))

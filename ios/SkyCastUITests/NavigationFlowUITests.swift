@@ -46,7 +46,18 @@ final class NavigationFlowUITests: XCTestCase {
     }
 
     func testEveryTabIsReachable() {
-        for title in ["Home", "METAR", "Locations", "Settings"] {
+        let titles = ["Home", "METAR", "Moon", "Locations", "Settings"]
+
+        // Asserted before the loop, because the loop alone cannot fail for a tab it does not
+        // list. Comparing against the bar's own button count is what makes a new tab break it.
+        XCTAssertTrue(app.tabBars.buttons.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertEqual(
+            app.tabBars.buttons.count,
+            titles.count,
+            "The tab bar has \(app.tabBars.buttons.count) tabs but this test covers \(titles.count)"
+        )
+
+        for title in titles {
             let tab = tabButton(title)
             XCTAssertTrue(tab.waitForExistence(timeout: 5), "Tab \(title) is missing")
             tab.tap()
@@ -55,6 +66,19 @@ final class NavigationFlowUITests: XCTestCase {
         // A section header exists only on the Settings screen itself, so finding one proves
         // the content rendered rather than merely that the tab is highlighted.
         XCTAssertTrue(app.staticTexts["Units"].waitForExistence(timeout: 5))
+    }
+
+    /// The Moon tab renders without a location, a network or a cache.
+    ///
+    /// Worth its own test because it is the only screen in the app that has no data source: if it
+    /// showed an empty state or a spinner, nothing else in the suite would notice.
+    func testMoonTabShowsComputedContent() {
+        tabButton("Moon").tap()
+
+        // "Distance" is a section heading on this screen only, and it is drawn from the computed
+        // snapshot, so its presence proves the calculation ran and rendered.
+        XCTAssertTrue(app.staticTexts["Distance"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Coming up"].exists)
     }
 
     func testAddLocationPushesAndBackReturns() {

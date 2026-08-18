@@ -1,28 +1,21 @@
 import SwiftUI
 
-/// The app shell: four tabs, each owning an independent `NavigationStack`.
+/// The app shell: five tabs, each owning an independent `NavigationStack`.
 ///
-/// One stack **per tab** is the important detail. It is what makes each tab remember its
-/// own scroll position and pushed screens across tab switches, the same property Android
-/// achieves with `saveState`/`restoreState` in `SkyCastNavigator`. A single shared stack
-/// would reset the user's place every time they visited Settings.
+/// One stack **per tab** is what makes each tab remember its own scroll position and pushed screens
+/// across tab switches, the same property Android achieves with `saveState`/`restoreState` in
+/// `SkyCastNavigator`.
 ///
-/// ## Liquid Glass
+/// The tab bar, navigation bars and toolbars adopt Liquid Glass **automatically**, because the app
+/// is built against the iOS 26 SDK.
 ///
-/// The tab bar, navigation bars and toolbars adopt Liquid Glass **automatically** because
-/// the app is built against the iOS 26 SDK, there is no modifier to add. The one thing
-/// worth opting into explicitly is `tabBarMinimizeBehavior`, below.
+/// There is **no** `.accessibilityIdentifier` on the tabs. SwiftUI generates the tab-bar buttons
+/// from each `Tab`'s label, and an identifier set on either the `Tab` or its content does not reach
+/// the generated button. `SkyCastUITests` therefore queries by label *scoped to* `app.tabBars`,
+/// which is unambiguous even though "METAR" also appears as a screen heading.
 ///
-/// ## A note on UI testing
-///
-/// There is deliberately **no** `.accessibilityIdentifier` on the tabs. SwiftUI generates the
-/// tab-bar buttons from each `Tab`'s label, and an identifier set on either the `Tab` or its
-/// content does not reach the generated button, verified by dumping the accessibility tree.
-/// `SkyCastUITests` therefore queries by label *scoped to* `app.tabBars`, which is
-/// unambiguous even though "METAR" also appears as a screen heading.
-///
-/// (Android needs the opposite: `TopLevelDestination.testTag`, because Compose offers no
-/// equivalent scoping and the bar label collides with the heading.)
+/// Android needs the opposite, `TopLevelDestination.testTag`, because Compose offers no equivalent
+/// scoping.
 struct RootView: View {
     @State private var selectedTab: AppTab = .home
 
@@ -44,10 +37,11 @@ struct RootView: View {
     }
 }
 
-/// The four top-level destinations.
+/// The five top-level destinations.
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case home
     case metar
+    case moon
     case locations
     case settings
 
@@ -59,6 +53,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .home: "Home"
         case .metar: "METAR"
+        case .moon: "Moon"
         case .locations: "Locations"
         case .settings: "Settings"
         }
@@ -68,6 +63,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .home: "house"
         case .metar: "airplane"
+        case .moon: "moon.stars"
         case .locations: "mappin.and.ellipse"
         case .settings: "gearshape"
         }
@@ -78,6 +74,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .home: HomeScreen()
         case .metar: MetarScreen()
+        case .moon: MoonScreen()
         case .locations: LocationsScreen()
         case .settings: SettingsScreen()
         }
