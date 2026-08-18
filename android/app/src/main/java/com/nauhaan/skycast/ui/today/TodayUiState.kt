@@ -45,11 +45,12 @@ data class TodayUiState(
      *
      * Readings arrive in three-hour steps, so a couple of past entries plus the next eight give the
      * user something to swipe through without the strip becoming a second forecast screen. Past
-     * hours are kept deliberately, "it was 4° colder this morning" is context the current reading
-     * alone cannot give.
+     * hours are kept so that "it was 4° colder this morning" is available as context.
+     *
+     * Takes the **page** rather than the selected one, so every page draws its own strip.
      */
-    fun hourlyWindow(now: Instant = Instant.now()): List<HourlyForecast> {
-        val hours = selected?.forecast?.data?.days?.flatMap { it.hourly }.orEmpty()
+    fun hourlyWindow(page: TodayLocationWeather, now: Instant = Instant.now()): List<HourlyForecast> {
+        val hours = page.forecast.data?.days?.flatMap { it.hourly }.orEmpty()
         if (hours.isEmpty()) return emptyList()
 
         val firstUpcoming = hours.indexOfFirst { !it.time.isBefore(now) }

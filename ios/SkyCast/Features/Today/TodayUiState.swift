@@ -61,10 +61,11 @@ struct TodayUiState: Equatable {
     ///
     /// Readings arrive in three-hour steps, so a couple of past entries plus the next eight give
     /// the user something to swipe through without the strip becoming a second forecast screen.
-    /// Past hours are kept deliberately, "it was 4° colder this morning" is context the current
-    /// reading alone cannot give.
-    func hourlyWindow(now: Date = .now) -> [HourlyForecast] {
-        let hours = selected?.forecast.data?.days.flatMap(\.hourly) ?? []
+    /// Past hours are kept so that "it was 4° colder this morning" is available as context.
+    ///
+    /// Takes the **page** rather than the selected one, so every page draws its own strip.
+    func hourlyWindow(for page: TodayPage, now: Date = .now) -> [HourlyForecast] {
+        let hours = page.forecast.data?.days.flatMap(\.hourly) ?? []
         guard !hours.isEmpty else { return [] }
 
         let firstUpcoming = hours.firstIndex { $0.time >= now }

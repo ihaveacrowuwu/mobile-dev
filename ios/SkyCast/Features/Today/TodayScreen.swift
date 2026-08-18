@@ -161,9 +161,9 @@ private struct TodayPageView: View {
                         )
 
                         HourlyStrip(
-                            // Only the visible page computes its window: it reads the clock, and
-                            // running it for every page on every render is work nobody sees.
-                            hours: isSelected ? state.hourlyWindow() : [],
+                            // Every page draws its own strip, including the ones off-screen. The
+                            // slice is cheap, and skipping it made the section appear mid-swipe.
+                            hours: state.hourlyWindow(for: page),
                             timeZone: weather.timeZone,
                             unit: state.preferences.temperatureUnit
                         )

@@ -258,9 +258,9 @@ private fun TodayPage(
         )
 
         HourlyStrip(
-            // Only the visible page computes its window: `hourlyWindow()` reads the clock, and
-            // running it for every page on every recomposition would be work nobody sees.
-            hours = if (isSelected) uiState.hourlyWindow() else emptyList(),
+            // Every page draws its own strip, including the ones off-screen. The slice is cheap,
+            // and skipping it made the section appear mid-swipe.
+            hours = uiState.hourlyWindow(page),
             zoneOffset = weather.zoneOffset,
             unit = uiState.preferences.temperatureUnit,
             modifier = Modifier.padding(bottom = Spacing.md),
