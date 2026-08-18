@@ -150,7 +150,6 @@ struct SkyPathCard: View {
     /// Spoken instead of the drawing.
     let announcement: String
 
-    @Environment(\.weatherSurfaceTint) private var weatherSurfaceTint
 
     private var isUp: Bool {
         progress > 0 && progress < 1
@@ -199,16 +198,7 @@ struct SkyPathCard: View {
             }
         }
         .padding(Spacing.md)
-        .background {
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .fill(Color.skySurface)
-                .overlay {
-                    if let weatherSurfaceTint {
-                        RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .fill(weatherSurfaceTint.opacity(tintOpacity))
-                    }
-                }
-        }
+        .frostedCard()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(announcement)
     }
@@ -226,7 +216,6 @@ struct SkyPathCard: View {
     private let arcHeight: CGFloat = 64
     private let markerDiameter: CGFloat = 10
     private let trackOpacity: Double = 0.15
-    private let tintOpacity: Double = 0.45
 }
 
 /// A shallow arc across a tile, flat enough to read as a horizon rather than a rainbow.

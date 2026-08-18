@@ -197,21 +197,27 @@ fun NightSkyPanel(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(SkyCorner))
-            .drawBehind {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Zenith, Horizon),
-                        startY = 0f,
-                        endY = size.height,
-                    ),
-                )
-                drawStars(size)
-            }
+            .nightSky()
             .padding(contentPadding),
         contentAlignment = Alignment.Center,
     ) {
         content()
     }
+}
+
+/**
+ * Paints the night sky behind whatever this modifies: the whole screen, or the small circular
+ * patches behind the discs in the "coming up" list.
+ */
+fun Modifier.nightSky(): Modifier = drawBehind {
+    drawRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(Zenith, Horizon),
+            startY = 0f,
+            endY = size.height,
+        ),
+    )
+    drawStars(size)
 }
 
 /**

@@ -29,11 +29,6 @@ struct RootView: View {
                 }
             }
         }
-        // Liquid Glass behaviour: the tab bar shrinks to a compact pill as the user
-        // scrolls down, handing the full screen over to content and expanding again on
-        // scroll up. This is the headline interaction of the new tab bar, and it is
-        // opt-in rather than automatic.
-        .tabBarMinimizeBehavior(.onScrollDown)
     }
 }
 

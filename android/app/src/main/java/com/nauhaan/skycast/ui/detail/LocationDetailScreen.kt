@@ -34,10 +34,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.core.designsystem.component.BackgroundIntensity
-import com.nauhaan.skycast.core.designsystem.component.DailyRangeList
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
-import com.nauhaan.skycast.core.designsystem.component.TemperatureTrend
 import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
@@ -45,16 +43,16 @@ import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.DailyRangesSection
+import com.nauhaan.skycast.ui.common.ObservedAtFooter
+import com.nauhaan.skycast.ui.common.SectionHeader
 import com.nauhaan.skycast.ui.common.SunPathSection
+import com.nauhaan.skycast.ui.common.TemperatureTrendSection
 import com.nauhaan.skycast.ui.common.previewWeather
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
 import com.nauhaan.skycast.ui.home.HourlyStrip
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import com.nauhaan.skycast.core.designsystem.R as DesignSystemR
 
 /** Full conditions for one saved location, pushed from Home or Locations. */
@@ -172,7 +170,9 @@ internal fun LocationDetailContent(
                         )
 
                         WeatherDetailGrid(
-                            // Eight tiles: dew point and length of day are derived readings.
+                            // Eight tiles rather than Home's six: dew point and length of day are
+                            // derived readings, and this is the screen someone opens because the
+                            // glance was not enough.
                             details = weather.toDetails(
                                 preferences = uiState.preferences,
                                 labels = rememberWeatherDetailLabels(),
@@ -228,48 +228,10 @@ private fun ForecastSections(
             )
         }
 
-        val points = forecast.toTrendPoints(unit)
-        if (points.size >= MINIMUM_TREND_POINTS) {
-            SectionHeader(
-                title = stringResource(R.string.detail_section_trend),
-                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
-            )
-            TemperatureTrend(
-                points = points,
-                contentDescription = forecast.trendDescription(unit),
-                modifier = Modifier.padding(horizontal = Spacing.md),
-            )
-        }
-
-        val days = forecast.toDayRanges(unit)
-        if (days.isNotEmpty()) {
-            SectionHeader(
-                title = stringResource(R.string.detail_section_days),
-                modifier = Modifier.padding(
-                    start = Spacing.md,
-                    end = Spacing.md,
-                    top = Spacing.md,
-                    bottom = Spacing.sm,
-                ),
-            )
-            DailyRangeList(
-                days = days,
-                modifier = Modifier.padding(horizontal = Spacing.md),
-                onDaySelected = { day -> onDaySelected(day.epochDay) },
-            )
-        }
+        // Shared with Home, which now shows the same sections. See ui/common/ForecastSections.kt.
+        TemperatureTrendSection(forecast = forecast, unit = unit)
+        DailyRangesSection(forecast = forecast, unit = unit, onDaySelected = onDaySelected)
     }
-}
-
-/** A section title, styled once so the screen's headings cannot drift apart. */
-@Composable
-private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
 }
 
 /** Place name, full display name and coordinates, all known from the local database. */
@@ -348,29 +310,8 @@ private fun WeatherStatusNotice(error: AppError?, onRetry: () -> Unit, modifier:
     }
 }
 
-/** When the reading was taken, the provenance that justifies a detail screen. */
-@Composable
-private fun ObservedAtFooter(observedAt: Instant, modifier: Modifier = Modifier) {
-    val observed = stringResource(
-        R.string.detail_observed_at,
-        DateTimeFormatter
-            .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-            .withZone(ZoneId.systemDefault())
-            .format(observedAt),
-    )
-
-    Text(
-        text = observed,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
-    )
-}
-
 /** Enough to fill the strip without turning the top of the screen into a second forecast tab. */
 private const val HOURS_ON_STRIP = 8
-private const val MINIMUM_TREND_POINTS = 2
 
 @Preview(name = "Location detail", showBackground = true)
 @Composable
@@ -396,7 +337,7 @@ private fun LocationDetailPreview() {
     }
 }
 
-@Preview(name = "Location detail, removed", showBackground = true)
+@Preview(name = "Location detail: removed", showBackground = true)
 @Composable
 private fun LocationDetailMissingPreview() {
     SkyCastTheme {

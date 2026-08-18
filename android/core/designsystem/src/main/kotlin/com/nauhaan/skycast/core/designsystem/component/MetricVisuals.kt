@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -39,7 +38,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
@@ -210,18 +208,19 @@ fun SkyPathCard(
     modifier: Modifier = Modifier,
     markerColour: Color = riseColour,
 ) {
-    val tint = LocalWeatherTint.current
-    val base = MaterialTheme.colorScheme.surfaceContainerHigh
-    val container = if (tint == null) base else tint.copy(alpha = TINT_ALPHA).compositeOver(base)
     val track = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TRACK_ALPHA)
     val progress = reading.progress.coerceIn(0f, 1f)
     val isUp = reading.progress > 0f && reading.progress < 1f
+    val shape = CardDefaults.shape
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = reading.contentDescription },
-        colors = CardDefaults.cardColors(containerColor = container),
+            .clearAndSetSemantics { contentDescription = reading.contentDescription }
+            .frostRim(shape),
+        shape = shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
     ) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Canvas(
@@ -341,7 +340,6 @@ private const val NEEDLE_INNER = 0.1f
 private const val NEEDLE_OUTER = 0.82f
 private const val RING_ALPHA = 0.2f
 private const val TRACK_ALPHA = 0.25f
-private const val TINT_ALPHA = 0.45f
 
 /** Lifts the control point above the box so the drawn curve peaks inside it. */
 private const val SUN_ARC_LIFT = 0.6f

@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -41,6 +40,11 @@ import com.nauhaan.skycast.core.designsystem.component.MoonSetIcon
 import com.nauhaan.skycast.core.designsystem.component.NightSkyPanel
 import com.nauhaan.skycast.core.designsystem.component.SkyPathCard
 import com.nauhaan.skycast.core.designsystem.component.SkyPathReading
+import com.nauhaan.skycast.core.designsystem.component.frostRim
+import com.nauhaan.skycast.core.designsystem.component.frostedCardColours
+import com.nauhaan.skycast.core.designsystem.component.frostedCardElevation
+import com.nauhaan.skycast.core.designsystem.component.nightSky
+import com.nauhaan.skycast.core.designsystem.theme.NightSkyTheme
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
@@ -71,31 +75,37 @@ fun MoonScreen(modifier: Modifier = Modifier, viewModel: MoonViewModel = hiltVie
 
 @Composable
 internal fun MoonContent(uiState: MoonUiState, modifier: Modifier = Modifier) {
-    val snapshot = uiState.snapshot
-    if (snapshot == null) {
-        LoadingView(modifier = modifier, message = stringResource(R.string.moon_loading))
-        return
-    }
+    // The sky is the screen, not a card on it, and everything inside it is themed dark so text and
+    // cards are legible against it in either app theme. See NightSkyTheme.
+    NightSkyTheme {
+        Box(modifier = modifier.fillMaxSize().nightSky()) {
+            val snapshot = uiState.snapshot
+            if (snapshot == null) {
+                LoadingView(message = stringResource(R.string.moon_loading))
+                return@Box
+            }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
-    ) {
-        MoonHero(snapshot = snapshot)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(Spacing.md),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            ) {
+                MoonHero(snapshot = snapshot)
 
-        if (uiState.showsRiseAndSet) {
-            SectionHeading(stringResource(R.string.moon_tonight))
-            MoonPathCard(snapshot = snapshot, zone = uiState.zone)
+                if (uiState.showsRiseAndSet) {
+                    SectionHeading(stringResource(R.string.moon_tonight))
+                    MoonPathCard(snapshot = snapshot, zone = uiState.zone)
+                }
+
+                SectionHeading(stringResource(R.string.moon_distance))
+                MoonDistanceCard(snapshot = snapshot)
+
+                SectionHeading(stringResource(R.string.moon_coming_up))
+                UpcomingPhasesCard(phases = snapshot.upcomingPhases, zone = uiState.zone)
+            }
         }
-
-        SectionHeading(stringResource(R.string.moon_distance))
-        MoonDistanceCard(snapshot = snapshot)
-
-        SectionHeading(stringResource(R.string.moon_coming_up))
-        UpcomingPhasesCard(phases = snapshot.upcomingPhases, zone = uiState.zone)
     }
 }
 
@@ -122,44 +132,46 @@ private fun MoonHero(snapshot: MoonSnapshot, modifier: Modifier = Modifier) {
     val countdown = fullMoonCountdown(snapshot)
     val description = listOfNotNull("$phaseName. $summary", countdown).joinToString(". ")
 
-    NightSkyPanel(
-        modifier = modifier.clearAndSetSemantics { contentDescription = description },
+    // No panel of its own any more: the sky behind the whole screen is the ground this sits on, and a
+    // rounded rectangle of night inside a night was a picture of the sky rather than the sky.
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.lg)
+            .clearAndSetSemantics { contentDescription = description },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                LunarCycleRing(
-                    cycleFraction = snapshot.cycleFraction.toFloat(),
-                    diameter = RingDiameter,
-                )
-                MoonDisc(elongationDegrees = snapshot.elongationDegrees, diameter = DiscDiameter)
-            }
+        Box(contentAlignment = Alignment.Center) {
+            LunarCycleRing(
+                cycleFraction = snapshot.cycleFraction.toFloat(),
+                diameter = RingDiameter,
+            )
+            MoonDisc(elongationDegrees = snapshot.elongationDegrees, diameter = DiscDiameter)
+        }
 
+        Text(
+            text = phaseName,
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            // From the scheme, not hardcoded: NightSkyTheme has already made this subtree dark, so
+            // `onSurface` is the light colour here in either app theme.
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = Spacing.sm),
+        )
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        if (countdown != null) {
             Text(
-                text = phaseName,
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                // The panel is dark in both themes, so its text is white in both, the one place in
-                // the app that does not take its colour from the scheme.
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Spacing.sm),
-            )
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = SecondaryAlpha),
+                text = countdown,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TertiaryAlpha),
                 textAlign = TextAlign.Center,
             )
-            if (countdown != null) {
-                Text(
-                    text = countdown,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = TertiaryAlpha),
-                    textAlign = TextAlign.Center,
-                )
-            }
         }
     }
 }
@@ -206,15 +218,18 @@ private fun MoonDistanceCard(snapshot: MoonSnapshot, modifier: Modifier = Modifi
     val meaning = stringResource(snapshot.distanceBand.labelRes)
     val width = stringResource(R.string.moon_apparent_width, snapshot.angularDiameterDegrees)
 
+    val shape = CardDefaults.shape
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clearAndSetSemantics {
                 contentDescription = "$distance. $meaning. $width"
-            },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+            }
+            .frostRim(shape),
+        shape = shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
     ) {
         Row(
             modifier = Modifier.padding(Spacing.md),
@@ -247,11 +262,15 @@ private fun MoonDistanceCard(snapshot: MoonSnapshot, modifier: Modifier = Modifi
 /** The next four principal phases, each with the Moon drawn as it will look. */
 @Composable
 private fun UpcomingPhasesCard(phases: List<PrincipalPhase>, zone: ZoneId, modifier: Modifier = Modifier) {
+    val shape = CardDefaults.shape
+
     Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .frostRim(shape),
+        shape = shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
     ) {
         phases.forEachIndexed { index, phase ->
             if (index > 0) {
@@ -400,7 +419,6 @@ private const val BelowHorizon = -1f
 private val DiscDiameter = 160.dp
 private val RingDiameter = 205.dp
 private val RowDiscDiameter = 34.dp
-private const val SecondaryAlpha = 0.85f
 private const val TertiaryAlpha = 0.65f
 
 @Preview(showBackground = true)

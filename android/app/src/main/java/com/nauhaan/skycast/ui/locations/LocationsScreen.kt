@@ -17,12 +17,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,6 +34,7 @@ import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
+import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.SavedLocation
 
 /**
@@ -70,12 +74,19 @@ internal fun LocationsContent(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        // Transparent so the favourite's weather shows through from the shell. See RootScreen.
+        containerColor = Color.Transparent,
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddLocation) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = stringResource(R.string.action_add_location),
-                )
+            // Hidden at the cap rather than shown-but-broken. A button that opens a search whose only
+            // possible outcome is "the list is full" wastes two taps to deliver bad news; the caption
+            // in the list says the same thing where the user is already looking.
+            if (uiState.canAddMore) {
+                FloatingActionButton(onClick = onAddLocation) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.action_add_location),
+                    )
+                }
             }
         },
     ) { innerPadding ->
@@ -102,6 +113,29 @@ internal fun LocationsContent(
                     )
                     HorizontalDivider()
                 }
+
+                // How full the list is, and, at the cap, that the Add button has gone.
+                item {
+                    Text(
+                        text = if (uiState.canAddMore) {
+                            pluralStringResource(
+                                R.plurals.locations_count,
+                                uiState.savedCount,
+                                uiState.savedCount,
+                                uiState.limit,
+                            )
+                        } else {
+                            pluralStringResource(
+                                R.plurals.locations_limit_reached,
+                                uiState.limit,
+                                uiState.limit,
+                            )
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(Spacing.md),
+                    )
+                }
             }
         }
     }
@@ -117,6 +151,9 @@ private fun SavedLocationRow(
     modifier: Modifier = Modifier,
 ) {
     ListItem(
+        // Transparent, like the Scaffold above it: an opaque row would be a white slab across the
+        // favourite's weather rather than a line of text on it.
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(location.name) },
         supportingContent = { Text(location.displayName) },
         leadingContent = {
@@ -155,7 +192,7 @@ private fun SavedLocationRow(
     )
 }
 
-@Preview(name = "Locations, populated", showBackground = true)
+@Preview(name = "Locations: populated", showBackground = true)
 @Composable
 private fun LocationsContentPreview() {
     SkyCastTheme {
@@ -189,7 +226,7 @@ private fun LocationsContentPreview() {
     }
 }
 
-@Preview(name = "Locations, empty", showBackground = true)
+@Preview(name = "Locations: empty", showBackground = true)
 @Composable
 private fun LocationsEmptyPreview() {
     SkyCastTheme {

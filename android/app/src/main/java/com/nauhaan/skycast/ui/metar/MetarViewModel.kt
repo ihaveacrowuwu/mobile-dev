@@ -7,6 +7,8 @@ import com.nauhaan.skycast.domain.model.MetarReport
 import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.repository.LocationRepository
 import com.nauhaan.skycast.domain.repository.MetarRepository
+import com.nauhaan.skycast.ui.common.SelectedLocationStore
+import com.nauhaan.skycast.ui.common.observeActiveLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +61,7 @@ class MetarViewModel
 constructor(
     private val metarRepository: MetarRepository,
     locationRepository: LocationRepository,
+    selectedLocationStore: SelectedLocationStore,
 ) : ViewModel() {
     /** See `HomeViewModel.manualRefreshError`: a failed manual refresh is otherwise silent. */
     private val manualRefreshError = MutableStateFlow<AppError?>(null)
@@ -66,7 +69,9 @@ constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<MetarUiState> = locationRepository
-        .observePrimaryLocation()
+        // The place selected on Home, not the favourite. See ui/common/SelectedLocationStore.kt: following the
+        // favourite meant swiping Home to Malé and still being shown London's airport here.
+        .observeActiveLocation(selectedLocationStore)
         .flatMapLatest { location ->
             if (location == null) {
                 flowOf(MetarUiState(hasNoLocation = true))

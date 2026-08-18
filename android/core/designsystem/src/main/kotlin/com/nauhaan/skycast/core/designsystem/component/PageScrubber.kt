@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -54,8 +57,40 @@ fun PageScrubber(
     val active = MaterialTheme.colorScheme.primary
     val inactive = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = INACTIVE_ALPHA)
 
+    // A floating pill rather than bare dots on the page, matching the control Apple's Weather app
+    // puts at the bottom of its screen, the iOS counterpart wraps `UIPageControl` in glass for the
+    // same reason. Bare dots on a photographic or heavily washed background have no ground of their
+    // own, so they lose contrast exactly when the weather behind them is most colourful. It also
+    // gives the drag gesture a visible extent: a control looks grabbable in a way three dots do not.
+    Surface(
+        modifier = modifier.frostRim(CircleShape),
+        shape = CircleShape,
+        color = frostedContainerColour(),
+    ) {
+        ScrubberDots(
+            count = count,
+            selectedIndex = selectedIndex,
+            onSelect = onSelect,
+            contentDescription = contentDescription,
+            haptics = haptics,
+            active = active,
+            inactive = inactive,
+        )
+    }
+}
+
+@Composable
+private fun ScrubberDots(
+    count: Int,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    contentDescription: String,
+    haptics: HapticFeedback,
+    active: Color,
+    inactive: Color,
+) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .height(RowHeight)
             .clearAndSetSemantics { this.contentDescription = contentDescription }
             .pointerInput(count) {
@@ -80,9 +115,11 @@ fun PageScrubber(
                     }
                 }
             }
-            .padding(horizontal = Spacing.sm),
+            // Wider inside the pill than it was bare: the control needs room around the dots or it
+            // reads as a badge clamped to them.
+            .padding(horizontal = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         repeat(count) { index ->
             val isSelected = index == selectedIndex

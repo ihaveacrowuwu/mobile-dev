@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.domain.repository.WeatherRepository
 import com.nauhaan.skycast.domain.usecase.ObserveTodayWeatherUseCase
+import com.nauhaan.skycast.ui.common.SelectedLocationStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,6 +30,7 @@ class HomeViewModel
 constructor(
     private val observeTodayWeather: ObserveTodayWeatherUseCase,
     private val weatherRepository: WeatherRepository,
+    private val selectedLocationStore: SelectedLocationStore,
 ) : ViewModel() {
     /** Transient, screen-local UI state that no repository owns. */
     private val bannerDismissed = MutableStateFlow(false)
@@ -46,9 +49,10 @@ constructor(
     /**
      * Which saved place is on screen.
      *
-     * Screen state, not stored state: the user's *primary* location is a persisted preference and
-     * lives in the database, while "the page I happened to swipe to" belongs to this session only.
-     * Seeded from the primary so the app opens where the user expects.
+     * Screen state, not stored state: the favourite is a persisted preference and lives in the
+     * database, while "the page I happened to swipe to" belongs to this session only. Seeded from the
+     * favourite, which is the whole of what the favourite does to this screen: it decides where
+     * the app opens and nothing after that.
      */
     private val selectedIndex = MutableStateFlow(0)
 
@@ -78,6 +82,9 @@ constructor(
                 isBannerDismissed = dismissed,
                 refreshError = refreshError,
             )
+        }.onEach { state ->
+            // Publish the page on screen so the METAR and Moon tabs follow it.
+            state.location?.id?.let(selectedLocationStore::select)
         }.stateIn(
             scope = viewModelScope,
             // WhileSubscribed with a 5 s grace period: survives a configuration change

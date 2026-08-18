@@ -23,6 +23,18 @@ import javax.inject.Inject
 /** State for the saved-locations list. */
 data class LocationsUiState(val locations: List<SavedLocation> = emptyList(), val isLoading: Boolean = true) {
     val isEmpty: Boolean get() = locations.isEmpty() && !isLoading
+
+    /**
+     * Whether there is room for another place.
+     *
+     * Surfaced so the Add button can go quiet at the cap instead of leading to a search that can only
+     * end in an error. The repository still enforces the limit, this is the courtesy, not the rule.
+     */
+    val canAddMore: Boolean get() = SavedLocation.canSaveAnother(locations.size)
+
+    val savedCount: Int get() = locations.size
+
+    val limit: Int get() = SavedLocation.MAX_SAVED
 }
 
 /** State for the search-and-add screen. */

@@ -7,6 +7,8 @@ import com.nauhaan.skycast.domain.model.MoonSnapshot
 import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.repository.LocationRepository
 import com.nauhaan.skycast.domain.repository.WeatherRepository
+import com.nauhaan.skycast.ui.common.SelectedLocationStore
+import com.nauhaan.skycast.ui.common.observeActiveLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -58,11 +60,16 @@ data class MoonUiState(
 @HiltViewModel
 class MoonViewModel
 @Inject
-constructor(locationRepository: LocationRepository, weatherRepository: WeatherRepository) :
-    ViewModel() {
+constructor(
+    locationRepository: LocationRepository,
+    weatherRepository: WeatherRepository,
+    selectedLocationStore: SelectedLocationStore,
+) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<MoonUiState> = locationRepository
-        .observePrimaryLocation()
+        // The place selected on Home, not the favourite: moonrise is a fact about where you are
+        // looking, so it should follow the page you were just on. See ui/common/SelectedLocationStore.kt.
+        .observeActiveLocation(selectedLocationStore)
         .flatMapLatest { location ->
             if (location == null) {
                 // Still worth a screen: everything but rise and set is location-independent.

@@ -72,6 +72,14 @@ fun AppError.toPresentation(): ErrorPresentation = when (this) {
             isRetryable = false,
         )
 
+    // Not retryable, and the message says what to do instead: retrying a full list never empties it.
+    is AppError.LocationLimitReached ->
+        ErrorPresentation(
+            titleRes = R.string.error_location_limit_title,
+            messageRes = R.string.error_location_limit_message,
+            isRetryable = false,
+        )
+
     is AppError.Unknown ->
         ErrorPresentation(
             titleRes = R.string.error_unknown_title,

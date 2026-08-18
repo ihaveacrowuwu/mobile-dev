@@ -1,6 +1,5 @@
 package com.nauhaan.skycast.core.designsystem.component
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,13 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
@@ -78,27 +75,19 @@ fun WeatherDetailGrid(details: List<WeatherDetail>, modifier: Modifier = Modifie
 private fun WeatherDetailTile(detail: WeatherDetail, modifier: Modifier = Modifier) {
     val accent = detail.kind.accent()
 
-    // The theme surface with a whisper of the page's mood mixed over it. Composited rather than
-    // replaced so the base stays the colour the theme guarantees contrast against: the tile belongs
-    // to a warm page or a cold one without any text on it becoming a contrast problem that has to
-    // be re-checked per condition. Animated on the effects spec, this is a colour change, and the
-    // spatial spec would overshoot past the target colour.
-    val tint = LocalWeatherTint.current
-    val container by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.surfaceContainerHigh.let { surface ->
-            if (tint == null) surface else tint.copy(alpha = TINT_ALPHA).compositeOver(surface)
-        },
-        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
-        label = "detailTileContainer",
-    )
+    val shape = CardDefaults.shape
 
     Card(
-        modifier = modifier.clearAndSetSemantics {
-            // The compass draws a bearing the value never mentions, so it is spoken.
-            val bearing = (detail.visual as? MetricVisual.Compass)?.let { " from the ${it.cardinal}" } ?: ""
-            contentDescription = "${detail.label}, ${detail.value}$bearing"
-        },
-        colors = CardDefaults.cardColors(containerColor = container),
+        modifier = modifier
+            .clearAndSetSemantics {
+                // The compass draws a bearing the value never mentions, so it is spoken.
+                val bearing = (detail.visual as? MetricVisual.Compass)?.let { " from the ${it.cardinal}" } ?: ""
+                contentDescription = "${detail.label}, ${detail.value}$bearing"
+            }
+            .frostRim(shape),
+        shape = shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
     ) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,7 +162,6 @@ private const val TILES_PER_ROW = 2
  * Higher than it was, and lighter for it: 10% of the *mood* hue put a mid-dark slate over a light
  * card and the result read as dirty grey. 45% of the container keeps a light card light.
  */
-private const val TINT_ALPHA = 0.45f
 private val IconSize = 16.dp
 
 @Preview(showBackground = true)

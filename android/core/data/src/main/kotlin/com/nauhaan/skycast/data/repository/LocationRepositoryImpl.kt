@@ -1,5 +1,6 @@
 package com.nauhaan.skycast.data.repository
 
+import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.core.common.DispatcherProvider
 import com.nauhaan.skycast.data.local.dao.SavedLocationDao
 import com.nauhaan.skycast.data.mapper.WeatherMapper.toDomain
@@ -54,6 +55,12 @@ constructor(
 
     override suspend fun save(result: LocationSearchResult): Long = withContext(dispatchers.io) {
         try {
+            // The cap is enforced here rather than in the UI, because the UI is not the only caller and
+            // "the list is full" is a fact about the data, not about a screen. See SavedLocation.MAX_SAVED.
+            if (!SavedLocation.canSaveAnother(dao.count())) {
+                throw AppError.LocationLimitReached(SavedLocation.MAX_SAVED)
+            }
+
             // The very first location the user adds becomes primary, so the Home tab
             // is never left with nothing to show.
             val isFirst = dao.count() == 0

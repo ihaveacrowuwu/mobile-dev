@@ -55,7 +55,11 @@ import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.DailyRangesSection
+import com.nauhaan.skycast.ui.common.ObservedAtFooter
+import com.nauhaan.skycast.ui.common.SectionHeader
 import com.nauhaan.skycast.ui.common.SunPathSection
+import com.nauhaan.skycast.ui.common.TemperatureTrendSection
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
@@ -69,7 +73,7 @@ import com.nauhaan.skycast.ui.common.toPresentation
  */
 @Composable
 fun HomeScreen(
-    onNavigateToLocationDetail: (Long) -> Unit,
+    onNavigateToDayDetail: (Long, Long) -> Unit,
     onNavigateToAddLocation: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -91,7 +95,7 @@ fun HomeScreen(
         onRefresh = viewModel::refresh,
         onDismissBanner = viewModel::dismissBanner,
         onSelectPage = viewModel::selectPage,
-        onOpenDetail = onNavigateToLocationDetail,
+        onOpenDayDetail = onNavigateToDayDetail,
         onAddLocation = onNavigateToAddLocation,
         modifier = modifier,
     )
@@ -103,7 +107,7 @@ internal fun HomeContent(
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onSelectPage: (Int) -> Unit,
-    onOpenDetail: (Long) -> Unit,
+    onOpenDayDetail: (Long, Long) -> Unit,
     onAddLocation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,7 +143,7 @@ internal fun HomeContent(
             onRefresh = onRefresh,
             onDismissBanner = onDismissBanner,
             onSelectPage = onSelectPage,
-            onOpenDetail = onOpenDetail,
+            onOpenDayDetail = onOpenDayDetail,
             modifier = modifier,
         )
     }
@@ -163,7 +167,7 @@ private fun HomePager(
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onSelectPage: (Int) -> Unit,
-    onOpenDetail: (Long) -> Unit,
+    onOpenDayDetail: (Long, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(
@@ -214,7 +218,7 @@ private fun HomePager(
                         isSelected = page == uiState.selectedIndex,
                         onRefresh = onRefresh,
                         onDismissBanner = onDismissBanner,
-                        onOpenDetail = onOpenDetail,
+                        onOpenDayDetail = onOpenDayDetail,
                         onSelectPage = onSelectPage,
                     )
                 }
@@ -231,7 +235,7 @@ private fun HomePage(
     isSelected: Boolean,
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
-    onOpenDetail: (Long) -> Unit,
+    onOpenDayDetail: (Long, Long) -> Unit,
     onSelectPage: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -266,9 +270,6 @@ private fun HomePage(
             weather = weather,
             unit = uiState.preferences.temperatureUnit,
             showsLocationName = false,
-            // Tapping the hero block pushes the full detail screen, the push half of the
-            // navigation hierarchy, reachable from Home.
-            onClick = { onOpenDetail(weather.locationId) },
             modifier = Modifier.padding(Spacing.md),
         )
 
@@ -300,19 +301,48 @@ private fun HomePage(
             modifier = Modifier.padding(bottom = Spacing.md),
         )
 
+        // The forecast picture. Both sections draw nothing when the forecast has not arrived, so a
+        // page whose current reading loaded first is not left with empty chart frames.
+        page.forecast.data?.let { forecast ->
+            TemperatureTrendSection(
+                forecast = forecast,
+                unit = uiState.preferences.temperatureUnit,
+            )
+            DailyRangesSection(
+                forecast = forecast,
+                unit = uiState.preferences.temperatureUnit,
+                onDaySelected = { epochDay -> onOpenDayDetail(weather.locationId, epochDay) },
+            )
+        }
+
+        SectionHeader(
+            title = stringResource(R.string.detail_section_conditions),
+            modifier = Modifier.padding(
+                start = Spacing.md,
+                end = Spacing.md,
+                top = Spacing.md,
+                bottom = Spacing.sm,
+            ),
+        )
+
         SunPathSection(
             weather = weather,
             modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
         )
 
         WeatherDetailGrid(
-            // Six tiles here, eight on the detail screen: Home is a glance, and the derived
-            // readings are why someone taps through.
+            // All eight tiles, including the derived dew point and length of day.
             details = weather.toDetails(
                 preferences = uiState.preferences,
                 labels = rememberWeatherDetailLabels(),
+                includeDerived = true,
             ),
             modifier = Modifier.padding(horizontal = Spacing.md),
+        )
+
+        ObservedAtFooter(
+            observedAt = weather.observedAt,
+            modifier = Modifier.padding(Spacing.md),
         )
     }
 }
@@ -410,7 +440,7 @@ private fun TodayLoadingPreview() {
             onRefresh = {},
             onDismissBanner = {},
             onSelectPage = {},
-            onOpenDetail = {},
+            onOpenDayDetail = { _, _ -> },
             onAddLocation = {},
         )
     }
@@ -425,7 +455,7 @@ private fun TodayEmptyPreview() {
             onRefresh = {},
             onDismissBanner = {},
             onSelectPage = {},
-            onOpenDetail = {},
+            onOpenDayDetail = { _, _ -> },
             onAddLocation = {},
         )
     }

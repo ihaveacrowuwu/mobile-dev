@@ -99,7 +99,6 @@ private struct WeatherDetailTile: View {
     let detail: WeatherDetail
 
     /// The tint of the page this tile is on, if it has one.
-    @Environment(\.weatherSurfaceTint) private var weatherSurfaceTint
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -133,20 +132,7 @@ private struct WeatherDetailTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.md)
-        // The surface first, then a whisper of the page's mood over it. Layered rather than
-        // blended into a single colour so the base stays the one the system guarantees contrast
-        // against, the tile belongs to a warm page or a cold one without any text on it becoming
-        // a contrast problem that has to be re-checked per condition.
-        .background {
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .fill(Color.skySurface)
-                .overlay {
-                    if let weatherSurfaceTint {
-                        RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .fill(weatherSurfaceTint.opacity(tintOpacity))
-                    }
-                }
-        }
+        .frostedCard()
         // One announcement per tile. Without this, VoiceOver reads "Humidity" and "69%" as two
         // unrelated fragments and the pairing is lost. The bar is decorative, it says the same
         // thing as the value.
@@ -162,13 +148,6 @@ private struct WeatherDetailTile: View {
         return "\(detail.label), \(detail.value)"
     }
 
-    /// Enough to be felt when swiping between a clear place and an overcast one, little enough
-    /// that the tile still reads as a surface rather than a coloured chip.
-    ///
-    /// Higher than it was, and lighter for it: the previous 10% of the *mood* hue put a mid-dark
-    /// slate over a white card, and the result read as dirty grey beside the near-white glass next
-    /// to it. 45% of the container keeps a light card light and still carries the condition.
-    private let tintOpacity: Double = 0.45
 }
 
 #Preview {

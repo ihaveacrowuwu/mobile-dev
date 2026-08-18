@@ -10,6 +10,7 @@ import com.nauhaan.skycast.testing.FakeWeatherRepository
 import com.nauhaan.skycast.testing.MainDispatcherRule
 import com.nauhaan.skycast.testing.sampleLocation
 import com.nauhaan.skycast.testing.sampleWeather
+import com.nauhaan.skycast.ui.common.SelectedLocationStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -43,8 +44,11 @@ class HomeViewModelTest {
     private lateinit var settingsRepository: FakeSettingsRepository
     private lateinit var viewModel: HomeViewModel
 
+    private lateinit var selectedLocationStore: SelectedLocationStore
+
     @Before
     fun setUp() {
+        selectedLocationStore = SelectedLocationStore()
         weatherRepository = FakeWeatherRepository()
         locationRepository = FakeLocationRepository()
         settingsRepository = FakeSettingsRepository()
@@ -55,6 +59,7 @@ class HomeViewModelTest {
                 settingsRepository = settingsRepository,
             ),
             weatherRepository = weatherRepository,
+            selectedLocationStore = selectedLocationStore,
         )
     }
 
@@ -97,6 +102,26 @@ class HomeViewModelTest {
 
         assertEquals(0, viewModel.uiState.value.selectedIndex)
         assertNotNull(viewModel.uiState.value.selected)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `the page on screen is published for the other tabs to follow`() = runTest {
+        // METAR and Moon follow the page you are looking at. Without this they would keep showing
+        // the favourite's airport and moonrise.
+        val london = sampleLocation(id = 1, isPrimary = true)
+        val male = sampleLocation(id = 2).copy(name = "Mal\u00e9")
+        locationRepository.savedLocations.value = listOf(london, male)
+        weatherRepository.currentWeather.value = DataState.success(sampleWeather())
+
+        val collectJob = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+        assertEquals(london.id, selectedLocationStore.selectedLocationId.value)
+
+        viewModel.selectPage(1)
+        advanceUntilIdle()
+        assertEquals(male.id, selectedLocationStore.selectedLocationId.value)
 
         collectJob.cancel()
     }

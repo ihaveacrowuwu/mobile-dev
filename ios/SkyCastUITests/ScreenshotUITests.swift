@@ -134,26 +134,11 @@ final class ScreenshotUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    /// The four tabs, as fractions across the tab bar.
-    ///
-    /// Coordinate taps rather than element queries. Locating the
-    /// FAB, a forecast row and the London row by label and predicate; when one of those
-    /// queries failed to match, XCUITest neither failed nor progressed and the run sat on the first
-    /// screen indefinitely. A normalised coordinate always resolves, so a wrong guess produces a
-    /// visibly wrong screenshot, which is a diagnosable failure rather than a hang.
-    /// Horizontal centre of each tab, as a fraction of screen width.
-    ///
     /// The five tab-bar destinations, addressed by their label.
     ///
-    /// Was a table of normalised x-fractions, and that cost two silent mis-captures. The four-tab
-    /// fractions put `locations` on the new Moon button; measured five-tab fractions then still missed
-    /// `settings`, because that tap follows a `back()` and the bar is animating back in when it lands.
-    /// A coordinate tap that hits nothing is indistinguishable from success, the capture is written
-    /// either way, showing whatever screen was already up.
-    ///
     /// Querying `app.tabBars.buttons[label]` waits for the button to exist and fails loudly if it
-    /// never does, which is what `NavigationFlowUITests` has always done. Coordinates remain below
-    /// only for content the accessibility tree does not name uniquely, like a specific list row.
+    /// never does. Coordinates remain below only for content the accessibility tree does not name
+    /// uniquely, like a specific list row.
     private enum Tab: String {
         case home = "Home"
         case metar = "METAR"
@@ -164,17 +149,10 @@ final class ScreenshotUITests: XCTestCase {
 
     private func selectTab(_ tab: Tab) {
         let button = app.tabBars.buttons[tab.rawValue]
-        if !button.waitForExistence(timeout: 2) {
-            // The real cause of the Settings mis-capture, and it took a screenshot of the tab bar to
-            // see it: `tabBarMinimizeBehavior(.onScrollDown)` collapses the bar to a single pill
-            // showing only the current tab, so the other four buttons are not in the accessibility
-            // tree at all. Any earlier `scrollDown()` leaves it that way. Scrolling back up expands
-            // it, which is exactly what a user does.
-            app.swipeDown()
-            _ = button.waitForExistence(timeout: 5)
-        }
+        // The assertion below turns a missed tab into a failure instead of a screenshot of the
+        // wrong screen.
         XCTAssertTrue(
-            button.exists,
+            button.waitForExistence(timeout: 10),
             "The \(tab.rawValue) tab never appeared, so this capture would have stored the previous screen"
         )
         button.tap()

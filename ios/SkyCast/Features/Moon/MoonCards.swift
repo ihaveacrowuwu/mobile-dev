@@ -153,7 +153,6 @@ struct MoonPathCard: View {
 struct MoonDistanceCard: View {
     let snapshot: MoonSnapshot
 
-    @Environment(\.weatherSurfaceTint) private var weatherSurfaceTint
 
     var body: some View {
         HStack(spacing: Spacing.md) {
@@ -177,16 +176,7 @@ struct MoonDistanceCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Spacing.md)
-        .background {
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .fill(Color.skySurface)
-                .overlay {
-                    if let weatherSurfaceTint {
-                        RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .fill(weatherSurfaceTint.opacity(tintOpacity))
-                    }
-                }
-        }
+        .frostedCard()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "Distance \(distanceLabel), \(Self.description(for: snapshot.distanceBand)). "
@@ -218,7 +208,6 @@ struct MoonDistanceCard: View {
         String(format: "%.2f", snapshot.angularDiameterDegrees)
     }
 
-    private let tintOpacity: Double = 0.45
 }
 
 /// The next four principal phases, each with the Moon drawn as it will look.
@@ -235,7 +224,7 @@ struct UpcomingPhasesCard: View {
                 row(phase)
             }
         }
-        .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
+        .frostedCard()
     }
 
     private func row(_ phase: PrincipalPhase) -> some View {

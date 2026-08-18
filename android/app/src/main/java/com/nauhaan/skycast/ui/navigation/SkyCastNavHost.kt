@@ -86,7 +86,9 @@ fun SkyCastNavHost(
             exitTransition = { fadeOut(fadeSpec) },
         ) {
             HomeScreen(
-                onNavigateToLocationDetail = navigator::navigateToLocationDetail,
+                // Home pushes the day-detail screen from its day rows. The location-detail screen
+                // is reachable from the Locations tab.
+                onNavigateToDayDetail = navigator::navigateToDayDetail,
                 onNavigateToAddLocation = navigator::navigateToAddLocation,
                 onWeatherTintChanged = onTodayWeatherTintChanged,
             )

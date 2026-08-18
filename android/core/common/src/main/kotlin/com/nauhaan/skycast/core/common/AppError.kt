@@ -39,6 +39,15 @@ sealed class AppError : Exception() {
     /** Reading or writing the local database failed. */
     data class Storage(val detail: String) : AppError()
 
+    /**
+     * The user already has [com.nauhaan.skycast.domain.model.SavedLocation.MAX_SAVED] places saved.
+     *
+     * A typed case rather than a boolean returned from `save`, because that is what makes the compiler
+     * point at every screen that has to say something about it. It also travels the same path every
+     * other failure does, so the Add-location screen needs no special branch to display it.
+     */
+    data class LocationLimitReached(val limit: Int) : AppError()
+
     /** Anything we did not anticipate. Keeps the cause for logging. */
     data class Unknown(override val cause: Throwable?) : AppError()
 
@@ -51,7 +60,8 @@ sealed class AppError : Exception() {
         get() =
             when (this) {
                 Offline, Timeout, RateLimited, is Server, is Unknown -> true
-                NotFound, Unauthorized, is Decoding, is Storage -> false
+                // Retrying a full list never empties it; the user has to remove a place first.
+                NotFound, Unauthorized, is Decoding, is Storage, is LocationLimitReached -> false
             }
 
     /** True when the cause is the user's connectivity rather than our service. */

@@ -22,6 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
+import com.nauhaan.skycast.core.designsystem.theme.weatherSurfaceTint
 import com.nauhaan.skycast.ui.navigation.SkyCastNavHost
 import com.nauhaan.skycast.ui.navigation.TopLevelDestination
 import com.nauhaan.skycast.ui.navigation.currentTopLevelDestination
@@ -38,13 +42,17 @@ import com.nauhaan.skycast.ui.navigation.rememberSkyCastNavigator
  * CompositionLocal the tiles read cannot reach it.
  */
 @Composable
-fun RootScreen(modifier: Modifier = Modifier) {
+fun RootScreen(modifier: Modifier = Modifier, backgroundViewModel: AppBackgroundViewModel = hiltViewModel()) {
     val navigator = rememberSkyCastNavigator()
     val currentTab = navigator.currentTopLevelDestination()
+    val background by backgroundViewModel.background.collectAsStateWithLifecycle()
 
     var todayTint by remember { mutableStateOf<Color?>(null) }
     val base = NavigationBarDefaults.containerColor
+    // On Home the bar shares the page you are looking at; everywhere else it shares the favourite's,
+    // which is what the background behind it is drawing too.
     val tint = todayTint.takeIf { currentTab == TopLevelDestination.HOME }
+        ?: weatherSurfaceTint(background.condition, background.isDaytime)
     // Effects spec, not spatial: this is a colour, and a spatial spec would overshoot past the
     // target colour on the way to it.
     val barContainer by animateColorAsState(
@@ -55,6 +63,9 @@ fun RootScreen(modifier: Modifier = Modifier) {
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        // Transparent, so the weather background below shows through the shell rather than being
+        // covered by the theme's surface colour.
+        containerColor = Color.Transparent,
         bottomBar = {
             AnimatedVisibility(visible = currentTab != null) {
                 NavigationBar(containerColor = barContainer) {
@@ -84,17 +95,25 @@ fun RootScreen(modifier: Modifier = Modifier) {
             }
         },
     ) { innerPadding ->
-        SkyCastNavHost(
-            navigator = navigator,
-            modifier = Modifier
-                .padding(innerPadding)
-                // `padding` applies the insets but does not mark them handled, so a pushed
-                // screen's own Scaffold adds the status-bar inset a second time and its app bar
-                // sits a status bar's height too low. `consumeWindowInsets` is what tells
-                // descendants these are already accounted for.
-                .consumeWindowInsets(innerPadding),
-            onTodayWeatherTintChanged = { todayTint = it },
-        )
+        // The favourite's weather, behind the whole graph. Home and the Moon tab draw their own over
+        // the top of it; every other screen simply sits on it. See AppBackgroundViewModel.
+        WeatherBackground(
+            condition = background.condition,
+            isDaytime = background.isDaytime,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            SkyCastNavHost(
+                navigator = navigator,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    // `padding` applies the insets but does not mark them handled, so a pushed
+                    // screen's own Scaffold adds the status-bar inset a second time and its app bar
+                    // sits a status bar's height too low. `consumeWindowInsets` is what tells
+                    // descendants these are already accounted for.
+                    .consumeWindowInsets(innerPadding),
+                onTodayWeatherTintChanged = { todayTint = it },
+            )
+        }
     }
 }
 

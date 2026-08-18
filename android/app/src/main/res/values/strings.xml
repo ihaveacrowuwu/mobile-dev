@@ -62,6 +62,7 @@
     <string name="error_decoding_message">We couldn\'t read the weather data. This is a bug, please report it.</string>
     <string name="error_storage_title">Storage problem</string>
     <string name="error_storage_message">Saved data couldn\'t be read. Clearing the cache in Settings may help.</string>
+    <string name="error_location_limit_title">That is as many places as SkyCast holds</string>
     <string name="error_unknown_title">Something went wrong</string>
     <string name="error_unknown_message">An unexpected error occurred. Please try again.</string>
 
@@ -158,8 +159,8 @@
     <string name="locations_empty_title">No saved places</string>
     <string name="locations_empty_message">Search for a city to start tracking its weather.</string>
     <!-- %1$s is the place name, so TalkBack says which row the control belongs to. -->
-    <string name="locations_set_primary">Show %1$s on the Home tab</string>
-    <string name="locations_is_primary">%1$s is shown on the Home tab</string>
+    <string name="locations_set_primary">Make %1$s the favourite, the app will open here</string>
+    <string name="locations_is_primary">%1$s is the favourite, the app opens here</string>
     <string name="locations_delete">Remove %1$s</string>
 
     <!-- ── Add location (search) ────────────────────────────────────────── -->
@@ -241,5 +242,14 @@
     <plurals name="moon_relative_in_days">
         <item quantity="one">in %1$d day</item>
         <item quantity="other">in %1$d days</item>
+    </plurals>
+    <string name="error_location_limit_message">The list is full, SkyCast holds a maximum of %1$d. Remove one on the Locations tab to make room.</string>
+    <plurals name="locations_limit_reached">
+        <item quantity="one">%1$d place saved, which is the maximum. Remove it to add another.</item>
+        <item quantity="other">All %1$d places saved. Remove one to add another.</item>
+    </plurals>
+    <plurals name="locations_count">
+        <item quantity="one">%1$d of %2$d places saved</item>
+        <item quantity="other">%1$d of %2$d places saved</item>
     </plurals>
 </resources>
