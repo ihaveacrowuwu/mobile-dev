@@ -132,13 +132,16 @@ struct LocationDetailScreen: View {
 
     @Environment(AppContainer.self) private var container
     @State private var viewModel: LocationDetailViewModel?
+    /// The pushed day. The stack is driven from a value so the rows stay reusable.
+    @State private var selectedDay: Date?
 
     var body: some View {
         Group {
             if let viewModel {
                 LocationDetailContent(
                     state: viewModel.state,
-                    onRefresh: { await viewModel.refresh() }
+                    onRefresh: { await viewModel.refresh() },
+                    onSelectDay: { selectedDay = $0 }
                 )
             } else {
                 LoadingView()
@@ -146,6 +149,9 @@ struct LocationDetailScreen: View {
         }
         .navigationTitle(viewModel?.state.location?.name ?? "Location")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $selectedDay) { date in
+            DayDetailScreen(locationID: locationID, date: date)
+        }
         .task {
             if viewModel == nil {
                 viewModel = LocationDetailViewModel(
@@ -165,6 +171,7 @@ struct LocationDetailScreen: View {
 struct LocationDetailContent: View {
     let state: LocationDetailUiState
     let onRefresh: () async -> Void
+    var onSelectDay: ((Date) -> Void)?
 
     var body: some View {
         if state.isMissing {
@@ -205,7 +212,7 @@ struct LocationDetailContent: View {
                             showsLocationName: false
                         )
 
-                        ForecastSections(state: state)
+                        ForecastSections(state: state, onSelectDay: onSelectDay)
 
                         SectionHeader("Conditions")
 
@@ -257,8 +264,9 @@ struct LocationDetailContent: View {
 /// Silent when it has not, since the forecast and the current reading are separate requests.
 private struct ForecastSections: View {
     let state: LocationDetailUiState
+    var onSelectDay: ((Date) -> Void)?
 
-    /// Enough to fill the strip without turning the top of the screen into a second Forecast tab.
+    /// Enough to fill the strip without turning the top of the screen into a second forecast list.
     private let hoursOnStrip = 8
 
     var body: some View {
@@ -289,7 +297,9 @@ private struct ForecastSections: View {
 
             if !days.isEmpty {
                 SectionHeader("Next days")
-                DailyRangeList(days: days)
+                DailyRangeList(days: days, onDaySelected: onSelectDay.map { action in
+                    { day in action(day.date) }
+                })
             }
         }
     }

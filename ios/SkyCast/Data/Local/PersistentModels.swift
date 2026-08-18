@@ -183,11 +183,88 @@ final class PersistentForecastReading {
 // MARK: - Container
 
 /// Builds the app's `ModelContainer`.
+/// The nearest airport's METAR for one saved location, cached.
+///
+/// One row per location, replaced on refresh, so the store cannot accumulate observations. Adding a
+/// model is an additive schema change, which SwiftData migrates on its own, no versioned plan is
+/// needed, unlike the Room side where the same change is an explicit `CREATE TABLE`.
+///
+/// The cloud layers are stored as one string rather than a related model. They are read and written
+/// only as a whole, never queried, and a second entity plus a relationship for "FEW045 SCT120" would
+/// be structure with no purpose. Format is `COVER:BASE` pairs separated by `;`.
+@Model
+final class PersistentMetar {
+    #Unique<PersistentMetar>([\.locationID])
+
+    var locationID: Int64
+    var stationID: String
+    var stationName: String
+    var distanceKm: Double
+    var latitude: Double
+    var longitude: Double
+    var elevationMetres: Int
+    var observedAt: Date
+    var temperatureCelsius: Double?
+    var dewPointCelsius: Double?
+    var windDirectionDegrees: Int?
+    var windSpeedKnots: Int?
+    var visibilityStatuteMiles: Double?
+    var visibilityIsOrGreater: Bool
+    var altimeterHectopascals: Double?
+    var clouds: String
+    var flightCategoryRawValue: String
+    var raw: String
+    var cachedAt: Date
+
+    init(
+        locationID: Int64,
+        stationID: String,
+        stationName: String,
+        distanceKm: Double,
+        latitude: Double,
+        longitude: Double,
+        elevationMetres: Int,
+        observedAt: Date,
+        temperatureCelsius: Double?,
+        dewPointCelsius: Double?,
+        windDirectionDegrees: Int?,
+        windSpeedKnots: Int?,
+        visibilityStatuteMiles: Double?,
+        visibilityIsOrGreater: Bool,
+        altimeterHectopascals: Double?,
+        clouds: String,
+        flightCategoryRawValue: String,
+        raw: String,
+        cachedAt: Date
+    ) {
+        self.locationID = locationID
+        self.stationID = stationID
+        self.stationName = stationName
+        self.distanceKm = distanceKm
+        self.latitude = latitude
+        self.longitude = longitude
+        self.elevationMetres = elevationMetres
+        self.observedAt = observedAt
+        self.temperatureCelsius = temperatureCelsius
+        self.dewPointCelsius = dewPointCelsius
+        self.windDirectionDegrees = windDirectionDegrees
+        self.windSpeedKnots = windSpeedKnots
+        self.visibilityStatuteMiles = visibilityStatuteMiles
+        self.visibilityIsOrGreater = visibilityIsOrGreater
+        self.altimeterHectopascals = altimeterHectopascals
+        self.clouds = clouds
+        self.flightCategoryRawValue = flightCategoryRawValue
+        self.raw = raw
+        self.cachedAt = cachedAt
+    }
+}
+
 enum ModelContainerFactory {
     static let schema = Schema([
         PersistentSavedLocation.self,
         PersistentWeather.self,
         PersistentForecastReading.self,
+        PersistentMetar.self,
     ])
 
     /// The on-disk container used by the app.

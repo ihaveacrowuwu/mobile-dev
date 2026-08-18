@@ -96,7 +96,7 @@ implemented:
 | **About & licences** | In-app attribution for OpenWeather and dependency licences (MO4). | ✅ Built |
 | **Accessibility** | VoiceOver/TalkBack labels, combined announcements for grouped readings, Dynamic Type / font scaling, 44–48 pt touch targets. | ✅ Built |
 | **Graceful missing-key state** | With no API key the app still builds and runs, showing setup instructions rather than crashing or failing to compile. | ✅ Built |
-| **Forecast list** | Five days for the primary location, each row tappable through to the 3-hourly breakdown. | ✅ Built |
+| **Five-day forecast** | On a place's detail screen, beside the trend chart and the hourly strip: a comparable high/low bar per day, each tappable through to its hour-by-hour breakdown. It had its own tab until METAR took that slot, the same content, one tap from Home and better for sitting next to the chart. | ✅ Built |
 | **Day detail** | Hour-by-hour readings for one forecast day: temperature, wind, chance of rain, with day/night artwork per reading. | ✅ Built |
 | **Locations management** | Add by geocoding search (debounced, 400 ms), set which place Today shows, remove a place. The last remaining place cannot be deleted. | ✅ Built |
 | **Location detail** | The full picture for any saved place: the next hours, a temperature trend chart across the forecast period, a comparable high/low bar per day, and eight readings, humidity, wind, pressure, visibility, sunrise, sunset, dew point and length of day, plus coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
@@ -108,6 +108,7 @@ implemented:
 | **Value-aware detail tiles** | Each reading shows where it sits on its own scale, so "1014 hPa" reads as an ordinary day rather than as a number. | ✅ Built |
 | **Per-metric visuals** | Each reading draws itself the way it should: an arc gauge for anything with a range, a compass for wind (pointing where it blows *from*), and a full-width arc for the sun's day with a marker at now. Surfaces wind direction and cloud cover, both fetched since the first commit and never shown. | ✅ Built |
 | **Draggable page indicator** | Centred under the reading; press and slide to run through your places, with a haptic tick per change. `UIPageControl` on iOS, drawn by hand on Android. | ✅ Built |
+| **METAR** | The nearest reporting airport's aviation observation: flight category, the raw coded line, and the decoded fields in knots, statute miles and inches of mercury. Nearest station chosen by great-circle distance; cached, so it works offline and says how old the observation is. | ✅ Built |
 | **Derived readings** | Dew point (from temperature and humidity, which OpenWeather's free tier does not send) and length of day, on the detail screen. | ✅ Built |
 | **Temperature trend chart** | The whole forecast period as one line, with its extremes annotated, Swift Charts on iOS, drawn on a Compose `Canvas` on Android, no chart dependency on either. | ✅ Built |
 | **Theming that follows the weather** | The condition's hue reaches the detail tiles and, on Android, the navigation bar while Today is open, so the screen shifts as you swipe between a clear place and an overcast one. | ✅ Built |
@@ -130,8 +131,8 @@ implemented:
 
 | Screen | iOS | Android |
 | --- | --- | --- |
-| **Today** | ![iOS Today](docs/screenshots/ios/01-today.png) | ![Android Today](docs/screenshots/android/01-today.png) |
-| **Forecast** | ![iOS Forecast](docs/screenshots/ios/02-forecast.png) | ![Android Forecast](docs/screenshots/android/02-forecast.png) |
+| **Home** | ![iOS Home](docs/screenshots/ios/01-home.png) | ![Android Home](docs/screenshots/android/01-home.png) |
+| **METAR** | ![iOS METAR](docs/screenshots/ios/02-metar.png) | ![Android METAR](docs/screenshots/android/02-metar.png) |
 | **Locations** | ![iOS Locations](docs/screenshots/ios/03-locations.png) | ![Android Locations](docs/screenshots/android/03-locations.png) |
 | **Add location** | ![iOS Add](docs/screenshots/ios/04-add-location.png) | ![Android Add](docs/screenshots/android/04-add-location.png) |
 | **Settings** | ![iOS Settings](docs/screenshots/ios/05-settings.png) | ![Android Settings](docs/screenshots/android/05-settings.png) |

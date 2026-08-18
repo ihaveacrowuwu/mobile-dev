@@ -61,18 +61,24 @@ final class ScreenshotUITests: XCTestCase {
         selectTab(.locations)
         selectTab(.home)
         settle(seconds: 2)
-        try capture("01-today")
+        try capture("01-home")
 
-        selectTab(.forecast)
-        try capture("02-forecast")
-        tapFirstForecastRow()
-        try capture("10-day-detail")
-        back()
+        selectTab(.metar)
+        try capture("02-metar")
+        // The day-detail screen is now reached from a place's detail screen, captured below.
 
         selectTab(.locations)
         try capture("03-locations")
         tapFirstLocationRow()
         try capture("06-location-detail")
+        // The day-detail screen hangs off this screen's day rows now that the Forecast tab is gone.
+        // Well down the page: the identity block, the reading, the hourly strip and the trend chart
+        // all come first, so the rows are below the fold.
+        scrollDown()
+        scrollDown()
+        tapFirstDayRow()
+        try capture("10-day-detail")
+        back()
         back()
 
         tapAddLocation()
@@ -125,13 +131,13 @@ final class ScreenshotUITests: XCTestCase {
     /// The four tabs, as fractions across the tab bar.
     ///
     /// Coordinate taps rather than element queries. Locating the
-    /// FAB, the first forecast row and the London row by label and predicate; when one of those
+    /// FAB, a forecast row and the London row by label and predicate; when one of those
     /// queries failed to match, XCUITest neither failed nor progressed and the run sat on the first
     /// screen indefinitely. A normalised coordinate always resolves, so a wrong guess produces a
     /// visibly wrong screenshot, which is a diagnosable failure rather than a hang.
     private enum Tab: CGFloat {
         case home = 0.16
-        case forecast = 0.38
+        case metar = 0.38
         case locations = 0.62
         case settings = 0.85
     }
@@ -145,19 +151,26 @@ final class ScreenshotUITests: XCTestCase {
         tapNormalised(x: 0.5, y: 0.24)
     }
 
-    /// The first forecast row.
-    ///
-    /// Deeper than the Locations row because the Forecast list carries a section header for the
-    /// place name. Both were 0.24 at first, and the forecast tap landed on the card's top edge and
-    /// navigated nowhere, which produced a "day detail" screenshot byte-identical to the forecast
-    /// list. Comparing file sizes is what caught it.
-    private func tapFirstForecastRow() {
-        tapNormalised(x: 0.5, y: 0.31)
-    }
-
     /// The `+` in the navigation bar of the Locations tab.
     private func tapAddLocation() {
         tapNormalised(x: 0.93, y: 0.105)
+    }
+
+    /// Scrolls the current screen up by most of its height, for content below the fold.
+    private func scrollDown() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+        start.press(forDuration: 0.05, thenDragTo: end)
+        settle(seconds: 1)
+    }
+
+    /// A day row in the detail screen's "Next days" list, once scrolled into view.
+    ///
+    /// Near the top: two scrolls put the list there. 0.62 was the first guess and landed in the gap
+    /// between the list and the tiles below it, which produced a "day detail" capture that was
+    /// really the detail screen, the same class of silent miss as the byte-identical shots earlier.
+    private func tapFirstDayRow() {
+        tapNormalised(x: 0.5, y: 0.15)
     }
 
     private func back() {

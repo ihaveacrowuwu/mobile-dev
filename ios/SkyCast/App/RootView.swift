@@ -19,7 +19,7 @@ import SwiftUI
 /// tab-bar buttons from each `Tab`'s label, and an identifier set on either the `Tab` or its
 /// content does not reach the generated button, verified by dumping the accessibility tree.
 /// `SkyCastUITests` therefore queries by label *scoped to* `app.tabBars`, which is
-/// unambiguous even though "Forecast" also appears as a screen heading.
+/// unambiguous even though "METAR" also appears as a screen heading.
 ///
 /// (Android needs the opposite: `TopLevelDestination.testTag`, because Compose offers no
 /// equivalent scoping and the bar label collides with the heading.)
@@ -47,7 +47,7 @@ struct RootView: View {
 /// The four top-level destinations.
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case home
-    case forecast
+    case metar
     case locations
     case settings
 
@@ -58,7 +58,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .home: "Home"
-        case .forecast: "Forecast"
+        case .metar: "METAR"
         case .locations: "Locations"
         case .settings: "Settings"
         }
@@ -67,7 +67,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .home: "house"
-        case .forecast: "calendar"
+        case .metar: "airplane"
         case .locations: "mappin.and.ellipse"
         case .settings: "gearshape"
         }
@@ -77,7 +77,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var destination: some View {
         switch self {
         case .home: HomeScreen()
-        case .forecast: ForecastScreen()
+        case .metar: MetarScreen()
         case .locations: LocationsScreen()
         case .settings: SettingsScreen()
         }

@@ -26,7 +26,7 @@ final class NavigationFlowUITests: XCTestCase {
 
     /// A tab-bar button, located by label but **scoped to the tab bar**.
     ///
-    /// Scoping is what makes the label safe: "Forecast" also appears as that screen's
+    /// Scoping is what makes the label safe: "METAR" also appears as that screen's
     /// heading, but `app.tabBars` excludes it. An accessibility identifier would be more
     /// robust to copy changes, but SwiftUI does not propagate one onto the button it
     /// generates for a `Tab`, see the note in `RootView.swift`.
@@ -46,7 +46,7 @@ final class NavigationFlowUITests: XCTestCase {
     }
 
     func testEveryTabIsReachable() {
-        for title in ["Home", "Forecast", "Locations", "Settings"] {
+        for title in ["Home", "METAR", "Locations", "Settings"] {
             let tab = tabButton(title)
             XCTAssertTrue(tab.waitForExistence(timeout: 5), "Tab \(title) is missing")
             tab.tap()
@@ -77,11 +77,10 @@ final class NavigationFlowUITests: XCTestCase {
 
     /// Locations → location detail → back.
     ///
-    /// The **second** push route, deliberately chosen over Forecast → day detail. A day row only
-    /// exists once a forecast has been fetched, so asserting on one would make this test depend on
-    /// a live network and a valid API key, it would then fail on a reviewer's machine for reasons
-    /// that have nothing to do with navigation. A saved location, by contrast, comes from the
-    /// debug seeder and is read from SwiftData, so this route is deterministic offline.
+    /// The **second** push route. A day row only exists once a forecast has been fetched, so
+    /// asserting on one would make this test depend on a live network and a valid API key. A saved
+    /// location comes from the debug seeder and is read from SwiftData, so this route is
+    /// deterministic offline.
     ///
     /// The day-detail push is verified manually and captured in `docs/screenshots/`.
     func testLocationDetailPushesAndBackReturns() {

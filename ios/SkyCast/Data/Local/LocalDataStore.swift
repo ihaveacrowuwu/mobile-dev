@@ -181,6 +181,28 @@ actor LocalDataStore {
         try modelContext.save()
     }
 
+    // MARK: - METAR cache
+
+    func cachedMetar(locationID: Int64) throws -> MetarReport? {
+        var descriptor = FetchDescriptor<PersistentMetar>(
+            predicate: #Predicate { $0.locationID == locationID }
+        )
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first.map(MetarPersistenceMapper.report(from:))
+    }
+
+    /// Upsert, for the same reason as the weather cache: exactly one observation per place.
+    func upsert(_ report: MetarReport, locationID: Int64) throws {
+        let existing = try modelContext.fetch(
+            FetchDescriptor<PersistentMetar>(predicate: #Predicate { $0.locationID == locationID })
+        )
+        for model in existing {
+            modelContext.delete(model)
+        }
+        modelContext.insert(MetarPersistenceMapper.persistent(from: report, locationID: locationID))
+        try modelContext.save()
+    }
+
     // MARK: - Maintenance
 
     /// Clears cached weather but **not** saved locations: cache is disposable, the user's
@@ -188,6 +210,8 @@ actor LocalDataStore {
     func clearCache() throws {
         try modelContext.delete(model: PersistentWeather.self)
         try modelContext.delete(model: PersistentForecastReading.self)
+        // The METAR table too, or "clear cache" would be a half-truth.
+        try modelContext.delete(model: PersistentMetar.self)
         try modelContext.save()
     }
 

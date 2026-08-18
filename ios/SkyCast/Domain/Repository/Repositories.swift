@@ -113,3 +113,23 @@ protocol SettingsRepository: AnyObject {
     func setThemeMode(_ mode: ThemeMode)
     func reset()
 }
+
+/// The nearest airport's METAR for a saved location, offline-first.
+///
+/// Same contract as ``WeatherRepository``: emit the cache immediately, then attempt a refresh, and
+/// never discard a cached observation because the network failed. A METAR an hour old is still a real
+/// observation, arguably more clearly so than a current-conditions reading, since it carries the
+/// time it was taken.
+/// The nearest airport's METAR for a saved location, offline-first.
+///
+/// Same contract as ``WeatherRepository``: emit the cache immediately, then attempt a refresh, and
+/// never discard a cached observation because the network failed.
+protocol MetarRepository: Sendable {
+    func nearestMetar(for location: SavedLocation) -> AsyncStream<DataState<MetarReport>>
+
+    /// Forces a fetch, bypassing the TTL. Returns the error, or `nil` on success.
+    func refresh(_ location: SavedLocation) async -> AppError?
+
+    /// Drops every cached observation. Called from Settings alongside the weather cache.
+    func clearCache() async
+}

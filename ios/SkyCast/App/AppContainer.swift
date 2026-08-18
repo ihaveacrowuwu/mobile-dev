@@ -14,17 +14,20 @@ import SwiftUI
 final class AppContainer {
     let modelContainer: ModelContainer
     let weatherRepository: any WeatherRepository
+    let metarRepository: any MetarRepository
     let locationRepository: any LocationRepository
     let settingsStore: SettingsStore
 
     private init(
         modelContainer: ModelContainer,
         weatherRepository: any WeatherRepository,
+        metarRepository: any MetarRepository,
         locationRepository: any LocationRepository,
         settingsStore: SettingsStore
     ) {
         self.modelContainer = modelContainer
         self.weatherRepository = weatherRepository
+        self.metarRepository = metarRepository
         self.locationRepository = locationRepository
         self.settingsStore = settingsStore
     }
@@ -56,6 +59,13 @@ final class AppContainer {
                 local: local,
                 networkMonitor: monitor
             ),
+            metarRepository: MetarRepositoryImpl(
+                // Its own client: OpenWeatherAPIClient appends our key to every URL, and this
+                // endpoint neither needs one nor should receive it. See AviationAPIClient.
+                api: AviationAPIClient(),
+                local: local,
+                networkMonitor: monitor
+            ),
             locationRepository: LocationRepositoryImpl(api: api, local: local),
             settingsStore: SettingsStore()
         )
@@ -77,6 +87,11 @@ final class AppContainer {
             modelContainer: modelContainer,
             weatherRepository: WeatherRepositoryImpl(
                 api: api,
+                local: local,
+                networkMonitor: monitor
+            ),
+            metarRepository: MetarRepositoryImpl(
+                api: AviationAPIClient(),
                 local: local,
                 networkMonitor: monitor
             ),

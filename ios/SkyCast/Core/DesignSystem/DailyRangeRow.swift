@@ -24,13 +24,28 @@ struct DayRange: Identifiable, Equatable {
 }
 
 /// The forecast's days, each as a labelled range bar.
+///
+/// `onDaySelected` makes each row a button through to that day's hour-by-hour breakdown. `nil`
+/// leaves the rows inert, which is what a preview or a summary wants.
 struct DailyRangeList: View {
     let days: [DayRange]
+    var onDaySelected: ((DayRange) -> Void)?
 
     var body: some View {
         VStack(spacing: Spacing.sm) {
             ForEach(days) { day in
-                DailyRangeRow(day: day)
+                if let onDaySelected {
+                    // A Button around the row, not a tap gesture: it brings the press feedback, the
+                    // keyboard focus ring and the "Button" VoiceOver trait, and the whole row is the
+                    // target, which clears the 44-point minimum where a 6-point bar never could.
+                    Button { onDaySelected(day) } label: {
+                        DailyRangeRow(day: day)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Shows the hour-by-hour breakdown")
+                } else {
+                    DailyRangeRow(day: day)
+                }
             }
         }
     }
