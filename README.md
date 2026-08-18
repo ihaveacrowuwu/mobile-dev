@@ -390,6 +390,16 @@ mobile-dev/
    distribution.
 6. **English only.** Strings are externalised, but no translations exist and
    `androidResources.localeFilters` ships only `en`.
+7. **Four of the five Android navigation UI tests fail.** `NavigationFlowTest` disables Compose's
+   `mainClock.autoAdvance` to get past the indefinite `LoadingIndicator` animation, and that also
+   stops coroutines dispatched on Compose's UI clock from being delivered, so screens fed by a
+   `StateFlow` never leave their loading state and the assertions time out. The failures predate
+   this work: the same tests fail identically at an earlier commit, verified in a separate
+   worktree. Two of the causes *are* fixed, the suite no longer hangs for twenty minutes with no
+   output, and it no longer clicks a navigation bar that has not finished animating in, but the
+   remaining four need the suite reworked to seed a cache so no indefinite loader appears, at which
+   point auto-advance can be left on. Every other test passes: the JVM unit suites, the iOS unit and
+   UI suites, and the eight Room migration and DAO instrumented tests.
 
 ### Future improvements
 
