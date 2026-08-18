@@ -254,9 +254,13 @@ private fun TimeLabel(text: String, icon: androidx.compose.ui.graphics.vector.Im
 private fun sunArc(size: Size, until: Float = 1f): Path = Path().apply {
     val start = sunArcPoint(0f, size)
     moveTo(start.x, start.y)
-    val steps = (SUN_ARC_STEPS * until.coerceIn(0f, 1f)).toInt().coerceAtLeast(1)
+    val fraction = until.coerceIn(0f, 1f)
+    val steps = (SUN_ARC_STEPS * fraction).toInt().coerceAtLeast(1)
     for (step in 1..steps) {
-        val point = sunArcPoint(step / SUN_ARC_STEPS.toFloat() * until, size)
+        // `step / steps`, not `step / SUN_ARC_STEPS`. The latter scales by the fraction twice, so
+        // the drawn arc stopped at progress², visibly short of the sun marker, which is evaluated
+        // from the same curve at the real progress. Caught by looking at it.
+        val point = sunArcPoint(fraction * step / steps, size)
         lineTo(point.x, point.y)
     }
 }
