@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -69,6 +70,28 @@ class NavigationFlowTest {
     fun setUp() {
         hiltRule.inject()
         composeRule.mainClock.autoAdvance = false
+        awaitNavigationBar()
+    }
+
+    /**
+     * Waits for the navigation bar to be on screen before the first interaction.
+     *
+     * The bar is wrapped in `AnimatedVisibility`, and `currentBackStackEntryAsState()` is null on
+     * the very first frame, so the bar is absent to begin with and animates in once the graph has
+     * a destination. With auto-advance disabled nothing moves that animation along, so a test whose
+     * first statement clicked a tab was clicking a bar that was not there yet: "could not find any
+     * node that satisfies (TestTag = 'tab_settings')", three seconds in.
+     *
+     * Advancing the clock until the tag resolves is deterministic, unlike a sleep, and it fails
+     * loudly rather than hanging if the bar never appears.
+     */
+    private fun awaitNavigationBar() {
+        await("the navigation bar") {
+            composeRule
+                .onAllNodesWithTag(TAB_TODAY)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
     }
 
     /** Lets a navigation transition finish, deterministically rather than by sleeping. */
@@ -90,18 +113,54 @@ class NavigationFlowTest {
 
     /** Waits for real asynchronous work, such as a Room emission or a network reply, to reach the UI. */
     private fun awaitText(text: String) {
-        composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().isNotEmpty()
+        await("text \"$text\"") {
+            composeRule
+                .onAllNodesWithText(text, substring = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
         }
     }
 
     private fun awaitContentDescription(description: String) {
-        composeRule.waitUntil(TIMEOUT_MILLIS) {
+        await("content description \"$description\"") {
             composeRule
                 .onAllNodesWithContentDescription(description, substring = true)
-                .fetchSemanticsNodes()
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .isNotEmpty()
         }
+    }
+
+    /**
+     * Waits for [condition], **advancing the test clock** between attempts.
+     *
+     * This replaced `composeRule.waitUntil`, which cannot work here. With auto-advance disabled the
+     * frame clock only moves when a test moves it, and coroutines dispatched on Compose's UI
+     * dispatcher are delivered on a frame, so a `collectAsStateWithLifecycle` never starts
+     * collecting, and a screen fed by a `StateFlow` sits on its loading state forever. `waitUntil`
+     * polls in real time without touching the clock, so it watched a screen that could not
+     * progress and timed out after ten seconds.
+     *
+     * Both symptoms this suite showed trace back to that: a Settings screen stuck on "Loading", and
+     * tests that hung rather than failed. Advancing the clock while polling fixes both, and keeps
+     * the reason for disabling auto-advance, the indefinite `LoadingIndicator`, intact.
+     *
+     * `atLeastOneRootRequired = false` matters as much as the clock. The default blocks until a
+     * Compose root exists, so a test whose activity never came up waited forever instead of
+     * failing, which is how this suite produced twenty-minute hangs with no output. Polling
+     * without that requirement turns the same situation into a named failure.
+     */
+    private fun await(what: String, condition: () -> Boolean) {
+        repeat(AWAIT_ATTEMPTS) {
+            if (condition()) return
+            // A frame, then a moment of real time. Both are needed and for different reasons: the
+            // frame lets Compose deliver work queued on its UI dispatcher, and the real time lets
+            // the disk read that work is waiting on actually finish. Advancing frames alone spins
+            // through the whole budget in milliseconds and gives DataStore no chance to answer.
+            composeRule.mainClock.advanceTimeByFrame()
+            composeRule.waitForIdle()
+            Thread.sleep(AWAIT_STEP_MILLIS)
+        }
+        error("Gave up waiting for $what")
     }
 
     @Test
@@ -222,7 +281,10 @@ class NavigationFlowTest {
         /** Comfortably longer than the Expressive spatial spec used for push transitions. */
         const val TRANSITION_MILLIS = 1_000L
 
+        /** Two hundred 25 ms steps: five seconds, far longer than a local read or a transition. */
+        const val AWAIT_ATTEMPTS = 200
+        const val AWAIT_STEP_MILLIS = 25L
+
         /** Generous: a cold Room read plus a network round trip on a loaded emulator. */
-        const val TIMEOUT_MILLIS = 10_000L
     }
 }
