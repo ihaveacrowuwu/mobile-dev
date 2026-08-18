@@ -19,6 +19,7 @@ data class WeatherDetailLabels(
     val visibility: String,
     val sunrise: String,
     val sunset: String,
+    val cloud: String,
     val dewPoint: String,
     val daylight: String,
 )
@@ -32,6 +33,7 @@ fun rememberWeatherDetailLabels(): WeatherDetailLabels = WeatherDetailLabels(
     visibility = stringResource(R.string.detail_visibility),
     sunrise = stringResource(R.string.detail_sunrise),
     sunset = stringResource(R.string.detail_sunset),
+    cloud = stringResource(R.string.detail_cloud),
     dewPoint = stringResource(R.string.detail_dew_point),
     daylight = stringResource(R.string.detail_daylight),
 )

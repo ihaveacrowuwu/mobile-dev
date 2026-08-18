@@ -55,6 +55,7 @@ import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.SunPathSection
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
@@ -297,6 +298,11 @@ private fun HomePage(
             zoneOffset = weather.zoneOffset,
             unit = uiState.preferences.temperatureUnit,
             modifier = Modifier.padding(bottom = Spacing.md),
+        )
+
+        SunPathSection(
+            weather = weather,
+            modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
         )
 
         WeatherDetailGrid(

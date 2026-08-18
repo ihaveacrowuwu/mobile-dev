@@ -63,13 +63,13 @@ struct LocationTimeZoneTests {
     func sunriseRendersInLocationZone() {
         let weather = londonWeather(offsetSeconds: 3_600)
 
-        let details = Dictionary(
-            uniqueKeysWithValues: weather.details(preferences: UserPreferences()).map { ($0.label, $0.value) }
-        )
+        // Read off the sun-path card, which is where these times render. The guard catches a
+        // location's times being formatted in the device's zone.
+        let sun = weather.sunPath()
 
         // London's own clock. A device five hours ahead would say 09:49.
-        #expect(details["Sunrise"] == "05:49")
-        #expect(details["Sunset"] == "21:21")
+        #expect(sun?.sunriseLabel == "05:49")
+        #expect(sun?.sunsetLabel == "21:21")
     }
 
     @Test("The same instant formats differently for two different location zones")
@@ -128,10 +128,7 @@ struct LocationTimeZoneTests {
     }
 
     private func sunriseLabel(offsetSeconds: Int) -> String? {
-        londonWeather(offsetSeconds: offsetSeconds)
-            .details(preferences: UserPreferences())
-            .first { $0.label == "Sunrise" }?
-            .value
+        londonWeather(offsetSeconds: offsetSeconds).sunPath()?.sunriseLabel
     }
 }
 

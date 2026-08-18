@@ -209,6 +209,16 @@ struct LocationDetailContent: View {
 
                         SectionHeader("Conditions")
 
+                        if let sun = weather.sunPath() {
+                            SunPathCard(
+                                progress: sun.progress,
+                                sunriseLabel: sun.sunriseLabel,
+                                sunsetLabel: sun.sunsetLabel,
+                                daylightLabel: sun.daylightLabel,
+                                announcement: sun.announcement
+                            )
+                        }
+
                         WeatherDetailGrid(
                             // Eight tiles: dew point and length of day are derived readings.
                             details: weather.details(preferences: state.preferences, includeDerived: true)

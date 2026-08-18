@@ -192,6 +192,16 @@ private struct HomePageView: View {
                             unit: state.preferences.temperatureUnit
                         )
 
+                        if let sun = weather.sunPath() {
+                            SunPathCard(
+                                progress: sun.progress,
+                                sunriseLabel: sun.sunriseLabel,
+                                sunsetLabel: sun.sunsetLabel,
+                                daylightLabel: sun.daylightLabel,
+                                announcement: sun.announcement
+                            )
+                        }
+
                         WeatherDetailGrid(details: weather.details(preferences: state.preferences))
                     } else {
                         // A page reached by swiping ahead of its data.

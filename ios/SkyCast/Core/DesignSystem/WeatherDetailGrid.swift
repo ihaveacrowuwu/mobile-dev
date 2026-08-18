@@ -11,12 +11,8 @@ struct WeatherDetail: Identifiable, Equatable {
     let label: String
     let value: String
     let kind: WeatherDetailKind
-    /// Where this reading sits on its own scale, 0–1, or `nil` for readings that have no scale.
-    ///
-    /// Sunrise and sunset are times, not magnitudes, so they get no indicator. Everything else does:
-    /// the bar is what turns "1014 hPa" from a number into an impression, for the large majority of
-    /// people who could not say from memory whether that is high or low.
-    var fraction: Double?
+    /// How the reading draws itself. See ``MetricVisual`` for why this is not simply a fraction.
+    var visual: MetricVisual = .plain
 
     var id: String {
         label
@@ -35,6 +31,9 @@ enum WeatherDetailKind: CaseIterable {
     case sunrise
     case sunset
 
+    /// Reported all along and never shown until the tiles could draw it.
+    case cloud
+
     // Derived rather than reported, see ``Weather/dewPointCelsius`` and
     // ``Weather/daylightDuration``. They share the hue of the reading they are closest to: dew
     // point is moisture, so it takes humidity's blue, and daylight takes the sunrise gold.
@@ -49,6 +48,7 @@ enum WeatherDetailKind: CaseIterable {
         case .visibility: "eye.fill"
         case .sunrise: "sunrise.fill"
         case .sunset: "sunset.fill"
+        case .cloud: "cloud.fill"
         case .dewPoint: "thermometer.medium"
         case .daylight: "sun.horizon.fill"
         }
@@ -62,6 +62,7 @@ enum WeatherDetailKind: CaseIterable {
         case .visibility: WeatherPalette.visibility
         case .sunrise, .daylight: WeatherPalette.sunrise
         case .sunset: WeatherPalette.sunset
+        case .cloud: WeatherPalette.onCloudContainer
         }
     }
 }
@@ -112,12 +113,22 @@ private struct WeatherDetailTile: View {
                     .foregroundStyle(detail.kind.accent)
             }
 
-            Text(detail.value)
-                .font(.headline)
+            HStack(alignment: .center, spacing: Spacing.sm) {
+                Text(detail.value)
+                    .font(.title3.weight(.medium))
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
 
-            if let fraction = detail.fraction {
-                MetricBar(fraction: fraction, colour: detail.kind.accent)
-                    .padding(.top, Spacing.xxs)
+                Spacer(minLength: 0)
+
+                switch detail.visual {
+                case .plain:
+                    EmptyView()
+                case let .gauge(fraction):
+                    MetricGauge(fraction: fraction, colour: detail.kind.accent)
+                case let .compass(degrees, _):
+                    WindCompass(degrees: degrees, colour: detail.kind.accent)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -140,7 +151,15 @@ private struct WeatherDetailTile: View {
         // unrelated fragments and the pairing is lost. The bar is decorative, it says the same
         // thing as the value.
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(detail.label), \(detail.value)")
+        .accessibilityLabel(announcement)
+    }
+
+    /// The compass draws a bearing that the value alone does not mention, so it is spoken.
+    private var announcement: String {
+        if case let .compass(_, cardinal) = detail.visual {
+            return "\(detail.label), \(detail.value) from the \(cardinal)"
+        }
+        return "\(detail.label), \(detail.value)"
     }
 
     /// Enough to be felt when swiping between a clear place and an overcast one, little enough
@@ -152,48 +171,20 @@ private struct WeatherDetailTile: View {
     private let tintOpacity: Double = 0.45
 }
 
-/// A slim bar showing where a reading sits on its scale.
-private struct MetricBar: View {
-    let fraction: Double
-    let colour: Color
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.primary.opacity(trackOpacity))
-                Capsule()
-                    .fill(colour)
-                    .frame(width: proxy.size.width * fraction.clamped())
-            }
-        }
-        .frame(height: barHeight)
-        // The value is already read out by the tile; an animating bar adds nothing for VoiceOver.
-        .accessibilityHidden(true)
-        // Length is geometry, so it animates, but only when the value genuinely changes, not on
-        // every re-render.
-        .animation(.smooth, value: fraction)
-    }
-
-    private let barHeight: CGFloat = 4
-    private let trackOpacity: Double = 0.12
-}
-
-private extension Double {
-    func clamped() -> Double {
-        min(max(self, 0), 1)
-    }
-}
-
 #Preview {
     ScrollView {
         WeatherDetailGrid(details: [
-            WeatherDetail(label: "Humidity", value: "69%", kind: .humidity, fraction: 0.69),
-            WeatherDetail(label: "Wind", value: "8.7 kt", kind: .wind, fraction: 0.18),
-            WeatherDetail(label: "Pressure", value: "29.92 inHg", kind: .pressure, fraction: 0.45),
-            WeatherDetail(label: "Visibility", value: "5.4 NM", kind: .visibility, fraction: 1),
-            WeatherDetail(label: "Sunrise", value: "05:27", kind: .sunrise),
-            WeatherDetail(label: "Sunset", value: "20:46", kind: .sunset),
+            WeatherDetail(label: "Humidity", value: "69%", kind: .humidity, visual: .gauge(0.69)),
+            WeatherDetail(
+                label: "Wind",
+                value: "8.7 kt",
+                kind: .wind,
+                visual: .compass(degrees: 270, cardinal: "W")
+            ),
+            WeatherDetail(label: "Pressure", value: "29.92 inHg", kind: .pressure, visual: .gauge(0.45)),
+            WeatherDetail(label: "Visibility", value: "5.4 NM", kind: .visibility, visual: .gauge(1)),
+            WeatherDetail(label: "Cloud cover", value: "40%", kind: .cloud, visual: .gauge(0.4)),
+            WeatherDetail(label: "Dew point", value: "12°C", kind: .dewPoint, visual: .gauge(0.6)),
         ])
         .padding(Spacing.md)
     }

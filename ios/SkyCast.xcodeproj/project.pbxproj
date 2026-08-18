@@ -48,6 +48,7 @@
 		A360BBA7DCB031CF659270F4 /* WeatherPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9753FCD5939CC8845EEE6E /* WeatherPalette.swift */; };
 		A4C2B78361459585A65F2AE1 /* LocalDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B593ADDD504097AA4CAB3B /* LocalDataStore.swift */; };
 		AB4C602E908D5AB075CB1EF0 /* DomainModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 425868B4E5A4214C125D9806 /* DomainModelTests.swift */; };
+		ADB466F0B0CCA0B8D01D71AD /* MetricVisuals.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FCA0CD6CA62F4E644C44A1 /* MetricVisuals.swift */; };
 		AEFE4B16256D04FD2FDDD3F1 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFA537B03D6A3B41B05AF5F /* HomeViewModelTests.swift */; };
 		B00A13EEB7CD0CF1A7CA6887 /* StateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EF7C04A10FA893DC4352F9 /* StateViews.swift */; };
 		B3016092CC1CD51DD9C74CF3 /* SkyCastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD0987640C0FBF599843997 /* SkyCastApp.swift */; };
@@ -127,6 +128,7 @@
 		ADF82BAF6B48C436DCC3D0BF /* AddLocationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddLocationScreen.swift; sourceTree = "<group>"; };
 		B1CE1CA7B46B8DB18533EE1A /* DTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOs.swift; sourceTree = "<group>"; };
 		B3B593ADDD504097AA4CAB3B /* LocalDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDataStore.swift; sourceTree = "<group>"; };
+		B5FCA0CD6CA62F4E644C44A1 /* MetricVisuals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricVisuals.swift; sourceTree = "<group>"; };
 		BD9259428AB072EF2EF74EBB /* WeatherBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherBackground.swift; sourceTree = "<group>"; };
 		C0E0AD2A4670A1A829903DAC /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		C43CDD9E776FCE54DBE2516E /* WeatherMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherMapper.swift; sourceTree = "<group>"; };
@@ -389,6 +391,7 @@
 				E95F73BA77E1B7B41F75BEDA /* ConditionBadge.swift */,
 				A298D73F84F6CD1BB79C9552 /* DailyRangeRow.swift */,
 				8E871D9C6AED2D561966E10A /* GlassSurface.swift */,
+				B5FCA0CD6CA62F4E644C44A1 /* MetricVisuals.swift */,
 				5C6B3A4E4594502DA98C39C7 /* PageScrubber.swift */,
 				554A4A10F10849293D54C1FA /* Spacing.swift */,
 				34EF7C04A10FA893DC4352F9 /* StateViews.swift */,
@@ -590,6 +593,7 @@
 				E125CD701B0D6DA398C875F1 /* LocationRepositoryImpl.swift in Sources */,
 				0728303A66898974BF1B1322 /* LocationsScreen.swift in Sources */,
 				B8095F376204F519C42C6C2A /* LocationsViewModel.swift in Sources */,
+				ADB466F0B0CCA0B8D01D71AD /* MetricVisuals.swift in Sources */,
 				F7F71467E1F18EBFFA2382F4 /* NetworkMonitor.swift in Sources */,
 				ECD16DEBE8805F4A051AA529 /* PageScrubber.swift in Sources */,
 				7B2B0ED68394D658BB24C416 /* PersistentModels.swift in Sources */,

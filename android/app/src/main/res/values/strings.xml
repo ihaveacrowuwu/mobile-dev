@@ -91,7 +91,9 @@
     <string name="detail_visibility">Visibility</string>
     <string name="detail_sunrise">Sunrise</string>
     <string name="detail_sunset">Sunset</string>
+    <string name="detail_cloud">Cloud cover</string>
     <string name="detail_dew_point">Dew point</string>
+    <string name="detail_sun_path">Sunrise %1$s, sunset %2$s, %3$s of daylight</string>
     <string name="detail_daylight">Daylight</string>
 
     <!-- ── Detail screen sections ───────────────────────────────────────── -->

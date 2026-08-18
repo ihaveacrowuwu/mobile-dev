@@ -339,3 +339,45 @@ private extension Weather {
         )
     }
 }
+
+@Suite("Presentation of readings")
+struct ReadingPresentationTests {
+    /// The compass names a bearing the numeric value never mentions, so a wrong table would be
+    /// invisible on screen, a needle pointing north-east beside the word "east" looks fine.
+    @Test("Cardinal points name the right sector", arguments: [
+        (0, "N"), (360, "N"), (90, "E"), (180, "S"), (270, "W"),
+        (23, "NNE"), (45, "NE"), (293, "WNW"), (338, "NNW"),
+    ])
+    func cardinalPoints(degrees: Int, expected: String) {
+        #expect(Weather.cardinal(for: degrees) == expected)
+    }
+
+    /// The API documents 0–360, but 360 and negatives are both representable, and an out-of-range
+    /// index would crash the whole screen rather than mislabel one tile.
+    @Test("Out-of-range bearings wrap instead of crashing", arguments: [-90, 720, 450, -361])
+    func cardinalWraps(degrees: Int) {
+        #expect(!Weather.cardinal(for: degrees).isEmpty)
+    }
+
+    @Test("The sun's progress runs from sunrise to sunset")
+    func sunProgress() {
+        let weather = Fixtures.weather().with(
+            sunrise: Fixtures.now,
+            sunset: Fixtures.now.addingTimeInterval(12 * 3_600)
+        )
+
+        let atNoon = weather.sunPath(now: Fixtures.now.addingTimeInterval(6 * 3_600))
+
+        #expect(abs((atNoon?.progress ?? 0) - 0.5) < 0.001)
+        #expect(atNoon?.daylightLabel == "12h 0m")
+    }
+
+    /// Polar winter, or a malformed payload. The card is hidden rather than drawn with a NaN
+    /// position, which is what dividing by a zero-length day would produce.
+    @Test("A day with no length yields no sun path")
+    func sunPathNeedsADay() {
+        let weather = Fixtures.weather().with(sunrise: Fixtures.now, sunset: Fixtures.now)
+
+        #expect(weather.sunPath() == nil)
+    }
+}

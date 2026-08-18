@@ -1,18 +1,14 @@
 import Foundation
 
-/// Formats a ``Weather`` into the secondary readings shown under the hero block.
+/// Formats a ``Weather`` into the readings shown beneath the hero block.
 ///
-/// Lives in `Features` rather than `Domain` because every decision here is presentational: how
-/// many decimal places, which unit symbol, what time format.
+/// Lives in `Features` rather than `Domain` because everything here is presentational: decimal
+/// places, unit symbols, time format, and which shape the tile draws.
 ///
-/// Unlike the Android counterpart (`ui/common/WeatherDetails.kt`), the labels are written inline
-/// rather than passed in. Android has to hoist them because `stringResource` needs a `Context` and
-/// this function deliberately has none; on iOS a plain `String` literal is already a localisation
-/// key, so the indirection would buy nothing.
+/// Labels are written inline, since on iOS a plain `String` literal is already a localisation key.
 extension Weather {
-    /// - Parameter includeDerived: adds dew point and length of day. Off for Home, which stays a
-    ///   glance; on for the detail screen, which is where someone goes precisely because the
-    ///   glance was not enough.
+    /// - Parameter includeDerived: adds the dew point. Off for Home, which stays a glance; on for
+    ///   the detail screen, which is where someone goes precisely because the glance was not enough.
     func details(preferences: UserPreferences, includeDerived: Bool = false) -> [WeatherDetail] {
         let windUnit = preferences.windSpeedUnit
         let wind = windUnit.convertFromMetresPerSecond(windSpeedMetresPerSecond)
@@ -34,31 +30,40 @@ extension Weather {
                 value: "\(humidityPercent)%",
                 kind: .humidity,
                 // Humidity is already a percentage, so its fraction is itself.
-                fraction: Double(humidityPercent) / 100
+                visual: .gauge(Double(humidityPercent) / 100)
             ),
             WeatherDetail(
                 label: "Wind",
                 value: windText,
                 kind: .wind,
-                fraction: windSpeedMetresPerSecond / Self.strongWindMetresPerSecond
+                // The direction has been in the model since the first commit and was never shown,
+                // because a bar cannot draw a bearing. A compass can.
+                visual: .compass(
+                    degrees: Double(windDirectionDegrees),
+                    cardinal: Self.cardinal(for: windDirectionDegrees)
+                )
             ),
             WeatherDetail(
                 label: "Pressure",
                 value: pressureText,
                 kind: .pressure,
-                // Scaled across the range a barometer realistically covers, so the indicator moves
-                // meaningfully instead of sitting in the same spot every day.
-                fraction: (Double(pressureHpa) - Self.lowPressureHpa) / Self.pressureRangeHpa
+                // Scaled across the range a barometer realistically covers, so the arc moves
+                // meaningfully day to day.
+                visual: .gauge((Double(pressureHpa) - Self.lowPressureHpa) / Self.pressureRangeHpa)
             ),
             WeatherDetail(
                 label: "Visibility",
                 value: "\(visibility.oneDecimalPlace) \(visibilityUnit.symbol)",
                 kind: .visibility,
                 // 10 km is the value OpenWeather reports for "clear", so it is effectively the top.
-                fraction: Double(visibilityMetres) / Self.clearVisibilityMetres
+                visual: .gauge(Double(visibilityMetres) / Self.clearVisibilityMetres)
             ),
-            WeatherDetail(label: "Sunrise", value: localTime(sunrise), kind: .sunrise),
-            WeatherDetail(label: "Sunset", value: localTime(sunset), kind: .sunset),
+            WeatherDetail(
+                label: "Cloud cover",
+                value: "\(cloudinessPercent)%",
+                kind: .cloud,
+                visual: .gauge(Double(cloudinessPercent) / 100)
+            ),
         ] + (includeDerived ? derivedDetails(preferences: preferences) : [])
     }
 
@@ -71,16 +76,38 @@ extension Weather {
                 value: "\(Int(dewPoint.rounded()))\(unit.symbol)",
                 kind: .dewPoint,
                 // Measured against the air temperature: a dew point close to it is what "muggy"
-                // actually means, and a nearly-full bar says so without the meteorology.
-                fraction: dewPointCelsius / temperatureCelsius
-            ),
-            WeatherDetail(
-                label: "Daylight",
-                value: daylightDuration.hoursAndMinutes,
-                kind: .daylight,
-                fraction: daylightDuration / Self.secondsInADay
+                // actually means, and a nearly-full arc says so without the meteorology.
+                visual: .gauge(dewPointCelsius / temperatureCelsius)
             ),
         ]
+    }
+
+    /// Everything the sun-path card needs, or `nil` where the times are unusable.
+    func sunPath(now: Date = .now) -> SunPathReading? {
+        let span = sunset.timeIntervalSince(sunrise)
+        guard span > 0 else { return nil }
+        return SunPathReading(
+            progress: now.timeIntervalSince(sunrise) / span,
+            sunriseLabel: localTime(sunrise),
+            sunsetLabel: localTime(sunset),
+            daylightLabel: daylightDuration.hoursAndMinutes,
+            announcement: "Sunrise \(localTime(sunrise)), sunset \(localTime(sunset)), "
+                + "\(daylightDuration.spokenDuration) of daylight"
+        )
+    }
+
+    /// The 16-point compass name for a bearing, so "west-northwest" is available and not just
+    /// "west".
+    static func cardinal(for degrees: Int) -> String {
+        let points = [
+            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+        ]
+        // Normalised first: the API is documented as 0–360, but 360 and a negative are both
+        // representable, and an out-of-range index here would crash the whole screen.
+        let normalised = ((degrees % 360) + 360) % 360
+        let sector = Int((Double(normalised) / 22.5).rounded()) % points.count
+        return points[sector]
     }
 
     /// Formats an instant as a wall-clock time **in the observed location's zone**, not the
@@ -99,9 +126,15 @@ extension Weather {
     private static let lowPressureHpa = 950.0
     private static let pressureRangeHpa = 130.0
     private static let clearVisibilityMetres = 10_000.0
+}
 
-    /// The scale the daylight indicator reads against: a full 24 hours of sun.
-    private static let secondsInADay: TimeInterval = 24 * 60 * 60
+/// The sun-path card's content, already formatted.
+struct SunPathReading: Equatable {
+    let progress: Double
+    let sunriseLabel: String
+    let sunsetLabel: String
+    let daylightLabel: String
+    let announcement: String
 }
 
 private extension TimeInterval {
@@ -109,6 +142,12 @@ private extension TimeInterval {
     var hoursAndMinutes: String {
         let minutes = Int(self / 60)
         return "\(minutes / 60)h \(minutes % 60)m"
+    }
+
+    /// The same duration in words, because "14h 28m" read aloud is not a sentence.
+    var spokenDuration: String {
+        let minutes = Int(self / 60)
+        return "\(minutes / 60) hours \(minutes % 60) minutes"
     }
 }
 

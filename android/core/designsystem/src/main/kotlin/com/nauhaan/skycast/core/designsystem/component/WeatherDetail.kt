@@ -11,14 +11,8 @@ data class WeatherDetail(
     val label: String,
     val value: String,
     val kind: WeatherDetailKind,
-    /**
-     * Where this reading sits on its own scale, 0–1, or `null` for readings that have no scale.
-     *
-     * Sunrise and sunset are times, not magnitudes, so they get no indicator. Everything else does:
-     * the bar is what turns "1014 hPa" from a number into an impression, for the large majority of
-     * people who could not say from memory whether that is high or low.
-     */
-    val fraction: Double? = null,
+    /** How the reading draws itself. See [MetricVisual]. */
+    val visual: MetricVisual = MetricVisual.Plain,
 )
 
 /**
@@ -35,6 +29,9 @@ enum class WeatherDetailKind {
     VISIBILITY,
     SUNRISE,
     SUNSET,
+
+    /** Reported all along and never shown until the tiles could draw it. */
+    CLOUD,
 
     // Derived rather than reported, see `Weather.dewPointCelsius` and `Weather.daylightDuration`.
     // They share the hue of the reading they are closest to: dew point is moisture, so it takes

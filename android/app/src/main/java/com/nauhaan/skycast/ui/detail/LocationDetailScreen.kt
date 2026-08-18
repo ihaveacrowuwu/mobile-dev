@@ -45,6 +45,7 @@ import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.SunPathSection
 import com.nauhaan.skycast.ui.common.previewWeather
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
@@ -158,6 +159,11 @@ internal fun LocationDetailContent(
                                 top = Spacing.md,
                                 bottom = Spacing.sm,
                             ),
+                        )
+
+                        SunPathSection(
+                            weather = weather,
+                            modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
                         )
 
                         WeatherDetailGrid(

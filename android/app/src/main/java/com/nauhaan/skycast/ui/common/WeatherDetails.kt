@@ -1,10 +1,13 @@
 package com.nauhaan.skycast.ui.common
 
+import com.nauhaan.skycast.core.designsystem.component.MetricVisual
+import com.nauhaan.skycast.core.designsystem.component.SunPathReading
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetail
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailKind
 import com.nauhaan.skycast.domain.model.UserPreferences
 import com.nauhaan.skycast.domain.model.Weather
 import java.time.Duration
+import java.time.Instant
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -22,10 +25,6 @@ fun Weather.toDetails(
     labels: WeatherDetailLabels,
     includeDerived: Boolean = false,
 ): List<WeatherDetail> {
-    // The location's zone, not the device's: London's sunrise is 04:49 in London, and
-    // reporting it as 09:49 because the phone is five hours ahead is simply wrong.
-    val timeFormat = DateTimeFormatter.ofPattern(TIME_PATTERN).withZone(zoneOffset)
-
     val windUnit = preferences.windSpeedUnit
     val wind = windUnit.convertFromMetresPerSecond(windSpeedMetresPerSecond)
     val windText = if (windUnit.isWholeNumber) {
@@ -54,13 +53,7 @@ fun Weather.toDetails(
                 kind = WeatherDetailKind.DEW_POINT,
                 // Measured against the air temperature: a dew point close to it is what "muggy"
                 // actually means, and a nearly-full bar says so without the meteorology.
-                fraction = (dewPointCelsius / temperatureCelsius).coerceIn(0.0, 1.0),
-            ),
-            WeatherDetail(
-                label = labels.daylight,
-                value = daylightDuration.toHoursAndMinutes(),
-                kind = WeatherDetailKind.DAYLIGHT,
-                fraction = (daylightDuration.toMinutes() / MINUTES_IN_A_DAY).coerceIn(0.0, 1.0),
+                visual = MetricVisual.Gauge((dewPointCelsius / temperatureCelsius).coerceIn(0.0, 1.0).toFloat()),
             ),
         )
     }
@@ -71,40 +64,86 @@ fun Weather.toDetails(
             value = "$humidityPercent%",
             kind = WeatherDetailKind.HUMIDITY,
             // Humidity is already a percentage, so its fraction is itself.
-            fraction = humidityPercent / PERCENT,
+            visual = MetricVisual.Gauge((humidityPercent / PERCENT).toFloat()),
         ),
         WeatherDetail(
             label = labels.wind,
             value = windText,
             kind = WeatherDetailKind.WIND,
-            fraction = (windSpeedMetresPerSecond / STRONG_WIND_METRES_PER_SECOND).coerceIn(0.0, 1.0),
+            // The direction has been in the model since the first commit and was never shown,
+            // because a bar cannot draw a bearing. A compass can.
+            visual = MetricVisual.Compass(
+                degrees = windDirectionDegrees.toFloat(),
+                cardinal = cardinalFor(windDirectionDegrees),
+            ),
         ),
         WeatherDetail(
             label = labels.pressure,
             value = pressureText,
             kind = WeatherDetailKind.PRESSURE,
-            // Scaled across the range a barometer realistically covers, so the indicator moves
-            // meaningfully instead of sitting at the same spot every day.
-            fraction = ((pressureHpa - LOW_PRESSURE_HPA) / PRESSURE_RANGE_HPA).coerceIn(0.0, 1.0),
+            // Scaled across the range a barometer realistically covers, so the arc moves
+            // meaningfully day to day.
+            visual = MetricVisual.Gauge(
+                ((pressureHpa - LOW_PRESSURE_HPA) / PRESSURE_RANGE_HPA).coerceIn(0.0, 1.0).toFloat(),
+            ),
         ),
         WeatherDetail(
             label = labels.visibility,
             value = "${visibility.toOneDecimalPlace()} ${visibilityUnit.symbol}",
             kind = WeatherDetailKind.VISIBILITY,
             // 10 km is the value OpenWeather reports for "clear", so it is effectively the ceiling.
-            fraction = (visibilityMetres / CLEAR_VISIBILITY_METRES).coerceIn(0.0, 1.0),
+            visual = MetricVisual.Gauge(
+                (visibilityMetres / CLEAR_VISIBILITY_METRES).coerceIn(0.0, 1.0).toFloat(),
+            ),
         ),
         WeatherDetail(
-            label = labels.sunrise,
-            value = timeFormat.format(sunrise),
-            kind = WeatherDetailKind.SUNRISE,
-        ),
-        WeatherDetail(
-            label = labels.sunset,
-            value = timeFormat.format(sunset),
-            kind = WeatherDetailKind.SUNSET,
+            label = labels.cloud,
+            value = "$cloudinessPercent%",
+            kind = WeatherDetailKind.CLOUD,
+            visual = MetricVisual.Gauge((cloudinessPercent / PERCENT).toFloat()),
         ),
     ) + derived
+}
+
+/**
+ * Everything the sun-path card needs, or `null` where the times are unusable.
+ */
+fun Weather.toSunPath(now: Instant = Instant.now(), riseSetDescription: String): SunPathReading? {
+    val span = Duration.between(sunrise, sunset)
+    if (span.isZero || span.isNegative) return null
+    return SunPathReading(
+        progress = (Duration.between(sunrise, now).toMillis().toDouble() / span.toMillis()).toFloat(),
+        sunriseLabel = sunriseLabel(),
+        sunsetLabel = sunsetLabel(),
+        daylightLabel = daylightDuration.toHoursAndMinutes(),
+        contentDescription = riseSetDescription,
+    )
+}
+
+/** The location's own wall-clock sunrise. See [toSunPath]. */
+fun Weather.sunriseLabel(): String = DateTimeFormatter.ofPattern(TIME_PATTERN).withZone(zoneOffset).format(sunrise)
+
+/** The location's own wall-clock sunset. */
+fun Weather.sunsetLabel(): String = DateTimeFormatter.ofPattern(TIME_PATTERN).withZone(zoneOffset).format(sunset)
+
+/** How long the sun is up, as "14h 28m". */
+fun Weather.daylightLabel(): String = daylightDuration.toHoursAndMinutes()
+
+/**
+ * The 16-point compass name for a bearing, so "west-northwest" is available and not just "west".
+ *
+ * Internal so its test can reach it.
+ */
+internal fun cardinalFor(degrees: Int): String {
+    val points = listOf(
+        "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+    )
+    // Normalised first: the API documents 0 to 360, but 360 and a negative are both representable,
+    // and an out-of-range index would crash the screen.
+    val normalised = ((degrees % FULL_CIRCLE_DEGREES) + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES
+    val sector = (normalised / SECTOR_DEGREES).roundToInt() % points.size
+    return points[sector]
 }
 
 /** "14h 28m", rather than a count of minutes. */
@@ -123,9 +162,6 @@ private fun Double.toPlaces(places: Int): String = if (places == 0) {
 private const val ONE_DECIMAL_SCALE = 10.0
 private const val PERCENT = 100.0
 
-/** Roughly a strong gale, the point past which the wind indicator should read as full. */
-private const val STRONG_WIND_METRES_PER_SECOND = 25.0
-
 private const val LOW_PRESSURE_HPA = 950.0
 private const val PRESSURE_RANGE_HPA = 130.0
 private const val CLEAR_VISIBILITY_METRES = 10_000.0
@@ -133,5 +169,6 @@ private const val CLEAR_VISIBILITY_METRES = 10_000.0
 /** 24-hour clock: unambiguous, and the app is English-only for now. */
 private const val TIME_PATTERN = "HH:mm"
 
-/** The scale the daylight indicator reads against: a full 24 hours of sun. */
-private const val MINUTES_IN_A_DAY = 24.0 * 60
+/** 360° over sixteen compass points. */
+private const val SECTOR_DEGREES = 22.5
+private const val FULL_CIRCLE_DEGREES = 360

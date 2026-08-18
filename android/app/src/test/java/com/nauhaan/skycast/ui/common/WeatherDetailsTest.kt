@@ -40,36 +40,42 @@ class WeatherDetailsTest {
         visibility = "Visibility",
         sunrise = "Sunrise",
         sunset = "Sunset",
+        cloud = "Cloud cover",
         dewPoint = "Dew point",
         daylight = "Daylight",
     )
 
-    private fun details(
-        zoneOffset: ZoneOffset,
-        preferences: UserPreferences = UserPreferences(),
-        includeDerived: Boolean = false,
-    ) = sampleWeather(zoneOffset = zoneOffset)
+    /** The fixture: one instant, rendered against whichever zone the location claims. */
+    private fun weather(zoneOffset: ZoneOffset) = sampleWeather(zoneOffset = zoneOffset)
         .copy(
             // 04:49 UTC. In London (UTC+1 in summer) that is 05:49; on a UTC+5 device, 09:49.
             sunrise = Instant.parse("2026-06-21T04:49:00Z"),
             sunset = Instant.parse("2026-06-21T20:21:00Z"),
         )
+
+    private fun details(
+        zoneOffset: ZoneOffset,
+        preferences: UserPreferences = UserPreferences(),
+        includeDerived: Boolean = false,
+    ) = weather(zoneOffset)
         .toDetails(preferences = preferences, labels = labels, includeDerived = includeDerived)
         .associate { it.label to it.value }
 
     @Test
     fun `sunrise and sunset render in the location's zone`() {
-        val formatted = details(ZoneOffset.ofHours(1))
+        // Read off the sun-path card, which is where these times render. The guard catches a
+        // location's times being formatted in the device's zone.
+        val london = weather(ZoneOffset.ofHours(1))
 
         // London's own clock, not the device's: the device would say 09:49.
-        assertEquals("05:49", formatted["Sunrise"])
-        assertEquals("21:21", formatted["Sunset"])
+        assertEquals("05:49", london.sunriseLabel())
+        assertEquals("21:21", london.sunsetLabel())
     }
 
     @Test
     fun `a different location zone produces a different time from the same instant`() {
-        val london = details(ZoneOffset.ofHours(1))["Sunrise"]
-        val male = details(ZoneOffset.ofHours(5))["Sunrise"]
+        val london = weather(ZoneOffset.ofHours(1)).sunriseLabel()
+        val male = weather(ZoneOffset.ofHours(5)).sunriseLabel()
 
         // Same `Instant`, two places: the formatted strings must differ. This is the property that
         // breaks when the offset is ignored, since then both would read as the device's zone.
