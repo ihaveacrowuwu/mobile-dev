@@ -48,12 +48,18 @@ final class MetarViewModel {
 
     private let metarRepository: any MetarRepository
     private let locationRepository: any LocationRepository
+    private let selectedLocationStore: SelectedLocationStore
 
     private var observationTask: Task<Void, Never>?
 
-    init(metarRepository: any MetarRepository, locationRepository: any LocationRepository) {
+    init(
+        metarRepository: any MetarRepository,
+        locationRepository: any LocationRepository,
+        selectedLocationStore: SelectedLocationStore
+    ) {
         self.metarRepository = metarRepository
         self.locationRepository = locationRepository
+        self.selectedLocationStore = selectedLocationStore
     }
 
     func start() {
@@ -85,7 +91,10 @@ final class MetarViewModel {
 
     private func observe() async {
         do {
-            guard let location = try await locationRepository.primaryLocation() else {
+            // The place selected on Home, not the favourite: following the favourite meant swiping
+            // Home to Malé and still being shown London's airport. See SelectedLocationStore.
+            let locations = try await locationRepository.savedLocations()
+            guard let location = selectedLocationStore.activeLocation(from: locations) else {
                 state = MetarUiState(hasNoLocation: true)
                 return
             }
@@ -130,7 +139,8 @@ struct MetarScreen: View {
             if viewModel == nil {
                 viewModel = MetarViewModel(
                     metarRepository: container.metarRepository,
-                    locationRepository: container.locationRepository
+                    locationRepository: container.locationRepository,
+                    selectedLocationStore: container.selectedLocationStore
                 )
                 viewModel?.start()
             } else {
@@ -183,7 +193,12 @@ struct MetarContent: View {
                     )
                 }
                 StationHeader(report: report)
-                FlightCategoryBadge(category: report.flightCategory)
+                // The category first and large, because it is the one thing a pilot looks for before
+                // anything else, it decides whether the flight can be made under visual rules at all.
+                FlightCategoryHero(category: report.flightCategory)
+                SkySection(report: report)
+                WindSection(report: report)
+                DerivedSection(report: report)
                 RawReportCard(raw: report.raw)
                 DecodedRows(report: report)
             }
@@ -231,131 +246,11 @@ private struct StationHeader: View {
     }()
 }
 
-/// The flight-rules category, as a coloured badge.
-///
-/// The first thing a pilot looks for, so it is the first thing after the station. The colours come
-/// from the weather palette rather than being invented here, so they are the same contrast-checked
-/// colours the rest of the app uses.
-private struct FlightCategoryBadge: View {
-    let category: FlightCategory
-
-    private var colour: Color {
-        switch category {
-        case .vfr: WeatherPalette.wind
-        case .mvfr: WeatherPalette.humidity
-        case .ifr: WeatherPalette.sunset
-        case .lifr: WeatherPalette.pressure
-        case .unknown: Color.secondary
-        }
-    }
-
-    var body: some View {
-        Text(category.label)
-            .font(.headline)
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.xs)
-            .background(colour.opacity(badgeOpacity), in: .rect(cornerRadius: Radius.sm))
-            .accessibilityLabel("Flight category \(category.label)")
-    }
-
-    private let badgeOpacity: Double = 0.25
-}
-
-private struct RawReportCard: View {
-    let raw: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("Raw report")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(raw)
-                // Monospaced: a METAR is a fixed-format line, and the groups stay aligned.
-                .font(.system(.body, design: .monospaced))
-                .textSelection(.enabled)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.md)
-        .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
-    }
-}
-
-private struct DecodedRows: View {
-    let report: MetarReport
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Text("Decoded")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Spacing.md)
-                .padding(.top, Spacing.sm)
-
-            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                if index > 0 {
-                    Divider().padding(.horizontal, Spacing.md)
-                }
-                HStack {
-                    Text(row.label)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(row.value)
-                        .multilineTextAlignment(.trailing)
-                }
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(row.label), \(row.value)")
-            }
-        }
-        .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
-    }
-
-    private var rows: [(label: String, value: String)] {
-        var result: [(String, String)] = [
-            ("Wind", windDescription),
-            ("Visibility", visibilityDescription),
-        ]
-        if let temperature = report.temperatureCelsius {
-            result.append(("Temperature", "\(Int(temperature.rounded()))°C"))
-        }
-        if let dewPoint = report.dewPointCelsius {
-            result.append(("Dew point", "\(Int(dewPoint.rounded()))°C"))
-        }
-        if let altimeter = report.altimeterHectopascals {
-            let inches = String(format: "%.2f", altimeter / Self.hectopascalsPerInch)
-            result.append(("Altimeter", "\(Int(altimeter.rounded())) hPa · \(inches) inHg"))
-        }
-        result.append(("Cloud", cloudDescription))
-        return result
-    }
-
-    private var windDescription: String {
-        guard let knots = report.windSpeedKnots, knots > 0 else { return "Calm" }
-        guard let bearing = report.windDirectionDegrees else { return "Variable at \(knots) kt" }
-        return "\(bearing)° at \(knots) kt"
-    }
-
-    private var visibilityDescription: String {
-        guard let miles = report.visibilityStatuteMiles else { return "" }
-        let text = miles == miles.rounded() ? "\(Int(miles))" : "\(miles)"
-        return report.visibilityIsOrGreater ? "\(text)+ mi" : "\(text) mi"
-    }
-
-    private var cloudDescription: String {
-        guard !report.clouds.isEmpty else { return "No cloud reported" }
-        return report.clouds
-            .map { layer in
-                layer.baseFeet.map { "\(layer.cover) at \($0) ft" } ?? layer.cover
-            }
-            .joined(separator: ", ")
-    }
-
-    /// The same pressure in the unit the other half of the world's charts use.
-    private static let hectopascalsPerInch = 33.8639
-}
-
+// The flight-rules category, large, with what it actually means.
+//
+// The colours are the conventional ones, green visual, blue marginal, amber instrument, violet low
+// instrument, and they come from the weather palette rather than being invented here, so they are the same
+// contrast-checked colours the rest of the app uses.
 #Preview("Report") {
     NavigationStack {
         MetarContent(

@@ -2,6 +2,8 @@ package com.nauhaan.skycast.domain.model
 
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.exp
+import kotlin.math.roundToInt
 
 /**
  * A decoded aviation routine weather report from the nearest reporting airport.
@@ -56,8 +58,89 @@ data class MetarReport(
     /** How old the observation itself is, which is what a pilot actually cares about. */
     fun age(now: Instant): Duration = Duration.between(observedAt, now)
 
+    /**
+     * The lowest broken or overcast layer, in feet above the field: the **ceiling**.
+     *
+     * Not simply the lowest cloud. FEW and SCT layers are not a ceiling, which is why the
+     * flight-category thresholds are defined against BKN and OVC only.
+     */
+    val ceilingFeet: Int?
+        get() = clouds
+            .filter { it.cover in CEILING_COVERS }
+            .mapNotNull { it.baseFeet }
+            .minOrNull()
+
+    /**
+     * Relative humidity, computed from the temperature and dew point.
+     *
+     * A METAR reports both but never the humidity, and the pair is the harder one to read: 26/14 says
+     * "fairly dry" only to someone who does the arithmetic. Magnus, with the same coefficients the app
+     * already uses to derive dew point from humidity for OpenWeather, the inverse of that calculation,
+     * so the two cannot disagree.
+     */
+    val relativeHumidityPercent: Int?
+        get() {
+            val temperature = temperatureCelsius ?: return null
+            val dewPoint = dewPointCelsius ?: return null
+            val numerator = exp(MAGNUS_B * dewPoint / (MAGNUS_C + dewPoint))
+            val denominator = exp(MAGNUS_B * temperature / (MAGNUS_C + temperature))
+            return (PERCENT * numerator / denominator).roundToInt().coerceIn(0, PERCENT.toInt())
+        }
+
+    /**
+     * How far the temperature is above the dew point, in degrees.
+     *
+     * The number pilots read for fog risk: as the spread closes on zero the air is saturating, and fog or
+     * low cloud becomes likely. A spread of 1 °C at dusk is a different evening from a spread of 12 °C.
+     */
+    val dewPointSpreadCelsius: Double?
+        get() {
+            val temperature = temperatureCelsius ?: return null
+            val dewPoint = dewPointCelsius ?: return null
+            return temperature - dewPoint
+        }
+
+    /**
+     * Density altitude, in feet, the altitude the air *behaves* like.
+     *
+     * Hot, low-pressure air is thin, and thin air lengthens a take-off run and cuts climb rate. On a
+     * hot day an airfield at sea level can perform like one two thousand feet up.
+     *
+     * Uses the standard field approximation: pressure altitude from the altimeter setting (27 ft per
+     * hectopascal from standard pressure), then 120 ft for every degree the air is above ISA for
+     * that altitude. Labelled as approximate on screen.
+     */
+    val densityAltitudeFeet: Int?
+        get() {
+            val temperature = temperatureCelsius ?: return null
+            val altimeter = altimeterHectopascals ?: return null
+            val elevationFeet = elevationMetres * FEET_PER_METRE
+            val pressureAltitude = elevationFeet + (STANDARD_PRESSURE_HPA - altimeter) * FEET_PER_HPA
+            val isaTemperature = ISA_SEA_LEVEL_C - ISA_LAPSE_C_PER_1000_FT * (pressureAltitude / FEET_PER_THOUSAND)
+            return (pressureAltitude + FEET_PER_DEGREE_ABOVE_ISA * (temperature - isaTemperature))
+                .roundToInt()
+        }
+
     companion object {
         val METAR_TTL: Duration = Duration.ofMinutes(30)
+
+        /** Only these coverages form a ceiling. See [ceilingFeet]. */
+        private val CEILING_COVERS = setOf("BKN", "OVC", "VV")
+
+        // Magnus coefficients, matching DerivedReading's dew-point calculation.
+        private const val MAGNUS_B = 17.62
+        private const val MAGNUS_C = 243.12
+
+        private const val FEET_PER_METRE = 3.28084
+        private const val STANDARD_PRESSURE_HPA = 1013.25
+        private const val FEET_PER_HPA = 27.0
+        private const val ISA_SEA_LEVEL_C = 15.0
+        private const val ISA_LAPSE_C_PER_1000_FT = 2.0
+        private const val FEET_PER_DEGREE_ABOVE_ISA = 120.0
+        private const val PERCENT = 100.0
+
+        /** The lapse rate is quoted per thousand feet, so the altitude has to be divided by it. */
+        private const val FEET_PER_THOUSAND = 1_000.0
     }
 }
 
@@ -90,7 +173,7 @@ enum class FlightCategory(val label: String) {
     LIFR("LIFR"),
 
     /** The report did not include one. */
-    UNKNOWN(""),
+    UNKNOWN("N/A"),
     ;
 
     companion object {

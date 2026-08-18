@@ -129,6 +129,27 @@
       knots, and softening them into everyday words would make the screen less useful to the people
       it is for. The decoded rows exist for everyone else.
     -->
+    <string name="metar_section_sky">Sky</string>
+    <string name="metar_section_wind">Wind</string>
+    <string name="metar_section_derived">Worked out from the report</string>
+    <string name="metar_sky_clear">No cloud reported, a clear sky above the field.</string>
+    <string name="metar_sky_no_ceiling">Cloud reported, but no ceiling: nothing broken or overcast.</string>
+    <string name="metar_wind_knots">%1$d kt</string>
+    <string name="metar_wind_variable_direction">Variable direction</string>
+    <string name="metar_wind_from">From %1$d° (%2$s)</string>
+    <string name="metar_humidity">Relative humidity</string>
+    <string name="metar_percent">%1$d%%</string>
+    <string name="metar_spread">Dew point spread</string>
+    <string name="metar_spread_value">%1$.1f°C, %2$s</string>
+    <string name="metar_fog_likely">fog or low cloud likely</string>
+    <string name="metar_fog_possible">fog possible</string>
+    <string name="metar_fog_unlikely">fog unlikely</string>
+    <string name="metar_density_altitude">Density altitude</string>
+    <string name="metar_vfr_meaning">Visual flight rules: the ceiling is above 3,000 ft and visibility better than 5 miles.</string>
+    <string name="metar_mvfr_meaning">Marginal visual: ceiling 1,000–3,000 ft, or visibility 3–5 miles.</string>
+    <string name="metar_ifr_meaning">Instrument flight rules: ceiling 500–1,000 ft, or visibility 1–3 miles.</string>
+    <string name="metar_lifr_meaning">Low instrument: ceiling below 500 ft, or visibility under a mile.</string>
+    <string name="metar_category_unknown_meaning">This report did not include a flight category.</string>
     <string name="metar_loading">Finding the nearest reporting airport…</string>
     <string name="metar_none_title">No airport reporting nearby</string>
     <string name="metar_none_message">METARs are issued by airports. There is no station reporting near this place, try one closer to an airport.</string>
@@ -251,5 +272,13 @@
     <plurals name="locations_count">
         <item quantity="one">%1$d of %2$d places saved</item>
         <item quantity="other">%1$d of %2$d places saved</item>
+    </plurals>
+    <plurals name="metar_feet">
+        <item quantity="one">about %1$,d ft</item>
+        <item quantity="other">about %1$,d ft</item>
+    </plurals>
+    <plurals name="metar_sky_ceiling">
+        <item quantity="one">Ceiling at %1$d foot above the field</item>
+        <item quantity="other">Ceiling at %1$d feet above the field</item>
     </plurals>
 </resources>

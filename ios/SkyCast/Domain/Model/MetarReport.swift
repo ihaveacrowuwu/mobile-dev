@@ -53,7 +53,71 @@ struct MetarReport: Equatable, Sendable, Identifiable {
         max(0, now.timeIntervalSince(observedAt))
     }
 
+    /// The lowest broken or overcast layer, in feet above the field: the **ceiling**.
+    ///
+    /// Not simply the lowest cloud. FEW and SCT layers are not a ceiling, which is why the
+    /// flight-category thresholds are defined against BKN and OVC only.
+    var ceilingFeet: Int? {
+        clouds
+            .filter { Self.ceilingCovers.contains($0.cover) }
+            .compactMap(\.baseFeet)
+            .min()
+    }
+
+    /// Relative humidity, computed from the temperature and dew point.
+    ///
+    /// A METAR reports both but never the humidity. Uses Magnus with the same coefficients the app
+    /// uses to derive dew point from humidity, so the two cannot disagree.
+    var relativeHumidityPercent: Int? {
+        guard let temperatureCelsius, let dewPointCelsius else { return nil }
+        let numerator = exp(Self.magnusB * dewPointCelsius / (Self.magnusC + dewPointCelsius))
+        let denominator = exp(Self.magnusB * temperatureCelsius / (Self.magnusC + temperatureCelsius))
+        return min(max(Int((100 * numerator / denominator).rounded()), 0), 100)
+    }
+
+    /// How far the temperature is above the dew point, in degrees.
+    ///
+    /// The number pilots read for fog risk: as the spread closes on zero the air is saturating, and
+    /// fog or low cloud becomes likely.
+    var dewPointSpreadCelsius: Double? {
+        guard let temperatureCelsius, let dewPointCelsius else { return nil }
+        return temperatureCelsius - dewPointCelsius
+    }
+
+    /// Density altitude, in feet: the altitude the air *behaves* like.
+    ///
+    /// Hot, low-pressure air is thin, and thin air lengthens a take-off run and cuts climb rate.
+    ///
+    /// Uses the standard field approximation: pressure altitude from the altimeter setting (27 ft
+    /// per hectopascal from standard pressure), then 120 ft for every degree the air is above ISA
+    /// for that altitude. Labelled as approximate on screen.
+    var densityAltitudeFeet: Int? {
+        guard let temperatureCelsius, let altimeterHectopascals else { return nil }
+        let elevationFeet = Double(elevationMetres) * Self.feetPerMetre
+        let pressureAltitude = elevationFeet
+            + (Self.standardPressureHpa - altimeterHectopascals) * Self.feetPerHectopascal
+        let isaTemperature = Self.isaSeaLevelCelsius
+            - Self.isaLapseCelsiusPerThousandFeet * (pressureAltitude / 1_000)
+        let densityAltitude = pressureAltitude
+            + Self.feetPerDegreeAboveIsa * (temperatureCelsius - isaTemperature)
+        return Int(densityAltitude.rounded())
+    }
+
     static let metarTTL: TimeInterval = 30 * 60
+
+    /// Only these coverages form a ceiling. See ``ceilingFeet``.
+    private static let ceilingCovers: Set<String> = ["BKN", "OVC", "VV"]
+
+    // Magnus coefficients, matching the dew-point derivation in `Weather`.
+    private static let magnusB = 17.62
+    private static let magnusC = 243.12
+
+    private static let feetPerMetre = 3.28084
+    private static let standardPressureHpa = 1_013.25
+    private static let feetPerHectopascal = 27.0
+    private static let isaSeaLevelCelsius = 15.0
+    private static let isaLapseCelsiusPerThousandFeet = 2.0
+    private static let feetPerDegreeAboveIsa = 120.0
 }
 
 /// One reported cloud layer.
@@ -79,7 +143,7 @@ enum FlightCategory: String, Sendable, CaseIterable {
     /// Low instrument: below 500 ft or below 1 mile.
     case lifr = "LIFR"
     /// The report did not include one.
-    case unknown = ""
+    case unknown = "N/A"
 
     static func from(_ code: String?) -> FlightCategory {
         guard let code else { return .unknown }

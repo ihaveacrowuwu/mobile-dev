@@ -1,12 +1,16 @@
 package com.nauhaan.skycast.ui.metar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocationAlt
@@ -17,31 +21,43 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
+import com.nauhaan.skycast.core.designsystem.component.SkyLayer
+import com.nauhaan.skycast.core.designsystem.component.SkyLayersDiagram
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.WindCompass
+import com.nauhaan.skycast.core.designsystem.component.coverFractionFor
+import com.nauhaan.skycast.core.designsystem.component.frostRim
+import com.nauhaan.skycast.core.designsystem.component.frostedCardColours
+import com.nauhaan.skycast.core.designsystem.component.frostedCardElevation
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
 import com.nauhaan.skycast.domain.model.FlightCategory
 import com.nauhaan.skycast.domain.model.MetarReport
+import com.nauhaan.skycast.ui.common.SectionHeader
+import com.nauhaan.skycast.ui.common.cardinalFor
 import com.nauhaan.skycast.ui.common.toPresentation
 import java.time.Duration
 import java.time.Instant
@@ -139,7 +155,12 @@ internal fun MetarContent(
 private fun ReportBody(report: MetarReport, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         StationHeader(report)
-        FlightCategoryBadge(report.flightCategory)
+        // The category first and large, because it is the one thing a pilot looks for before anything
+        // else, it decides whether the flight can be made under visual rules at all.
+        FlightCategoryHero(report.flightCategory)
+        SkySection(report)
+        WindSection(report)
+        DerivedSection(report)
         RawReport(report.raw)
         DecodedRows(report)
     }
@@ -188,28 +209,240 @@ private fun StationHeader(report: MetarReport, modifier: Modifier = Modifier) {
  * here, so they are the same contrast-checked colours the rest of the app uses.
  */
 @Composable
-private fun FlightCategoryBadge(category: FlightCategory, modifier: Modifier = Modifier) {
-    val colour = when (category) {
-        FlightCategory.VFR -> weatherPalette.wind
-        FlightCategory.MVFR -> weatherPalette.humidity
-        FlightCategory.IFR -> weatherPalette.sunset
-        FlightCategory.LIFR -> weatherPalette.pressure
-        FlightCategory.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun FlightCategoryHero(category: FlightCategory, modifier: Modifier = Modifier) {
+    val colour = category.colour()
+    val meaning = stringResource(category.meaningRes)
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .frostRim(CardDefaults.shape)
+            .clearAndSetSemantics {
+                contentDescription = "Flight category ${category.label}. $meaning"
+            },
+        shape = CardDefaults.shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
+    ) {
+        Row(
+            modifier = Modifier.padding(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            // A filled disc rather than a small chip: at this size the colour does the work from across
+            // the room, which is the point of the convention, green visual, blue marginal, amber
+            // instrument, violet low instrument.
+            Box(
+                modifier = Modifier
+                    .size(CategoryDiscSize)
+                    .clip(CircleShape)
+                    .background(colour.copy(alpha = CATEGORY_DISC_ALPHA)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = category.label,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Text(
+                text = meaning,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * The sky, drawn to scale, with the ceiling marked. See [SkyLayersDiagram].
+ */
+@Composable
+private fun SkySection(report: MetarReport, modifier: Modifier = Modifier) {
+    val ceiling = report.ceilingFeet
+    val layers = report.clouds.mapNotNull { layer ->
+        layer.baseFeet?.let { base ->
+            SkyLayer(
+                cover = layer.cover,
+                baseFeet = base,
+                coverFraction = coverFractionFor(layer.cover),
+                isCeiling = base == ceiling,
+            )
+        }
     }
 
-    Surface(
-        modifier = modifier.clearAndSetSemantics {
-            contentDescription = "Flight category ${category.label}"
-        },
-        color = colour.copy(alpha = BADGE_ALPHA),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = MaterialTheme.shapes.small,
-    ) {
-        Text(
-            text = category.label,
-            style = MaterialTheme.typography.titleMediumEmphasized,
-            modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
-        )
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SectionHeader(stringResource(R.string.metar_section_sky))
+        if (layers.isEmpty()) {
+            // A clear sky is a real observation, not missing data, so it is stated explicitly.
+            Text(
+                text = stringResource(R.string.metar_sky_clear),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            val shape = CardDefaults.shape
+            Card(
+                modifier = Modifier.fillMaxWidth().frostRim(shape),
+                shape = shape,
+                colors = frostedCardColours(),
+                elevation = frostedCardElevation(),
+            ) {
+                SkyLayersDiagram(
+                    layers = layers,
+                    contentDescription = if (ceiling == null) {
+                        stringResource(R.string.metar_sky_no_ceiling)
+                    } else {
+                        pluralStringResource(R.plurals.metar_sky_ceiling, ceiling, ceiling)
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** Wind as a compass, because a bearing is a direction and not a magnitude. */
+@Composable
+private fun WindSection(report: MetarReport, modifier: Modifier = Modifier) {
+    val knots = report.windSpeedKnots ?: 0
+    val bearing = report.windDirectionDegrees
+    val shape = CardDefaults.shape
+
+    val description = report.windDescriptionPlain()
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SectionHeader(stringResource(R.string.metar_section_wind))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .frostRim(shape)
+                .clearAndSetSemantics { contentDescription = description },
+            shape = shape,
+            colors = frostedCardColours(),
+            elevation = frostedCardElevation(),
+        ) {
+            Row(
+                modifier = Modifier.padding(Spacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            ) {
+                // Calm and variable winds have no bearing to point at, so the needle is parked
+                // north and the text carries the meaning.
+                WindCompass(
+                    degrees = (bearing ?: 0).toFloat(),
+                    colour = weatherPalette.wind,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                    Text(
+                        text = stringResource(R.string.metar_wind_knots, knots),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The figures derived from a report rather than read off it.
+ *
+ * A METAR reports none of these. See `MetarReport` for how each is derived, and
+ * `MetarDerivationsTest` for the references they are checked against.
+ */
+@Composable
+private fun DerivedSection(report: MetarReport, modifier: Modifier = Modifier) {
+    val details = buildList {
+        report.relativeHumidityPercent?.let {
+            add(stringResource(R.string.metar_humidity) to stringResource(R.string.metar_percent, it))
+        }
+        report.dewPointSpreadCelsius?.let {
+            add(
+                stringResource(R.string.metar_spread) to
+                    stringResource(R.string.metar_spread_value, it, fogRiskLabel(it)),
+            )
+        }
+        report.densityAltitudeFeet?.let {
+            add(
+                stringResource(R.string.metar_density_altitude) to
+                    pluralStringResource(R.plurals.metar_feet, it, it),
+            )
+        }
+    }
+    if (details.isEmpty()) return
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SectionHeader(stringResource(R.string.metar_section_derived))
+        val shape = CardDefaults.shape
+        Card(
+            modifier = Modifier.fillMaxWidth().frostRim(shape),
+            shape = shape,
+            colors = frostedCardColours(),
+            elevation = frostedCardElevation(),
+        ) {
+            Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                details.forEachIndexed { index, (label, value) ->
+                    if (index > 0) HorizontalDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clearAndSetSemantics { contentDescription = "$label, $value" },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** How close the air is to saturating, in words. */
+@Composable
+private fun fogRiskLabel(spreadCelsius: Double): String = stringResource(
+    when {
+        spreadCelsius <= 1.0 -> R.string.metar_fog_likely
+        spreadCelsius <= 3.0 -> R.string.metar_fog_possible
+        else -> R.string.metar_fog_unlikely
+    },
+)
+
+/** The conventional colour for each category, taken from the app's palette. */
+@Composable
+private fun FlightCategory.colour(): Color = when (this) {
+    FlightCategory.VFR -> weatherPalette.wind
+    FlightCategory.MVFR -> weatherPalette.humidity
+    FlightCategory.IFR -> weatherPalette.sunset
+    FlightCategory.LIFR -> weatherPalette.pressure
+    FlightCategory.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
+}
+
+/** What the abbreviation actually means, for everyone who is not a pilot. */
+private val FlightCategory.meaningRes: Int
+    get() = when (this) {
+        FlightCategory.VFR -> R.string.metar_vfr_meaning
+        FlightCategory.MVFR -> R.string.metar_mvfr_meaning
+        FlightCategory.IFR -> R.string.metar_ifr_meaning
+        FlightCategory.LIFR -> R.string.metar_lifr_meaning
+        FlightCategory.UNKNOWN -> R.string.metar_category_unknown_meaning
+    }
+
+@Composable
+private fun MetarReport.windDescriptionPlain(): String {
+    val bearing = windDirectionDegrees
+    return when {
+        (windSpeedKnots ?: 0) == 0 -> stringResource(R.string.metar_wind_calm)
+        bearing == null -> stringResource(R.string.metar_wind_variable_direction)
+        else -> stringResource(R.string.metar_wind_from, bearing, cardinalFor(bearing))
     }
 }
 
@@ -348,7 +581,6 @@ private val OBSERVED_FORMAT: DateTimeFormatter =
 /** METARs are issued in UTC ("Z" in the report), so the observation time is shown in it. */
 private const val HECTOPASCALS_PER_INCH = 33.8639
 private const val INCHES_FORMAT = "%.2f"
-private const val BADGE_ALPHA = 0.25f
 
 @Preview(showBackground = true)
 @Composable
@@ -382,3 +614,8 @@ private fun MetarPreview() {
         )
     }
 }
+
+private val CategoryDiscSize = 64.dp
+
+/** Enough colour to read the category across a room, light enough to keep its label legible on it. */
+private const val CATEGORY_DISC_ALPHA = 0.35f
