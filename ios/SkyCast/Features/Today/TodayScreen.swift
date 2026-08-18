@@ -33,7 +33,7 @@ struct TodayScreen: View {
                 LoadingView()
             }
         }
-        .navigationTitle("Today")
+        .toolbarTitleDisplayMode(.inline)
         .navigationDestination(item: $detailLocationID) { locationID in
             LocationDetailScreen(locationID: locationID)
         }
@@ -84,32 +84,42 @@ struct TodayContent: View {
 
     /// The saved places, one per page.
     ///
-    /// `TabView` in page style rather than a hand-rolled `ScrollView` with paging: it supplies the
-    /// gesture, the rubber-banding, the index binding and, importantly, VoiceOver's swipe
-    /// navigation between pages, none of which a custom implementation would get right for free.
-    ///
-    /// The menu above it stays, because a gesture with no visible affordance is undiscoverable:
-    /// someone who never swipes would not learn there is more than one page.
+    /// `TabView` in page style supplies the gesture, the rubber-banding, the index binding and
+    /// VoiceOver's swipe navigation between pages. The place name lives in the toolbar, and the
+    /// menu beside it offers the list for readers who do not swipe.
     private var pager: some View {
-        VStack(spacing: 0) {
-            LocationSwitcher(state: state, onSelectPage: onSelectPage)
-                .padding(.horizontal, Spacing.md)
-                .padding(.bottom, Spacing.sm)
-
-            TabView(selection: selectionBinding) {
-                ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
-                    TodayPageView(
-                        page: page,
-                        state: state,
-                        isSelected: index == state.selectedIndex,
-                        onRefresh: onRefresh,
-                        onDismissBanner: onDismissBanner,
-                        onOpenDetail: onOpenDetail
+        TabView(selection: selectionBinding) {
+            ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
+                TodayPageView(
+                    page: page,
+                    state: state,
+                    isSelected: index == state.selectedIndex,
+                    onRefresh: onRefresh,
+                    onDismissBanner: onDismissBanner,
+                    onOpenDetail: onOpenDetail
+                )
+                .tag(index)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        // Lets each page's ScrollView run to the bottom of the screen, so content passes *under*
+        // the glass tab bar the way Liquid Glass intends. Without it the pages stop at the safe
+        // area and the bar sits on a flat slab of background, black, in dark mode. The pages add
+        // their own bottom clearance so nothing ends up permanently trapped behind the bar.
+        .ignoresSafeArea(.container, edges: .bottom)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                LocationMenu(state: state, onSelectPage: onSelectPage)
+            }
+            if state.showsPageIndicator, let current = state.location {
+                ToolbarItem(placement: .topBarTrailing) {
+                    PageDots(
+                        count: state.pages.count,
+                        selectedIndex: state.selectedIndex,
+                        currentName: current.name
                     )
-                    .tag(index)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
         }
         // Follows the place on screen, so swiping from a clear Malé to an overcast London changes
         // the weather of the whole screen, not just the numbers on it.
@@ -176,6 +186,10 @@ private struct TodayPageView: View {
                 }
                 .padding(.vertical, Spacing.md)
                 .padding(.horizontal, Spacing.md)
+                // Room to scroll the last tile out from under the tab bar. Generous rather than
+                // exact: the cost of too much is a little empty space at the very bottom of a
+                // scroll, and the cost of too little is a tile the user cannot read.
+                .padding(.bottom, Self.tabBarClearance)
             }
         }
         // Softens where content meets the navigation bar and the minimised tab bar.
@@ -183,41 +197,40 @@ private struct TodayPageView: View {
         // Native pull-to-refresh; also drives the Retry action above.
         .refreshable { await onRefresh() }
     }
+
+    /// Roughly the minimised tab bar plus the home indicator.
+    private static let tabBarClearance: CGFloat = 88
 }
 
-/// The place currently shown, with a menu of the others and a page indicator.
+/// The place currently shown, and a menu of the others.
 ///
-/// The dots report position and are not tap targets, 8-point dots would fail the 44-point minimum
-/// for no gain, and the menu beside them is the control.
-private struct LocationSwitcher: View {
+/// Lives in the toolbar, so it is a floating glass control rather than a strip of the page, see
+/// ``TodayContent/pager``.
+private struct LocationMenu: View {
     let state: TodayUiState
     let onSelectPage: (Int) -> Void
 
     var body: some View {
         if let current = state.location {
-            HStack {
-                Menu {
+            Menu {
+                // A picker rather than plain buttons: the menu then shows a tick beside the place
+                // on screen, which a list of identical-looking buttons cannot.
+                Picker("Place", selection: Binding(get: { state.selectedIndex }, set: onSelectPage)) {
                     ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
-                        Button(page.location.displayName) { onSelectPage(index) }
-                    }
-                } label: {
-                    // An HStack rather than a `Label`, which puts its icon first: a disclosure
-                    // chevron belongs after the thing it discloses.
-                    HStack(spacing: Spacing.xs) {
-                        Text(current.name)
-                            .font(.headline)
-                        Image(systemName: "chevron.down")
-                            .font(.caption.weight(.semibold))
+                        Text(page.location.displayName).tag(index)
                     }
                 }
-                .accessibilityLabel("Choose a place, showing \(current.name)")
-
-                Spacer()
-
-                if state.showsPageIndicator {
-                    PageDots(count: state.pages.count, selectedIndex: state.selectedIndex, currentName: current.name)
+            } label: {
+                // An HStack rather than a `Label`, which puts its icon first: a disclosure
+                // chevron belongs after the thing it discloses.
+                HStack(spacing: Spacing.xs) {
+                    Text(current.name)
+                        .font(.headline)
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
                 }
             }
+            .accessibilityLabel("Choose a place, showing \(current.name)")
         }
     }
 }
