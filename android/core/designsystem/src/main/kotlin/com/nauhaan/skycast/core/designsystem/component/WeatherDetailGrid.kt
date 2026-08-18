@@ -1,5 +1,6 @@
 package com.nauhaan.skycast.core.designsystem.component
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
@@ -32,11 +35,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
@@ -79,11 +84,25 @@ fun WeatherDetailGrid(details: List<WeatherDetail>, modifier: Modifier = Modifie
 private fun WeatherDetailTile(detail: WeatherDetail, modifier: Modifier = Modifier) {
     val accent = detail.kind.accent()
 
+    // The theme surface with a whisper of the page's mood mixed over it. Composited rather than
+    // replaced so the base stays the colour the theme guarantees contrast against: the tile belongs
+    // to a warm page or a cold one without any text on it becoming a contrast problem that has to
+    // be re-checked per condition. Animated on the effects spec, this is a colour change, and the
+    // spatial spec would overshoot past the target colour.
+    val tint = LocalWeatherTint.current
+    val container by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.surfaceContainerHigh.let { surface ->
+            if (tint == null) surface else tint.copy(alpha = TINT_ALPHA).compositeOver(surface)
+        },
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "detailTileContainer",
+    )
+
     Card(
         modifier = modifier.clearAndSetSemantics {
             contentDescription = "${detail.label}, ${detail.value}"
         },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        colors = CardDefaults.cardColors(containerColor = container),
     ) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -155,6 +174,8 @@ private fun WeatherDetailKind.icon(): ImageVector = when (this) {
     WeatherDetailKind.VISIBILITY -> Icons.Filled.Visibility
     WeatherDetailKind.SUNRISE -> Icons.Filled.WbSunny
     WeatherDetailKind.SUNSET -> Icons.Filled.WbTwilight
+    WeatherDetailKind.DEW_POINT -> Icons.Filled.DeviceThermostat
+    WeatherDetailKind.DAYLIGHT -> Icons.Filled.LightMode
 }
 
 @Composable
@@ -165,10 +186,18 @@ private fun WeatherDetailKind.accent(): Color = when (this) {
     WeatherDetailKind.VISIBILITY -> weatherPalette.visibility
     WeatherDetailKind.SUNRISE -> weatherPalette.sunrise
     WeatherDetailKind.SUNSET -> weatherPalette.sunset
+    WeatherDetailKind.DEW_POINT -> weatherPalette.humidity
+    WeatherDetailKind.DAYLIGHT -> weatherPalette.sunrise
 }
 
 /** Two tiles per row at the default text size; FlowRow drops to one when they stop fitting. */
 private const val TILES_PER_ROW = 2
+
+/**
+ * Enough to be felt when swiping between a clear place and an overcast one, little enough that the
+ * tile still reads as a neutral surface rather than a coloured chip.
+ */
+private const val TINT_ALPHA = 0.10f
 private val IconSize = 16.dp
 private val BarHeight = 4.dp
 

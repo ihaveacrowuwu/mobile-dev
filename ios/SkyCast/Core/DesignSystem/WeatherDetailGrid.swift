@@ -35,6 +35,12 @@ enum WeatherDetailKind: CaseIterable {
     case sunrise
     case sunset
 
+    // Derived rather than reported, see ``Weather/dewPointCelsius`` and
+    // ``Weather/daylightDuration``. They share the hue of the reading they are closest to: dew
+    // point is moisture, so it takes humidity's blue, and daylight takes the sunrise gold.
+    case dewPoint
+    case daylight
+
     var symbolName: String {
         switch self {
         case .humidity: "humidity.fill"
@@ -43,16 +49,18 @@ enum WeatherDetailKind: CaseIterable {
         case .visibility: "eye.fill"
         case .sunrise: "sunrise.fill"
         case .sunset: "sunset.fill"
+        case .dewPoint: "thermometer.medium"
+        case .daylight: "sun.horizon.fill"
         }
     }
 
     var accent: Color {
         switch self {
-        case .humidity: WeatherPalette.humidity
+        case .humidity, .dewPoint: WeatherPalette.humidity
         case .wind: WeatherPalette.wind
         case .pressure: WeatherPalette.pressure
         case .visibility: WeatherPalette.visibility
-        case .sunrise: WeatherPalette.sunrise
+        case .sunrise, .daylight: WeatherPalette.sunrise
         case .sunset: WeatherPalette.sunset
         }
     }
@@ -89,6 +97,9 @@ struct WeatherDetailGrid: View {
 private struct WeatherDetailTile: View {
     let detail: WeatherDetail
 
+    /// The mood colour of the page this tile is on, if it has one.
+    @Environment(\.weatherTint) private var weatherTint
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Label {
@@ -111,13 +122,30 @@ private struct WeatherDetailTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.md)
-        .background(Color.skySurface, in: .rect(cornerRadius: Radius.md))
+        // The surface first, then a whisper of the page's mood over it. Layered rather than
+        // blended into a single colour so the base stays the one the system guarantees contrast
+        // against, the tile belongs to a warm page or a cold one without any text on it becoming
+        // a contrast problem that has to be re-checked per condition.
+        .background {
+            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .fill(Color.skySurface)
+                .overlay {
+                    if let weatherTint {
+                        RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                            .fill(weatherTint.opacity(tintOpacity))
+                    }
+                }
+        }
         // One announcement per tile. Without this, VoiceOver reads "Humidity" and "69%" as two
         // unrelated fragments and the pairing is lost. The bar is decorative, it says the same
         // thing as the value.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(detail.label), \(detail.value)")
     }
+
+    /// Enough to be felt when swiping between a clear place and an overcast one, little enough
+    /// that the tile still reads as a neutral surface rather than a coloured chip.
+    private let tintOpacity: Double = 0.10
 }
 
 /// A slim bar showing where a reading sits on its scale.
