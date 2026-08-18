@@ -78,6 +78,7 @@ fun SkyCastNavigator.currentTopLevelDestination(): TopLevelDestination? {
         when (tab.route) {
             Route.Home -> destination.hasRoute(Route.Home::class)
             Route.Metar -> destination.hasRoute(Route.Metar::class)
+            Route.Moon -> destination.hasRoute(Route.Moon::class)
             Route.Locations -> destination.hasRoute(Route.Locations::class)
             Route.Settings -> destination.hasRoute(Route.Settings::class)
             else -> false

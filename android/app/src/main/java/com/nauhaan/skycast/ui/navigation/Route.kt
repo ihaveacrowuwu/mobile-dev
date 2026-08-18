@@ -2,10 +2,12 @@ package com.nauhaan.skycast.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.FlightTakeoff
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
@@ -28,6 +30,9 @@ sealed interface Route {
 
     @Serializable
     data object Metar : Route
+
+    @Serializable
+    data object Moon : Route
 
     @Serializable
     data object Locations : Route
@@ -55,7 +60,7 @@ sealed interface Route {
 }
 
 /**
- * The four bottom-bar destinations.
+ * The five bottom-bar destinations.
  *
  * Selected and unselected icons differ (filled vs outlined) because a filled-only bar
  * gives no visual affordance for which tab is active.
@@ -91,6 +96,14 @@ enum class TopLevelDestination(
         selectedIcon = Icons.Filled.FlightTakeoff,
         unselectedIcon = Icons.Outlined.FlightTakeoff,
         testTag = "tab_metar",
+    ),
+    MOON(
+        route = Route.Moon,
+        labelRes = R.string.tab_moon,
+        contentDescriptionRes = R.string.tab_moon_description,
+        selectedIcon = Icons.Filled.Bedtime,
+        unselectedIcon = Icons.Outlined.Bedtime,
+        testTag = "tab_moon",
     ),
     LOCATIONS(
         route = Route.Locations,

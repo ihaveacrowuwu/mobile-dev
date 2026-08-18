@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.Card
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
@@ -163,11 +166,53 @@ data class SunPathReading(
  */
 @Composable
 fun SunPathCard(reading: SunPathReading, modifier: Modifier = Modifier) {
+    SkyPathCard(
+        reading = SkyPathReading(
+            progress = reading.progress,
+            riseLabel = reading.sunriseLabel,
+            setLabel = reading.sunsetLabel,
+            centreLabel = reading.daylightLabel,
+            contentDescription = reading.contentDescription,
+        ),
+        riseIcon = Icons.Filled.WbSunny,
+        setIcon = Icons.Filled.WbTwilight,
+        riseColour = weatherPalette.sunrise,
+        setColour = weatherPalette.sunset,
+        modifier = modifier,
+    )
+}
+
+/** A rise-to-set card's content, already formatted by the feature layer. */
+@Immutable
+data class SkyPathReading(
+    /** 0 at the rise, 1 at the set. Outside that range the body is below the horizon. */
+    val progress: Float,
+    val riseLabel: String,
+    val setLabel: String,
+    val centreLabel: String,
+    val contentDescription: String,
+)
+
+/**
+ * An arc from a rise to a set, with a marker at the body's current position.
+ *
+ * Generalised out of [SunPathCard] when the Moon tab needed the same drawing with different times,
+ * colours and icons. Everything that makes it *readable*, the dashed remainder, the tinted
+ * container, the single spoken sentence, is therefore defined once.
+ */
+@Composable
+fun SkyPathCard(
+    reading: SkyPathReading,
+    riseIcon: ImageVector,
+    setIcon: ImageVector,
+    riseColour: Color,
+    setColour: Color,
+    modifier: Modifier = Modifier,
+    markerColour: Color = riseColour,
+) {
     val tint = LocalWeatherTint.current
     val base = MaterialTheme.colorScheme.surfaceContainerHigh
     val container = if (tint == null) base else tint.copy(alpha = TINT_ALPHA).compositeOver(base)
-    val sunrise = weatherPalette.sunrise
-    val sunset = weatherPalette.sunset
     val track = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TRACK_ALPHA)
     val progress = reading.progress.coerceIn(0f, 1f)
     val isUp = reading.progress > 0f && reading.progress < 1f
@@ -198,12 +243,12 @@ fun SunPathCard(reading: SunPathReading, modifier: Modifier = Modifier) {
                 // exact where clipping the full one would flatten its end.
                 drawPath(
                     path = sunArc(size, until = progress),
-                    brush = Brush.horizontalGradient(listOf(sunrise, sunset)),
+                    brush = Brush.horizontalGradient(listOf(riseColour, setColour)),
                     style = Stroke(width = 4f, cap = StrokeCap.Round),
                 )
                 if (isUp) {
                     drawCircle(
-                        color = sunrise,
+                        color = markerColour,
                         radius = MarkerRadiusPx,
                         center = sunArcPoint(progress, size),
                     )
@@ -217,17 +262,23 @@ fun SunPathCard(reading: SunPathReading, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                TimeLabel(reading.sunriseLabel, Icons.Filled.WbSunny, sunrise)
+                TimeLabel(reading.riseLabel, riseIcon, riseColour)
                 Text(
-                    text = reading.daylightLabel,
+                    text = reading.centreLabel,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TimeLabel(reading.sunsetLabel, Icons.Filled.WbTwilight, sunset)
+                TimeLabel(reading.setLabel, setIcon, setColour)
             }
         }
     }
 }
+
+/** Rise and set icons for a body with no dawn or dusk of its own. */
+val MoonRiseIcon: ImageVector get() = Icons.Filled.ArrowUpward
+
+/** @see MoonRiseIcon */
+val MoonSetIcon: ImageVector get() = Icons.Filled.ArrowDownward
 
 @Composable
 private fun TimeLabel(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color) {

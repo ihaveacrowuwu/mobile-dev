@@ -17,6 +17,7 @@ import com.nauhaan.skycast.ui.home.HomeScreen
 import com.nauhaan.skycast.ui.locations.AddLocationScreen
 import com.nauhaan.skycast.ui.locations.LocationsScreen
 import com.nauhaan.skycast.ui.metar.MetarScreen
+import com.nauhaan.skycast.ui.moon.MoonScreen
 import com.nauhaan.skycast.ui.settings.AboutScreen
 import com.nauhaan.skycast.ui.settings.SettingsScreen
 
@@ -96,6 +97,13 @@ fun SkyCastNavHost(
             exitTransition = { fadeOut(fadeSpec) },
         ) {
             MetarScreen(onNavigateToAddLocation = navigator::navigateToAddLocation)
+        }
+
+        composable<Route.Moon>(
+            enterTransition = { fadeIn(fadeSpec) },
+            exitTransition = { fadeOut(fadeSpec) },
+        ) {
+            MoonScreen()
         }
 
         composable<Route.Locations>(

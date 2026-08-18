@@ -15,6 +15,8 @@
     <!-- Longer descriptions announced by TalkBack, where the short label is ambiguous. -->
     <string name="tab_home_description">Current weather for your places</string>
     <string name="tab_metar_description">Aviation weather report</string>
+    <string name="tab_moon">Moon</string>
+    <string name="tab_moon_description">Moon phase and tonight\'s moonrise</string>
     <string name="tab_locations_description">Saved locations</string>
     <string name="tab_settings_description">Settings</string>
 
@@ -199,4 +201,45 @@
     <string name="about_api_key_configured">API key configured</string>
     <string name="about_yes">Yes</string>
     <string name="about_no">No</string>
+
+    <!-- Moon tab. Every value on this screen is computed on the device. -->
+    <string name="moon_loading">Working out where the Moon is…</string>
+    <string name="moon_tonight">Tonight</string>
+    <string name="moon_distance">Distance</string>
+    <string name="moon_coming_up">Coming up</string>
+    <string name="moon_summary">%1$d%% lit · %2$s</string>
+    <string name="moon_age_under_a_day">less than a day old</string>
+    <string name="moon_full_tonight">Full moon tonight</string>
+    <string name="moon_full_tomorrow">Full moon tomorrow</string>
+    <string name="moon_relative_today">today</string>
+    <string name="moon_relative_tomorrow">tomorrow</string>
+    <string name="moon_time_up">%1$dh %2$dm up</string>
+    <string name="moon_path_description">Moon rises at %1$s, sets at %2$s, %3$s</string>
+    <string name="moon_distance_km">%1$,d km</string>
+    <string name="moon_apparent_width">Apparent width %1$.2f°</string>
+    <string name="moon_distance_very_close">Unusually close, it will look large</string>
+    <string name="moon_distance_closer">Closer than average</string>
+    <string name="moon_distance_average">About average distance</string>
+    <string name="moon_distance_further">Further than average</string>
+    <string name="moon_distance_very_far">Unusually far, it will look small</string>
+    <string name="moon_phase_new">New moon</string>
+    <string name="moon_phase_waxing_crescent">Waxing crescent</string>
+    <string name="moon_phase_first_quarter">First quarter</string>
+    <string name="moon_phase_waxing_gibbous">Waxing gibbous</string>
+    <string name="moon_phase_full">Full moon</string>
+    <string name="moon_phase_waning_gibbous">Waning gibbous</string>
+    <string name="moon_phase_last_quarter">Last quarter</string>
+    <string name="moon_phase_waning_crescent">Waning crescent</string>
+    <plurals name="moon_age_days">
+        <item quantity="one">%1$d day old</item>
+        <item quantity="other">%1$d days old</item>
+    </plurals>
+    <plurals name="moon_full_in_days">
+        <item quantity="one">Full moon in %1$d day</item>
+        <item quantity="other">Full moon in %1$d days</item>
+    </plurals>
+    <plurals name="moon_relative_in_days">
+        <item quantity="one">in %1$d day</item>
+        <item quantity="other">in %1$d days</item>
+    </plurals>
 </resources>
