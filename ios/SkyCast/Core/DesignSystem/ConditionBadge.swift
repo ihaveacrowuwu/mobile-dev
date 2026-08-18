@@ -26,15 +26,31 @@ struct ConditionBadge: View {
     let isDaytime: Bool
     var size: CGFloat = 64
 
+    /// The Dynamic Type multiplier, obtained by scaling 1. Applied to ``size`` so the badge grows
+    /// with the user's text size exactly as a `.largeTitle`-relative symbol would.
+    @ScaledMetric(relativeTo: .largeTitle) private var typeScale: CGFloat = 1
+
+    private var box: CGFloat {
+        size * typeScale
+    }
+
     private var colours: (container: Color, content: Color) {
         WeatherPalette.colours(for: condition, isDaytime: isDaytime)
     }
 
     var body: some View {
-        ScaledSymbol(condition.symbolName(isDaytime: isDaytime), baseSize: size)
+        // Fitted into a **square**, not sized by the glyph. Set as a font size, each symbol's own
+        // proportions decided the badge's: `sun.max.fill` is square where `cloud.moon.fill` is
+        // wide and short, so the circle around them came out a different size per condition. That
+        // moved everything beneath it, a clear Malé sat visibly lower on the page than an
+        // overcast London, and the hourly temperatures never shared a baseline.
+        Image(systemName: condition.symbolName(isDaytime: isDaytime))
+            .resizable()
+            .scaledToFit()
+            .frame(width: box, height: box)
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(colours.content)
-            .padding(size * containerPaddingRatio)
+            .padding(box * containerPaddingRatio)
             .background(colours.container, in: .circle)
             // Decorative: the text beside it already names the condition, so announcing
             // the symbol would repeat it for VoiceOver users.
