@@ -88,37 +88,48 @@ struct TodayContent: View {
     /// VoiceOver's swipe navigation between pages. The place name lives in the toolbar, and the
     /// menu beside it offers the list for readers who do not swipe.
     private var pager: some View {
-        TabView(selection: selectionBinding) {
-            ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
-                TodayPageView(
-                    page: page,
-                    state: state,
-                    isSelected: index == state.selectedIndex,
-                    onRefresh: onRefresh,
-                    onDismissBanner: onDismissBanner,
-                    onOpenDetail: onOpenDetail
-                )
-                .tag(index)
+        // The GeometryReader recovers the safe-area insets after they are ignored. A paged
+        // TabView lays its pages out inside the safe area, so the pager ignores the insets and each
+        // page puts them back as content padding.
+        GeometryReader { proxy in
+            TabView(selection: selectionBinding) {
+                ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
+                    TodayPageView(
+                        page: page,
+                        state: state,
+                        isSelected: index == state.selectedIndex,
+                        onRefresh: onRefresh,
+                        onDismissBanner: onDismissBanner,
+                        onOpenDetail: onOpenDetail,
+                        chromeInsets: proxy.safeAreaInsets
+                    )
+                    .tag(index)
+                }
             }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            // On the TabView, not on the GeometryReader: a reader that ignores the safe area
+            // reports no insets, which would leave the pages with no padding.
+            .ignoresSafeArea(.container, edges: .vertical)
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        // Lets each page's ScrollView run to the bottom of the screen, so content passes *under*
-        // the glass tab bar the way Liquid Glass intends. Without it the pages stop at the safe
-        // area and the bar sits on a flat slab of background, black, in dark mode. The pages add
-        // their own bottom clearance so nothing ends up permanently trapped behind the bar.
-        .ignoresSafeArea(.container, edges: .bottom)
+        // Without this the navigation bar paints its own background across the top of the screen.
+        // Hiding it leaves only the toolbar items.
+        .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 LocationMenu(state: state, onSelectPage: onSelectPage)
             }
             if state.showsPageIndicator, let current = state.location {
                 ToolbarItem(placement: .topBarTrailing) {
-                    PageDots(
+                    PageIndicator(
                         count: state.pages.count,
                         selectedIndex: state.selectedIndex,
                         currentName: current.name
                     )
                 }
+                // Opts the indicator out of the toolbar's shared glass. Left in, the system gave it
+                // the same floating capsule as the menu beside it, which reads as a button, and it
+                // is not one: it reports position and cannot be pressed.
+                .sharedBackgroundVisibility(.hidden)
             }
         }
         // Follows the place on screen, so swiping from a clear Malé to an overcast London changes
@@ -142,6 +153,9 @@ private struct TodayPageView: View {
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
     let onOpenDetail: (Int64) -> Void
+    /// The insets the pager gave up so content could run behind the bars, see
+    /// ``TodayContent/pager``. Re-applied here as content padding.
+    let chromeInsets: EdgeInsets
 
     var body: some View {
         ScrollView {
@@ -184,12 +198,12 @@ private struct TodayPageView: View {
                         LoadingView(message: "Fetching the latest weather…")
                     }
                 }
-                .padding(.vertical, Spacing.md)
                 .padding(.horizontal, Spacing.md)
-                // Room to scroll the last tile out from under the tab bar. Generous rather than
-                // exact: the cost of too much is a little empty space at the very bottom of a
-                // scroll, and the cost of too little is a tile the user cannot read.
-                .padding(.bottom, Self.tabBarClearance)
+                // The inset is the gap: adding a further Spacing.md on top of a status bar plus a
+                // toolbar left the hero sitting noticeably low on the page.
+                .padding(.top, chromeInsets.top)
+                // The tab bar's own inset, plus room to scroll the last tile clear of it.
+                .padding(.bottom, chromeInsets.bottom + Self.tabBarClearance)
             }
         }
         // Softens where content meets the navigation bar and the minimised tab bar.
@@ -198,8 +212,8 @@ private struct TodayPageView: View {
         .refreshable { await onRefresh() }
     }
 
-    /// Roughly the minimised tab bar plus the home indicator.
-    private static let tabBarClearance: CGFloat = 88
+    /// Enough to scroll the last tile out from under the minimised tab bar.
+    private static let tabBarClearance: CGFloat = 56
 }
 
 /// The place currently shown, and a menu of the others.
@@ -235,23 +249,48 @@ private struct LocationMenu: View {
     }
 }
 
-private struct PageDots: View {
+/// Which page of how many, over the page rather than in the chrome.
+///
+/// Dots up to a handful of places, then a count. A row of dots is the familiar carousel affordance
+/// and reads instantly at three or four, but it degrades badly: at a dozen saved places it becomes
+/// a line of specks nobody can count, and it grows without bound. "7 of 12" costs the same space
+/// whatever the number.
+///
+/// Deliberately not a control. It reports position; the menu in the toolbar is how you move.
+/// Eight-point dots would fail the 44-point minimum touch target for no gain.
+private struct PageIndicator: View {
     let count: Int
     let selectedIndex: Int
     let currentName: String
 
     var body: some View {
-        HStack(spacing: Spacing.xs) {
-            ForEach(0..<count, id: \.self) { index in
-                Circle()
-                    .fill(index == selectedIndex ? Color.skyAccent : Color.secondary.opacity(0.3))
-                    .frame(width: index == selectedIndex ? 8 : 6, height: index == selectedIndex ? 8 : 6)
+        Group {
+            if count <= Self.dotLimit {
+                HStack(spacing: Spacing.xs) {
+                    ForEach(0..<count, id: \.self) { index in
+                        Circle()
+                            .fill(index == selectedIndex ? Color.skyAccent : Color.secondary.opacity(0.35))
+                            .frame(width: diameter(for: index), height: diameter(for: index))
+                    }
+                }
+            } else {
+                Text("\(selectedIndex + 1) of \(count)")
+                    .font(.caption.weight(.medium))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
             }
         }
         // One announcement for the whole indicator; individual dots mean nothing aloud.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Showing \(currentName), \(selectedIndex + 1) of \(count)")
     }
+
+    private func diameter(for index: Int) -> CGFloat {
+        index == selectedIndex ? 8 : 6
+    }
+
+    /// Six is about where counting dots stops being faster than reading a number.
+    private static let dotLimit = 6
 }
 
 // MARK: - Previews
