@@ -254,3 +254,88 @@ struct StalenessTests {
         #expect(Forecast.forecastTTL > Weather.currentWeatherTTL)
     }
 }
+
+@Suite("Derived readings")
+struct DerivedReadingTests {
+    /// The invariant that makes the formula trustworthy: air that is already saturated is at its
+    /// dew point by definition, so the two must agree exactly rather than approximately.
+    @Test("Saturated air has a dew point equal to its temperature", arguments: [-5.0, 0, 12.5, 30])
+    func saturationIsIdentity(temperature: Double) {
+        let weather = Fixtures.weather(temperatureCelsius: temperature).with(humidity: 100)
+
+        #expect(abs(weather.dewPointCelsius - temperature) < 0.01)
+    }
+
+    @Test("Dew point matches published values", arguments: [
+        (20.0, 50, 9.3),
+        (30.0, 79, 26.0),
+        (5.0, 78, 1.4),
+    ])
+    func knownValues(temperature: Double, humidity: Int, expected: Double) {
+        let weather = Fixtures.weather(temperatureCelsius: temperature).with(humidity: humidity)
+
+        // A tenth of a degree: the Magnus approximation is quoted to about that over this range,
+        // and the app only ever displays whole degrees.
+        #expect(abs(weather.dewPointCelsius - expected) < 0.1)
+    }
+
+    /// Physically impossible for the dew point to exceed the air temperature, and a UI that showed
+    /// it would look broken. The bar in the tile is drawn as a fraction of the temperature, so
+    /// this is also what keeps that fraction inside its track.
+    @Test("Dew point never exceeds the temperature", arguments: [1, 25, 50, 75, 99, 100])
+    func neverExceedsTemperature(humidity: Int) {
+        let weather = Fixtures.weather(temperatureCelsius: 18).with(humidity: humidity)
+
+        #expect(weather.dewPointCelsius <= 18.001)
+    }
+
+    @Test("Daylight is the span between sunrise and sunset")
+    func daylightSpan() {
+        let weather = Fixtures.weather().with(
+            sunrise: Fixtures.now,
+            sunset: Fixtures.now.addingTimeInterval(14 * 3_600 + 28 * 60)
+        )
+
+        #expect(weather.daylightDuration == 14 * 3_600 + 28 * 60)
+    }
+
+    /// Polar winter, or simply a malformed payload: either way a negative span would render as a
+    /// nonsense duration rather than "no daylight".
+    @Test("A sunset before sunrise reports no daylight")
+    func daylightNeverNegative() {
+        let weather = Fixtures.weather().with(
+            sunrise: Fixtures.now,
+            sunset: Fixtures.now.addingTimeInterval(-3_600)
+        )
+
+        #expect(weather.daylightDuration == 0)
+    }
+}
+
+private extension Weather {
+    /// Rebuilds the fixture with one or two fields replaced, Swift has no `copy(with:)`.
+    func with(humidity: Int? = nil, sunrise: Date? = nil, sunset: Date? = nil) -> Weather {
+        Weather(
+            locationID: locationID,
+            locationName: locationName,
+            condition: condition,
+            description: description,
+            iconCode: iconCode,
+            temperatureCelsius: temperatureCelsius,
+            feelsLikeCelsius: feelsLikeCelsius,
+            minTemperatureCelsius: minTemperatureCelsius,
+            maxTemperatureCelsius: maxTemperatureCelsius,
+            humidityPercent: humidity ?? humidityPercent,
+            pressureHpa: pressureHpa,
+            windSpeedMetresPerSecond: windSpeedMetresPerSecond,
+            windDirectionDegrees: windDirectionDegrees,
+            cloudinessPercent: cloudinessPercent,
+            visibilityMetres: visibilityMetres,
+            sunrise: sunrise ?? self.sunrise,
+            sunset: sunset ?? self.sunset,
+            observedAt: observedAt,
+            cachedAt: cachedAt,
+            timeZoneOffsetSeconds: timeZoneOffsetSeconds
+        )
+    }
+}

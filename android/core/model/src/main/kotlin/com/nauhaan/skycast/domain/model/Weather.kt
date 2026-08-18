@@ -1,7 +1,9 @@
 package com.nauhaan.skycast.domain.model
 
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlin.math.ln
 
 /**
  * Current weather conditions for a single location.
@@ -46,14 +48,43 @@ data class Weather(
     val isDaytime: Boolean get() = observedAt in sunrise..sunset
 
     /**
+     * How long the sun is up.
+     *
+     * Two timestamps the API already sends, subtracted, but "sunrise 05:50, sunset 20:18" asks
+     * the reader to do arithmetic before it means anything, and "14h 28m" does not.
+     */
+    val daylightDuration: Duration
+        get() = Duration.between(sunrise, sunset).coerceAtLeast(Duration.ZERO)
+
+    /**
+     * The temperature at which the air would start to condense, in Celsius.
+     *
+     * Derived rather than fetched: OpenWeather's free tier does not send it, and the Magnus
+     * formula recovers it from temperature and relative humidity to well inside a degree over the
+     * range any inhabited place sees. It is the reading that actually says whether the air will
+     * feel muggy, 78% humidity means something very different at 5° than at 30°, and it is what
+     * aviation weather reports quote alongside the temperature.
+     */
+    val dewPointCelsius: Double
+        get() {
+            val humidity = humidityPercent.coerceIn(1, 100) / 100.0
+            val gamma = (MAGNUS_B * temperatureCelsius) / (MAGNUS_C + temperatureCelsius) + ln(humidity)
+            return (MAGNUS_C * gamma) / (MAGNUS_B - gamma)
+        }
+
+    /**
      * Whether the cached copy is older than [ttl] and should be refreshed.
      * Staleness is a *presentation* concern, not an error: stale data is still shown.
      */
-    fun isStale(now: Instant, ttl: java.time.Duration = CURRENT_WEATHER_TTL): Boolean = cachedAt.plus(ttl).isBefore(now)
+    fun isStale(now: Instant, ttl: Duration = CURRENT_WEATHER_TTL): Boolean = cachedAt.plus(ttl).isBefore(now)
 
     companion object {
         /** OpenWeather refreshes station data roughly every 10 minutes. */
-        val CURRENT_WEATHER_TTL: java.time.Duration = java.time.Duration.ofMinutes(10)
+        val CURRENT_WEATHER_TTL: Duration = Duration.ofMinutes(10)
+
+        /** Magnus-formula coefficients, in the Sonntag1990 form. */
+        private const val MAGNUS_B = 17.62
+        private const val MAGNUS_C = 243.12
     }
 }
 

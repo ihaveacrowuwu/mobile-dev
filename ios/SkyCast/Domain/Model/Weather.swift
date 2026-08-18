@@ -55,12 +55,38 @@ struct Weather: Equatable, Sendable, Identifiable {
         observedAt >= sunrise && observedAt <= sunset
     }
 
+    /// How long the sun is up, in seconds.
+    ///
+    /// Two timestamps the API already sends, subtracted, but "sunrise 05:50, sunset 20:18" asks
+    /// the reader to do arithmetic before it means anything, and "14h 28m" does not.
+    var daylightDuration: TimeInterval {
+        max(0, sunset.timeIntervalSince(sunrise))
+    }
+
+    /// The temperature at which the air would start to condense, in Celsius.
+    ///
+    /// Derived rather than fetched: OpenWeather's free tier does not send it, and the Magnus
+    /// formula recovers it from temperature and relative humidity to well inside a degree over
+    /// the range any inhabited place sees. It is the reading that actually says whether the air
+    /// will feel muggy, 78% humidity means something very different at 5° than at 30°, and it
+    /// is what aviation weather reports quote alongside the temperature.
+    var dewPointCelsius: Double {
+        let humidity = max(1, min(100, Double(humidityPercent))) / 100
+        let gamma = (Self.magnusB * temperatureCelsius) / (Self.magnusC + temperatureCelsius)
+            + log(humidity)
+        return (Self.magnusC * gamma) / (Self.magnusB - gamma)
+    }
+
     /// Whether the cached copy is older than `ttl` and should be refreshed.
     ///
     /// Staleness is a *presentation* concern, not an error: stale data is still shown.
     func isStale(now: Date, ttl: TimeInterval = Weather.currentWeatherTTL) -> Bool {
         cachedAt.addingTimeInterval(ttl) < now
     }
+
+    /// Magnus-formula coefficients, in the Sonntag1990 form.
+    private static let magnusB = 17.62
+    private static let magnusC = 243.12
 
     /// OpenWeather refreshes station data roughly every 10 minutes.
     static let currentWeatherTTL: TimeInterval = 10 * 60
