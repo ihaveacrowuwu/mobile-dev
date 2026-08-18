@@ -31,40 +31,41 @@ struct MoonHero: View {
     private let maximumDiscDiameter: CGFloat = 210
 
     var body: some View {
-        NightSkyPanel {
-            VStack(spacing: Spacing.md) {
-                ZStack {
-                    LunarCycleRing(
-                        cycleFraction: snapshot.cycleFraction,
-                        diameter: discDiameter * 1.28
-                    )
-                    MoonDisc(
-                        elongationDegrees: snapshot.elongationDegrees,
-                        diameter: discDiameter
-                    )
-                }
-                .padding(.bottom, Spacing.xs)
-
-                VStack(spacing: Spacing.xxs) {
-                    Text(snapshot.phase.label)
-                        .font(.title2.weight(.semibold))
-                    Text("\(snapshot.illuminatedPercent)% lit · \(ageDescription)")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(secondaryOpacity))
-                    if let countdown = fullMoonCountdown {
-                        Text(countdown)
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(tertiaryOpacity))
-                            .padding(.top, Spacing.xxs)
-                    }
-                }
-                // The panel is dark in both appearances, so its text is white in both, the one
-                // place in the app that does not take its colour from the environment.
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.md)
+        // No panel of its own. The whole screen is the night sky now, so a rounded rectangle of night
+        // inside a night was a picture of the sky rather than the sky, the Android side lost the same
+        // panel for the same reason.
+        VStack(spacing: Spacing.md) {
+            ZStack {
+                LunarCycleRing(
+                    cycleFraction: snapshot.cycleFraction,
+                    diameter: discDiameter * 1.28
+                )
+                MoonDisc(
+                    elongationDegrees: snapshot.elongationDegrees,
+                    diameter: discDiameter
+                )
             }
+            .padding(.bottom, Spacing.xs)
+
+            VStack(spacing: Spacing.xxs) {
+                Text(snapshot.phase.label)
+                    .font(.title2.weight(.semibold))
+                Text("\(snapshot.illuminatedPercent)% lit · \(ageDescription)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if let countdown = fullMoonCountdown {
+                    Text(countdown)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, Spacing.xxs)
+                }
+            }
+            // From the semantic colours, not hardcoded white: the screen forces the dark appearance, so
+            // `.primary` and `.secondary` already resolve light here. See `MoonScreen`.
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, Spacing.md)
         }
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(announcement)
     }
@@ -95,9 +96,6 @@ struct MoonHero: View {
         }
         return parts.joined(separator: ". ")
     }
-
-    private let secondaryOpacity: Double = 0.85
-    private let tertiaryOpacity: Double = 0.65
 }
 
 /// Moonrise to moonset, on the same arc the sun card uses.
@@ -130,14 +128,14 @@ struct MoonPathCard: View {
     }
 
     private var spanLabel: String {
-        guard let span = snapshot.timeAboveHorizon else { return "" }
+        guard let span = snapshot.timeAboveHorizon else { return "N/A" }
         let hours = Int(span) / 3_600
         let minutes = (Int(span) % 3_600) / 60
         return "\(hours)h \(minutes)m up"
     }
 
     private func label(_ date: Date?) -> String {
-        guard let date else { return "" }
+        guard let date else { return "N/A" }
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         formatter.timeZone = timeZone
@@ -187,11 +185,11 @@ struct MoonDistanceCard: View {
     /// someone who does not already know the Moon's orbit is an ellipse.
     private static func description(for band: MoonDistanceBand) -> String {
         switch band {
-        case .veryClose: "Unusually close, it will look large"
+        case .veryClose: "Unusually close: it will look large"
         case .closer: "Closer than average"
         case .average: "About average distance"
         case .further: "Further than average"
-        case .veryFar: "Unusually far, it will look small"
+        case .veryFar: "Unusually far: it will look small"
         }
     }
 
@@ -199,7 +197,7 @@ struct MoonDistanceCard: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
-        let value = formatter.string(from: NSNumber(value: snapshot.distanceKm)) ?? ""
+        let value = formatter.string(from: NSNumber(value: snapshot.distanceKm)) ?? "N/A"
         return "\(value) km"
     }
 

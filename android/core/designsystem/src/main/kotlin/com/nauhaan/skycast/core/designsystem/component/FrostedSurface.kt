@@ -12,31 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.unit.dp
-import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
 
 /**
  * The app's card surface: a **frosted, translucent** panel that the weather shows through.
  *
- * ## What "frosted" means on Android, honestly
- *
- * iOS gets a real material, which blurs whatever is behind it. Compose has no backdrop-blur
- * primitive: `Modifier.blur` blurs a composable's *own* content, and `RenderEffect` needs API 31
- * while this app supports 26. The libraries that solve it properly would be a new dependency, which
- * the no-new-dependencies rule argues against for something cosmetic.
- *
- * So this is translucency plus a lit rim rather than true blur. The weather background behind it is a
- * soft gradient wash with no hard edges, which is exactly the case where translucency alone reads as
- * frosted glass, there is no fine detail behind the card for a blur to soften. The effect is close
- * enough that the two platforms look like the same app.
- *
- * ## The translucent fill
- *
- * The cards were `surfaceContainerHigh` with the location's container colour mixed in. That made them
- * *coloured* rather than *translucent*, so a card sat on the weather background like a sticker instead
- * of a pane in front of it. The tint survives at lower strength, enough that swiping between a clear
- * place and an overcast one still shifts the cards.
+ * Translucency plus a lit rim, not a true blur: Compose has no backdrop-blur primitive, since
+ * `Modifier.blur` blurs a composable's *own* content and `RenderEffect` needs API 31 while this app
+ * supports 26.
  */
 @Composable
 fun frostedCardColours(): CardColors {
@@ -51,18 +34,18 @@ fun frostedCardColours(): CardColors {
 }
 
 /**
- * The translucent, weather-tinted fill behind a card.
+ * The translucent fill behind a card.
  *
- * Animated on the **effects** spec: this is a colour change, and the spatial spec would overshoot past
- * the target colour, which looks like a bug rather than a flourish.
+ * **No weather tint.** The fill is light enough that what shows through is the background itself,
+ * so the card cannot clash with the gradient behind it.
+ *
+ * Animated on the **effects** spec for the theme changes that do move it: this is a colour, and the
+ * spatial spec would overshoot past the target.
  */
 @Composable
 fun frostedContainerColour(): Color {
-    val tint = LocalWeatherTint.current
-    val base = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FROST_ALPHA)
-    val target = if (tint == null) base else tint.copy(alpha = TINT_ALPHA).compositeOver(base)
     val container by animateColorAsState(
-        targetValue = target,
+        targetValue = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FROST_ALPHA),
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "frostedContainer",
     )
@@ -87,11 +70,13 @@ fun Modifier.frostRim(shape: Shape): Modifier = border(
 @Composable
 fun frostedCardElevation() = CardDefaults.cardElevation(defaultElevation = 0.dp)
 
-/** How much of the surface colour survives. Low enough to see the weather, high enough to read text on. */
-private const val FROST_ALPHA = 0.55f
-
-/** Low, because the translucency is now doing the work the colour used to do. */
-private const val TINT_ALPHA = 0.22f
+/**
+ * How much of the surface colour survives.
+ *
+ * Low. It is a veil that lifts the card off the background far enough to read text on, not a fill, at 0.55
+ * the card was a pale slab with a hint of weather behind it, which is the opposite emphasis.
+ */
+private const val FROST_ALPHA = 0.32f
 
 private const val RIM_ALPHA = 0.35f
 private val RimWidth = 1.dp

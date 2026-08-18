@@ -174,7 +174,9 @@ struct MoonContent: View {
         } else if let snapshot = state.snapshot {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.md) {
+                    // Clear of the navigation bar, which the sky runs underneath.
                     MoonHero(snapshot: snapshot, timeZone: state.timeZone)
+                        .padding(.top, Spacing.lg)
 
                     if state.showsRiseAndSet {
                         SectionHeading("Tonight")

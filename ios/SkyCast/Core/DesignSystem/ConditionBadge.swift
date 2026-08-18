@@ -1,26 +1,16 @@
 import SwiftUI
 
-/// The current condition, as an SF Symbol on a circular piece of Liquid Glass.
+/// The current condition, as a bare SF Symbol in the condition's own colour.
 ///
-/// The direct counterpart to Android's `WeatherConditionBadge`, which uses Material 3
-/// Expressive's `MaterialShapes`. The two platforms deliberately diverge here, and that
-/// divergence is the point: Expressive expresses meaning through **shape**, Liquid Glass
-/// through **depth and material**. Forcing one platform to imitate the other would produce
-/// something that looks wrong on both.
+/// The counterpart to Android's `WeatherConditionBadge`, which uses Material 3 Expressive's
+/// `MaterialShapes`.
 ///
-/// ## Colour, and two attempts that were wrong
+/// Colours come from ``WeatherPalette``: each condition gets its own hue, chosen to clear WCAG AA
+/// against the page in both appearances. Warm for sun, cool for night, blue for rain.
 ///
-/// `.multicolor` came first: SF Symbols supplies semantically correct colours, yellow sun, blue
-/// rain, rather than us hardcoding a palette. It fails contrast. Several conditions have no
-/// coloured element at all: `cloud.fill`, `cloud.moon.fill` and `moon.stars.fill` render **white**,
-/// invisible on a light surface. A light-mode screenshot showed hourly rows with no icon at all.
-///
-/// `.hierarchical` tinted with the app accent fixed contrast and lost the meaning: every condition
-/// became the same blue, so the colour said nothing.
-///
-/// What is here now is a **palette** from ``WeatherPalette``: each condition gets its own hue,
-/// drawn on a matching container that guarantees WCAG AA in both appearances. Warm for sun, cool
-/// for night, blue for rain, legible *and* meaningful, which neither previous attempt managed.
+/// The **square frame is load-bearing**. Sized by font, each symbol's own proportions would decide
+/// its footprint: `sun.max.fill` is square where `cloud.moon.fill` is wide and short, so without a
+/// fixed frame the hourly temperatures would not share a baseline.
 struct ConditionBadge: View {
     let condition: WeatherCondition
     let isDaytime: Bool
@@ -30,9 +20,12 @@ struct ConditionBadge: View {
     /// with the user's text size exactly as a `.largeTitle`-relative symbol would.
     @ScaledMetric(relativeTo: .largeTitle) private var typeScale: CGFloat = 1
 
+    /// Sized so the symbol carries the tile on its own, without a container around it.
     private var box: CGFloat {
-        size * typeScale
+        size * typeScale * Self.bareSymbolScale
     }
+
+    private static let bareSymbolScale: CGFloat = 1.25
 
     private var colours: (container: Color, content: Color) {
         WeatherPalette.colours(for: condition, isDaytime: isDaytime)
@@ -50,15 +43,10 @@ struct ConditionBadge: View {
             .frame(width: box, height: box)
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(colours.content)
-            .padding(box * containerPaddingRatio)
-            .background(colours.container, in: .circle)
             // Decorative: the text beside it already names the condition, so announcing
             // the symbol would repeat it for VoiceOver users.
             .accessibilityHidden(true)
     }
-
-    /// Proportional to the symbol so the badge keeps its shape as Dynamic Type scales it.
-    private let containerPaddingRatio: CGFloat = 0.28
 }
 
 #Preview("Every condition") {

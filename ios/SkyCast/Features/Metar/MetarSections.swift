@@ -9,7 +9,16 @@ import SwiftUI
 // `private` became internal in the move, which is a small loss of enclosure. The reason to accept it is that
 // these views are meaningless outside the METAR tab, which their names say.
 
-struct FlightCategoryHero: View {
+/// The flight-rules category, as a filled disc.
+///
+/// The colours are the conventional ones, green visual, blue marginal, amber instrument, violet low
+/// instrument, and they come from the weather palette rather than being invented here, so they are the same
+/// contrast-checked colours the rest of the app uses.
+///
+/// This was a card of its own, sitting under an equally prominent block of station details. Both were about
+/// the same thing, *this airport, right now*, so they were merged into one identity card and this became
+/// the piece that lives in its top-right corner.
+struct FlightCategoryDisc: View {
     let category: FlightCategory
 
     private var colour: Color {
@@ -22,9 +31,28 @@ struct FlightCategoryHero: View {
         }
     }
 
+    var body: some View {
+        ZStack {
+            Circle().fill(colour.opacity(discOpacity))
+            Text(category.label)
+                .font(.headline)
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+                .padding(Spacing.xs)
+        }
+        .frame(width: discDiameter, height: discDiameter)
+        .accessibilityHidden(true)
+    }
+
+    private let discDiameter: CGFloat = 64
+    /// Enough colour to read the category across a room, light enough to keep its label legible on it.
+    private let discOpacity: Double = 0.35
+}
+
+extension FlightCategory {
     /// What the abbreviation means, for everyone who is not a pilot.
-    private var meaning: String {
-        switch category {
+    var meaning: String {
+        switch self {
         case .vfr:
             "Visual flight rules: the ceiling is above 3,000 ft and visibility better than 5 miles."
         case .mvfr:
@@ -37,33 +65,6 @@ struct FlightCategoryHero: View {
             "This report did not include a flight category."
         }
     }
-
-    var body: some View {
-        HStack(spacing: Spacing.md) {
-            // A filled disc rather than a small chip: at this size the colour does the work from across the
-            // room, which is the point of the convention.
-            ZStack {
-                Circle().fill(colour.opacity(discOpacity))
-                Text(category.label)
-                    .font(.title3.weight(.semibold))
-            }
-            .frame(width: discDiameter, height: discDiameter)
-
-            Text(meaning)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.md)
-        .frostedCard()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Flight category \(category.label). \(meaning)")
-    }
-
-    private let discDiameter: CGFloat = 64
-    /// Enough colour to read the category across a room, light enough to keep its label legible on it.
-    private let discOpacity: Double = 0.35
 }
 
 /// The sky, drawn to scale, with the ceiling marked. See ``SkyLayersDiagram``.
@@ -96,7 +97,7 @@ struct SkySection: View {
             if layers.isEmpty {
                 // A clear sky is a real observation, not missing data, and it deserves saying rather than an
                 // empty frame.
-                Text("No cloud reported, a clear sky above the field.")
+                Text("No cloud reported: a clear sky above the field.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
@@ -280,7 +281,7 @@ struct DecodedRows: View {
     }
 
     private var visibilityDescription: String {
-        guard let miles = report.visibilityStatuteMiles else { return "" }
+        guard let miles = report.visibilityStatuteMiles else { return "N/A" }
         let text = miles == miles.rounded() ? "\(Int(miles))" : "\(miles)"
         return report.visibilityIsOrGreater ? "\(text)+ mi" : "\(text) mi"
     }

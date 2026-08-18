@@ -129,6 +129,13 @@
       knots, and softening them into everyday words would make the screen less useful to the people
       it is for. The decoded rows exist for everyone else.
     -->
+    <string name="golden_hour">Golden hour</string>
+    <string name="blue_hour">Blue hour</string>
+    <string name="golden_hour_range">%1$s – %2$s</string>
+    <string name="golden_hour_description">Golden hour from %1$s to %2$s, then blue hour until %3$s</string>
+    <string name="metar_chip_distance">%1$d km away</string>
+    <string name="metar_chip_elevation">%1$d m elevation</string>
+    <string name="metar_chip_age">%1$s ago</string>
     <string name="metar_section_sky">Sky</string>
     <string name="metar_section_wind">Wind</string>
     <string name="metar_section_derived">Worked out from the report</string>
@@ -155,7 +162,6 @@
     <string name="metar_none_message">METARs are issued by airports. There is no station reporting near this place, try one closer to an airport.</string>
     <string name="metar_empty_title">No locations yet</string>
     <string name="metar_empty_message">Add a place and SkyCast will show the nearest airport\'s report.</string>
-    <string name="metar_station_distance">%1$s km away · elevation %2$d m</string>
     <string name="metar_observed">Observed %1$s · %2$s ago</string>
     <string name="metar_raw_heading">Raw report</string>
     <string name="metar_decoded_heading">Decoded</string>

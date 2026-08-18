@@ -11,12 +11,18 @@ import SwiftUI
 /// reader turns on **Reduce Transparency**. Hand-rolled alpha does none of those things, and glass on a
 /// scrolling content card would break the one rule this project breaks most often.
 ///
-/// ## Why it replaced a solid fill
+/// ## Why there is no tint any more
 ///
-/// An opaque `skySurface` with the location's container colour mixed in would make
-/// them *coloured* rather than *translucent*, so a card sat on the weather background like a sticker
-/// rather than a pane in front of it. The tint survives at a much lower opacity, enough that swiping
-/// between a clear place and an overcast one still shifts the cards, which is the part worth keeping.
+/// The material samples what is behind it. An opaque surface with the location's
+/// container colour mixed in; the second kept that colour at 22% over a material. Both *painted a hue on
+/// the card*, and a chosen hue can only ever approximate the background, a warm card over a cool patch of
+/// gradient reads as a mismatch, because it is one.
+///
+/// The material already samples what is actually behind it. Adding a colour on top does not help it match;
+/// it fights what the sampling got right. So the tint is gone and the material is thinner, and the card
+/// harmonises with the background because it *is* the background, blurred. Swiping between a clear place
+/// and an overcast one still shifts every card, but now it shifts by the amount the background shifted
+/// rather than by a palette entry's idea of it.
 ///
 /// Defined once here because the same treatment had been written out six times: the detail grid, the sun
 /// path card, two Moon cards and two METAR cards had each grown their own copy.
@@ -32,18 +38,15 @@ extension View {
 private struct FrostedCardModifier: ViewModifier {
     let cornerRadius: CGFloat
 
-    @Environment(\.weatherSurfaceTint) private var weatherSurfaceTint
-
     func body(content: Content) -> some View {
         content.background {
             let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             shape
-                .fill(.thinMaterial)
-                .overlay {
-                    if let weatherSurfaceTint {
-                        shape.fill(weatherSurfaceTint.opacity(Self.tintOpacity))
-                    }
-                }
+                // `.ultraThin` rather than `.thin`: the thinner material lets more of the weather through,
+                // which is what the surface is for. Legibility is not at risk, materials carry
+                // vibrancy for the text drawn on them, and they turn opaque by themselves under Reduce
+                // Transparency, which is the case this would otherwise fail.
+                .fill(.ultraThinMaterial)
                 // A rim that catches the light at the top and fades away by the bottom. It is what makes
                 // the panel read as a pane with an edge rather than as a lighter rectangle, and it works
                 // in both appearances because it adds light rather than assuming a dark ground.
@@ -60,8 +63,5 @@ private struct FrostedCardModifier: ViewModifier {
         }
     }
 
-    /// Low, because the material is now doing the work the colour used to do. High enough that the
-    /// difference between a clear page and an overcast one is still visible on the cards.
-    private static let tintOpacity: Double = 0.22
     private static let rimOpacity: Double = 0.35
 }

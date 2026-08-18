@@ -128,6 +128,43 @@ extension Weather {
     private static let clearVisibilityMetres = 10_000.0
 }
 
+/// The evening's light for a place, formatted.
+///
+/// Returns `nil` where there is nothing to say, such as a polar summer or a latitude where the sun
+/// never reaches the angles that define these windows. The card then does not appear.
+///
+/// Takes the **location** as well as the weather, because a reading carries a zone offset but not a
+/// position.
+func goldenHourReading(
+    for location: SavedLocation,
+    timeZone: TimeZone,
+    now: Date = .now
+)
+    -> GoldenHourReading?
+{
+    guard let light = SolarCalculator.eveningLight(
+        on: now,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timeZone: timeZone
+    ) else { return nil }
+
+    let formatter = DateFormatter()
+    formatter.dateFormat = "HH:mm"
+    formatter.timeZone = timeZone
+
+    let goldenStart = formatter.string(from: light.goldenStart)
+    let goldenEnd = formatter.string(from: light.goldenEnd)
+    let blueEnd = formatter.string(from: light.blueEnd)
+
+    return GoldenHourReading(
+        goldenRangeLabel: "\(goldenStart) – \(goldenEnd)",
+        blueRangeLabel: "\(goldenEnd) – \(blueEnd)",
+        progress: light.progress(at: now),
+        announcement: "Golden hour from \(goldenStart) to \(goldenEnd), then blue hour until \(blueEnd)"
+    )
+}
+
 /// The sun-path card's content, already formatted.
 struct SunPathReading: Equatable {
     let progress: Double

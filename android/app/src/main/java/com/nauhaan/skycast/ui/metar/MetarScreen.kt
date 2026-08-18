@@ -21,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -155,9 +156,6 @@ internal fun MetarContent(
 private fun ReportBody(report: MetarReport, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         StationHeader(report)
-        // The category first and large, because it is the one thing a pilot looks for before anything
-        // else, it decides whether the flight can be made under visual rules at all.
-        FlightCategoryHero(report.flightCategory)
         SkySection(report)
         WindSection(report)
         DerivedSection(report)
@@ -168,89 +166,104 @@ private fun ReportBody(report: MetarReport, modifier: Modifier = Modifier) {
 
 @Composable
 private fun StationHeader(report: MetarReport, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    val category = report.flightCategory
+    val meaning = stringResource(category.meaningRes)
+    val distance = stringResource(R.string.metar_chip_distance, report.distanceKm.roundToInt())
+    val elevation = stringResource(R.string.metar_chip_elevation, report.elevationMetres)
+    val age = stringResource(R.string.metar_chip_age, report.age(Instant.now()).describe())
+    val observed = stringResource(
+        R.string.metar_observed,
+        OBSERVED_FORMAT.format(report.observedAt),
+        report.age(Instant.now()).describe(),
+    )
+    val shape = CardDefaults.shape
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .frostRim(shape)
+            .clearAndSetSemantics {
+                contentDescription = "${report.stationId}, ${report.stationName}. " +
+                    "${category.label}. $meaning $distance, $elevation. $observed"
+            },
+        shape = shape,
+        colors = frostedCardColours(),
+        elevation = frostedCardElevation(),
+    ) {
+        Column(
+            modifier = Modifier.padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = report.stationId,
+                        style = MaterialTheme.typography.headlineMediumEmphasized,
+                    )
+                    Text(
+                        text = report.stationName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FlightCategoryDisc(category)
+            }
+
+            Text(
+                text = meaning,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            HorizontalDivider()
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                MetarChip(distance)
+                MetarChip(elevation)
+                MetarChip(age)
+            }
+        }
+    }
+}
+
+/** One small fact, in a capsule. */
+@Composable
+private fun MetarChip(text: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = CHIP_ALPHA),
+    ) {
         Text(
-            text = report.stationId,
-            style = MaterialTheme.typography.headlineMediumEmphasized,
-        )
-        Text(
-            text = report.stationName,
-            style = MaterialTheme.typography.bodyMedium,
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(
-                R.string.metar_station_distance,
-                report.distanceKm.roundToInt().toString(),
-                report.elevationMetres,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(
-                R.string.metar_observed,
-                OBSERVED_FORMAT.format(report.observedAt),
-                report.age(Instant.now()).describe(),
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.xs),
+            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
         )
     }
 }
 
 /**
- * The flight-rules category, as a coloured badge.
+ * The flight-rules category, as a filled disc.
  *
- * The first thing a pilot looks for, so it is the first thing on the screen after the station. The
- * colours are the conventional ones, green for visual, blue for marginal, red for instrument,
- * magenta for low instrument, and they come from the weather palette rather than being invented
- * here, so they are the same contrast-checked colours the rest of the app uses.
+ * The colours are the conventional ones: green visual, blue marginal, amber instrument, violet low
+ * instrument. They come from the weather palette, so they are the same contrast-checked colours the
+ * rest of the app uses.
  */
 @Composable
-private fun FlightCategoryHero(category: FlightCategory, modifier: Modifier = Modifier) {
-    val colour = category.colour()
-    val meaning = stringResource(category.meaningRes)
-
-    Card(
+private fun FlightCategoryDisc(category: FlightCategory, modifier: Modifier = Modifier) {
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .frostRim(CardDefaults.shape)
-            .clearAndSetSemantics {
-                contentDescription = "Flight category ${category.label}. $meaning"
-            },
-        shape = CardDefaults.shape,
-        colors = frostedCardColours(),
-        elevation = frostedCardElevation(),
+            .size(CategoryDiscSize)
+            .clip(CircleShape)
+            .background(category.colour().copy(alpha = CATEGORY_DISC_ALPHA)),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier.padding(Spacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-        ) {
-            // A filled disc rather than a small chip: at this size the colour does the work from across
-            // the room, which is the point of the convention, green visual, blue marginal, amber
-            // instrument, violet low instrument.
-            Box(
-                modifier = Modifier
-                    .size(CategoryDiscSize)
-                    .clip(CircleShape)
-                    .background(colour.copy(alpha = CATEGORY_DISC_ALPHA)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = category.label,
-                    style = MaterialTheme.typography.titleMediumEmphasized,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Text(
-                text = meaning,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Text(
+            text = category.label,
+            style = MaterialTheme.typography.titleMediumEmphasized,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -540,7 +553,7 @@ private fun MetarReport.windDescription(): String {
 
 @Composable
 private fun MetarReport.visibilityDescription(): String {
-    val miles = visibilityStatuteMiles ?: return ""
+    val miles = visibilityStatuteMiles ?: return "N/A"
     val text = if (miles == miles.roundToInt().toDouble()) miles.roundToInt().toString() else miles.toString()
     return if (visibilityIsOrGreater) {
         stringResource(R.string.metar_visibility_or_greater, text)
@@ -619,3 +632,6 @@ private val CategoryDiscSize = 64.dp
 
 /** Enough colour to read the category across a room, light enough to keep its label legible on it. */
 private const val CATEGORY_DISC_ALPHA = 0.35f
+
+/** A capsule that separates from the card behind it without competing with it. */
+private const val CHIP_ALPHA = 0.5f

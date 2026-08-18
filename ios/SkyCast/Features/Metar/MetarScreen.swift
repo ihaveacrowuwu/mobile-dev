@@ -166,13 +166,13 @@ struct MetarContent: View {
                 systemImage: "mappin.and.ellipse"
             )
         } else if state.showsFullScreenError, let error = state.error {
-            // "No airport reporting nearby" is a fact about the place, not a network problem, so
-            // it gets its own wording.
+            // "No airport reporting nearby" is a fact about the place, not a network problem, so it
+            // gets its own wording rather than the generic offline message.
             if case .notFound = error {
                 EmptyStateView(
                     title: "No airport reporting nearby",
                     message: "METARs are issued by airports. There is no station reporting near this "
-                        + "place, try one closer to an airport.",
+                        + "place. Try one closer to an airport.",
                     systemImage: "airplane.departure"
                 )
             } else {
@@ -193,9 +193,6 @@ struct MetarContent: View {
                     )
                 }
                 StationHeader(report: report)
-                // The category first and large, because it is the one thing a pilot looks for before
-                // anything else, it decides whether the flight can be made under visual rules at all.
-                FlightCategoryHero(category: report.flightCategory)
                 SkySection(report: report)
                 WindSection(report: report)
                 DerivedSection(report: report)
@@ -209,26 +206,60 @@ struct MetarContent: View {
     }
 }
 
+/// Who this report is from, where, how old, and what it means, in one card.
+///
+/// This was four stacked lines of near-identical weight followed by a separate category card, so the eye had
+/// nowhere to land and the two blocks read as unrelated. They are the same fact: *this airport, right now,
+/// is flyable or it is not*. Putting them together lets the code and the category share the top line, where
+/// the two things a pilot checks first sit side by side.
+///
+/// The three details underneath became chips because they are three unrelated small facts, and a chip says
+/// "these do not continue into a sentence" in a way that three more lines of caption text does not.
 private struct StationHeader: View {
     let report: MetarReport
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
-            Text(report.stationID)
-                .font(.largeTitle.weight(.semibold))
-            Text(report.stationName)
-                .font(.subheadline)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(report.stationID)
+                        .font(.largeTitle.weight(.semibold))
+                    Text(report.stationName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: Spacing.sm)
+
+                FlightCategoryDisc(category: report.flightCategory)
+            }
+
+            Text(report.flightCategory.meaning)
+                .font(.footnote)
                 .foregroundStyle(.secondary)
-            Text("\(Int(report.distanceKm.rounded())) km away · elevation \(report.elevationMetres) m")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("Observed \(Self.observedFormatter.string(from: report.observedAt)) · \(age) ago")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.top, Spacing.xxs)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Divider()
+
+            HStack(spacing: Spacing.sm) {
+                MetarChip(symbol: "location", text: "\(Int(report.distanceKm.rounded())) km")
+                MetarChip(symbol: "mountain.2", text: "\(report.elevationMetres) m")
+                MetarChip(symbol: "clock", text: "\(age) ago")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        .padding(Spacing.md)
+        .frostedCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(announcement)
+    }
+
+    /// One sentence: four fragments read as four unrelated stops otherwise.
+    private var announcement: String {
+        "\(report.stationID), \(report.stationName). "
+            + "Flight category \(report.flightCategory.label). \(report.flightCategory.meaning) "
+            + "\(Int(report.distanceKm.rounded())) kilometres away, elevation \(report.elevationMetres) metres. "
+            + "Observed \(Self.observedFormatter.string(from: report.observedAt)), \(age) ago."
     }
 
     /// How old the observation is, which is what a pilot actually checks.
@@ -246,11 +277,21 @@ private struct StationHeader: View {
     }()
 }
 
-// The flight-rules category, large, with what it actually means.
-//
-// The colours are the conventional ones, green visual, blue marginal, amber instrument, violet low
-// instrument, and they come from the weather palette rather than being invented here, so they are the same
-// contrast-checked colours the rest of the app uses.
+/// One small fact, in a capsule.
+private struct MetarChip: View {
+    let symbol: String
+    let text: String
+
+    var body: some View {
+        Label(text, systemImage: symbol)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
+            .background(.quaternary, in: .capsule)
+    }
+}
+
 #Preview("Report") {
     NavigationStack {
         MetarContent(

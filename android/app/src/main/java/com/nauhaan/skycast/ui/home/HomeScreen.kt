@@ -1,5 +1,6 @@
 package com.nauhaan.skycast.ui.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,15 +35,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.ErrorView
+import com.nauhaan.skycast.core.designsystem.component.GoldenHourCard
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.PageScrubber
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
@@ -51,7 +51,6 @@ import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherSurfaceTint
-import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
@@ -60,6 +59,7 @@ import com.nauhaan.skycast.ui.common.ObservedAtFooter
 import com.nauhaan.skycast.ui.common.SectionHeader
 import com.nauhaan.skycast.ui.common.SunPathSection
 import com.nauhaan.skycast.ui.common.TemperatureTrendSection
+import com.nauhaan.skycast.ui.common.goldenHourReading
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
@@ -198,13 +198,46 @@ private fun HomePager(
         modifier = modifier.fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            LocationMenu(
-                uiState = uiState,
-                onSelectPage = onSelectPage,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-            )
+            // Pinned above the pages, so the place name stays legible while a page scrolls under it
+            // and the dots keep a fixed position.
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(vertical = Spacing.sm),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                ) {
+                    uiState.location?.let { location ->
+                        Text(
+                            text = location.name,
+                            style = MaterialTheme.typography.titleLargeEmphasized,
+                            maxLines = 1,
+                        )
+                    }
+                    if (uiState.showsPageIndicator) {
+                        PageScrubber(
+                            count = uiState.pages.size,
+                            selectedIndex = uiState.selectedIndex,
+                            onSelect = onSelectPage,
+                            contentDescription = stringResource(
+                                R.string.home_showing_location,
+                                uiState.location?.name.orEmpty(),
+                                uiState.selectedIndex + 1,
+                                uiState.pages.size,
+                            ),
+                        )
+                    }
+                }
+
+                LocationMenu(
+                    uiState = uiState,
+                    onSelectPage = onSelectPage,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                )
+            }
 
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
@@ -219,7 +252,6 @@ private fun HomePager(
                         onRefresh = onRefresh,
                         onDismissBanner = onDismissBanner,
                         onOpenDayDetail = onOpenDayDetail,
-                        onSelectPage = onSelectPage,
                     )
                 }
             }
@@ -236,7 +268,6 @@ private fun HomePage(
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onOpenDayDetail: (Long, Long) -> Unit,
-    onSelectPage: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val weather = page.weather.data
@@ -261,36 +292,12 @@ private fun HomePage(
             return@Column
         }
 
-        PlaceHeading(
-            location = page.location,
-            modifier = Modifier.padding(horizontal = Spacing.md),
-        )
-
         CurrentConditionsHeader(
             weather = weather,
             unit = uiState.preferences.temperatureUnit,
             showsLocationName = false,
             modifier = Modifier.padding(Spacing.md),
         )
-
-        // Between the reading and the strip, centred: the indicator belongs to the pager, so it
-        // sits directly under what paging changes rather than off in a corner of the chrome.
-        if (uiState.showsPageIndicator) {
-            PageScrubber(
-                count = uiState.pages.size,
-                selectedIndex = uiState.selectedIndex,
-                onSelect = onSelectPage,
-                contentDescription = stringResource(
-                    R.string.home_showing_location,
-                    page.location.name,
-                    uiState.selectedIndex + 1,
-                    uiState.pages.size,
-                ),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = Spacing.sm),
-            )
-        }
 
         HourlyStrip(
             // Every page draws its own strip, including the ones off-screen. The slice is cheap,
@@ -329,6 +336,15 @@ private fun HomePage(
             weather = weather,
             modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
         )
+
+        // Below the sun's arc, because it is the end of the same story the arc tells. Absent at latitudes
+        // and dates where there is no such window; see `SolarCalculator`.
+        goldenHourReading(page.location, weather.zoneOffset)?.let { reading ->
+            GoldenHourCard(
+                reading = reading,
+                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            )
+        }
 
         WeatherDetailGrid(
             // All eight tiles, including the derived dew point and length of day.
@@ -384,49 +400,6 @@ private fun LocationMenu(uiState: HomeUiState, onSelectPage: (Int) -> Unit, modi
                     },
                 )
             }
-        }
-    }
-}
-
-/**
- * The place, as the page's heading.
- *
- * Large and at the top of the content, because it is the single most important word on the screen
- * and it spent a while as the smallest, a label inside a text button in the corner.
- *
- * The region line beneath it earns its space when two saved places share a name, which is common
- * enough (there are more than twenty Londons) that "London" alone can be genuinely ambiguous.
- */
-@Composable
-private fun PlaceHeading(location: SavedLocation, modifier: Modifier = Modifier) {
-    val region = location.displayName
-        .split(",")
-        .drop(1)
-        .joinToString(", ") { it.trim() }
-        .takeIf { it.isNotBlank() }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics {
-                contentDescription = listOfNotNull(location.name, region).joinToString(". ")
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = location.name,
-            // The emphasized display role: this is the one place on Home that earns it, alongside
-            // the temperature. Two per screen is the ceiling Material 3 sets.
-            style = MaterialTheme.typography.headlineLargeEmphasized,
-            textAlign = TextAlign.Center,
-        )
-        if (region != null) {
-            Text(
-                text = region,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }

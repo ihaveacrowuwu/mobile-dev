@@ -49,6 +49,51 @@ struct HomeScreen: View {
     }
 }
 
+/// The place name and the page dots, pinned above the pager.
+///
+/// One line for the name and one row of dots. The region reads as glass, so the page passes
+/// underneath rather than stopping at a bar.
+private struct HomeStickyHeader: View {
+    let state: HomeUiState
+    let onSelectPage: (Int) -> Void
+
+    var body: some View {
+        VStack(spacing: Spacing.xs) {
+            if let location = state.location {
+                Text(location.name)
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .accessibilityAddTraits(.isHeader)
+            }
+
+            if state.showsPageIndicator, let current = state.location {
+                PageScrubber(
+                    count: state.pages.count,
+                    selection: Binding(get: { state.selectedIndex }, set: onSelectPage),
+                    announcement: "Showing \(current.name), \(state.selectedIndex + 1) of \(state.pages.count)"
+                )
+                // Sized to its content rather than stretched, so the capsule hugs the dots.
+                .frame(width: scrubberWidth, height: Self.scrubberHeight)
+                .skyGlass(.control)
+            }
+        }
+        .padding(.vertical, Spacing.sm)
+        .frame(maxWidth: .infinity)
+        // No background of its own. The page's weather already runs behind this, and a bar would put an
+        // opaque strip across the top of the one screen built to have content pass under its chrome.
+    }
+
+    /// `UIPageControl` reports an intrinsic width, but inside a capsule it stretched to fill the row.
+    /// Measured from the control's own metrics: roughly 18 points per dot.
+    private var scrubberWidth: CGFloat {
+        CGFloat(state.pages.count) * Self.scrubberDotSpacing
+    }
+
+    private static let scrubberDotSpacing: CGFloat = 18
+    private static let scrubberHeight: CGFloat = 28
+}
+
 /// One day of one place, which is what Home has to carry to push the day-detail screen.
 ///
 /// Home pages across several places, so a bare `Date` would be ambiguous: tapping Thursday on Malé
@@ -60,6 +105,10 @@ struct DayRoute: Hashable {
 
 /// The stateless half.
 struct HomeContent: View {
+    /// Measured from the sticky header so each page can start below it. A constant would break
+    /// when the pill appears or disappears, or when Dynamic Type resizes the name.
+    @State private var headerHeight: CGFloat = 0
+
     let state: HomeUiState
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
@@ -104,7 +153,8 @@ struct HomeContent: View {
                         onDismissBanner: onDismissBanner,
                         onSelectDay: onSelectDay,
                         onSelectPage: onSelectPage,
-                        chromeInsets: proxy.safeAreaInsets
+                        chromeInsets: proxy.safeAreaInsets,
+                        headerHeight: headerHeight
                     )
                     .tag(index)
                 }
@@ -113,6 +163,15 @@ struct HomeContent: View {
             // On the TabView, not on the GeometryReader: a reader that ignores the safe area
             // reports no insets, which would leave the pages with no padding.
             .ignoresSafeArea(.container, edges: .vertical)
+        }
+        // Pinned above the pages, so the place name stays legible while a page scrolls under it
+        // and the dots keep a fixed position.
+        //
+        // Attached outside the `GeometryReader`, whose frame ignores the safe area and so gives
+        // nothing sensible to align to.
+        .overlay(alignment: .top) {
+            HomeStickyHeader(state: state, onSelectPage: onSelectPage)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
         }
         // Without this the navigation bar paints its own background across the top of the screen.
         // Hiding it leaves only the toolbar items.
@@ -149,6 +208,8 @@ private struct HomePageView: View {
     /// The insets the pager gave up so content could run behind the bars; see
     /// ``HomeContent/pager``. Re-applied here as content padding.
     let chromeInsets: EdgeInsets
+    /// How far down the page's content has to start to clear the pinned header.
+    let headerHeight: CGFloat
 
     var body: some View {
         ScrollView {
@@ -167,32 +228,12 @@ private struct HomePageView: View {
                     }
 
                     if let weather = page.weather.data {
-                        PlaceHeading(location: page.location)
-
                         CurrentConditionsHero(
                             weather: weather,
                             unit: state.preferences.temperatureUnit,
                             // The switcher above already names the place.
                             showsLocationName: false
                         )
-
-                        // Between the reading and the strip, centred: the indicator belongs to the
-                        // pager, so it sits directly under what paging changes rather than off in a
-                        // corner of the chrome.
-                        if state.showsPageIndicator, let current = state.location {
-                            PageScrubber(
-                                count: state.pages.count,
-                                selection: Binding(get: { state.selectedIndex }, set: onSelectPage),
-                                announcement: "Showing \(current.name), "
-                                    + "\(state.selectedIndex + 1) of \(state.pages.count)"
-                            )
-                            // Sized to its content rather than stretched, so the capsule hugs the dots.
-                            .frame(width: scrubberWidth(for: state.pages.count), height: Self.scrubberHeight)
-                            // A floating control, like the page control at the bottom of Apple's Weather
-                            // app, in the place this app's indicator already sits, under the reading.
-                            .skyGlass(.control)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        }
 
                         HourlyStrip(
                             // Every page draws its own strip, including the ones off-screen. The
@@ -227,6 +268,14 @@ private struct HomePageView: View {
                             )
                         }
 
+                        // Absent at latitudes and dates with no such window; see `SolarCalculator`.
+                        if let golden = goldenHourReading(
+                            for: page.location,
+                            timeZone: weather.timeZone
+                        ) {
+                            GoldenHourCard(reading: golden)
+                        }
+
                         // All eight tiles, including the derived dew point and length of day. Home used
                         // to show six and keep those two behind the hero tap; with nowhere to tap
                         // through to, holding them back would just be hiding them.
@@ -244,9 +293,9 @@ private struct HomePageView: View {
                     }
                 }
                 .padding(.horizontal, Spacing.md)
-                // The inset is the gap: adding a further Spacing.md on top of a status bar plus a
-                // toolbar left the hero sitting noticeably low on the page.
-                .padding(.top, chromeInsets.top)
+                // The header sits inside the safe area, so a page has to clear both it and the
+                // status bar it passes behind.
+                .padding(.top, chromeInsets.top + headerHeight)
                 // The tab bar's own inset, plus room to scroll the last tile clear of it.
                 .padding(.bottom, chromeInsets.bottom + Self.tabBarClearance)
             }
