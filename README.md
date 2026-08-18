@@ -99,13 +99,16 @@ implemented:
 | **Forecast list** | Five days for the primary location, each row tappable through to the 3-hourly breakdown. | ✅ Built |
 | **Day detail** | Hour-by-hour readings for one forecast day: temperature, wind, chance of rain, with day/night artwork per reading. | ✅ Built |
 | **Locations management** | Add by geocoding search (debounced, 400 ms), set which place Today shows, remove a place. The last remaining place cannot be deleted. | ✅ Built |
-| **Location detail** | Full conditions for any saved place: humidity, wind, pressure, visibility, sunrise/sunset, coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
+| **Location detail** | The full picture for any saved place: the next hours, a temperature trend chart across the forecast period, a comparable high/low bar per day, and eight readings, humidity, wind, pressure, visibility, sunrise, sunset, dew point and length of day, plus coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
 | **Correct local times** | Sunrise, sunset and hourly readings are shown in the **observed location's** time zone, not the device's, and the forecast's day grouping is identical whether served from the network or the cache. | ✅ Built |
 | **Swipe between places** | Today pages through every saved location in the order the Locations tab lists them, with a menu for direct selection and dots showing position. | ✅ Built |
 | **Hourly strip** | Three-hourly readings from a little before now to a day ahead, scrollable, with the current hour marked. | ✅ Built |
 | **Weather-driven colour** | Each condition has its own hue, warm sun, cool night, blue rain, paired with contrast-checked text colours rather than one tonal palette that made every condition look alike. | ✅ Built |
 | **Condition backgrounds** | Today's background reflects the current condition and time of day and drifts slowly; the other weather screens carry a quieter version. Stops entirely under Reduce Motion. | ✅ Built |
 | **Value-aware detail tiles** | Each reading shows where it sits on its own scale, so "1014 hPa" reads as an ordinary day rather than as a number. | ✅ Built |
+| **Derived readings** | Dew point (from temperature and humidity, which OpenWeather's free tier does not send) and length of day, on the detail screen. | ✅ Built |
+| **Temperature trend chart** | The whole forecast period as one line, with its extremes annotated, Swift Charts on iOS, drawn on a Compose `Canvas` on Android, no chart dependency on either. | ✅ Built |
+| **Theming that follows the weather** | The condition's hue reaches the detail tiles and, on Android, the navigation bar while Today is open, so the screen shifts as you swipe between a clear place and an overcast one. | ✅ Built |
 
 ---
 
@@ -365,36 +368,31 @@ mobile-dev/
 
 ### Known issues
 
-1. **Three screens are placeholders.** Forecast, Locations and the detail screens are
-   reachable and navigable but show a description of their planned content. The
-   repositories, caches, mappers and geocoding beneath them are fully implemented and
-   unit-tested, so these are presentation-only gaps.
-2. **`Tab` accessibility identifiers do not reach the tab bar.** SwiftUI generates the
+1. **`Tab` accessibility identifiers do not reach the tab bar.** SwiftUI generates the
    tab-bar button from a `Tab`'s label, and `.accessibilityIdentifier` on either the `Tab`
    or its content is not propagated to that button (verified by dumping the accessibility
    tree). `SkyCastUITests` therefore queries by label scoped to `app.tabBars`, which is
    unambiguous. Android needs the opposite, `testTag`, because Compose offers no
    equivalent scoping.
-3. **iOS requires iOS 26.** Liquid Glass is an iOS 26 API surface, so the deployment
+2. **iOS requires iOS 26.** Liquid Glass is an iOS 26 API surface, so the deployment
    target is 26.0 and devices below that are excluded. This is a deliberate trade-off for
    the design language; lowering the target means giving up Liquid Glass.
-4. **Compose Material3 is an alpha (`1.5.0-alpha14`).** Material 3 Expressive is
+3. **Compose Material3 is an alpha (`1.5.0-alpha14`).** Material 3 Expressive is
    Kotlin-`internal` in 1.4.0, the newest stable release, so there is no stable route to
    it. Pinned to an exact alpha for reproducibility. Also why the Compose BOM sits at
    2026.01.01 rather than the newest, see the recorded decision.
-5. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
+4. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
    and Gradle itself onto versions whose mutual compatibility is unverified here. Hilt is
    therefore pinned to 2.58, the newest release that still works with AGP 8. Recorded in
    `android/gradle/libs.versions.toml`.
-6. **No release signing configuration.** `assembleRelease` uses the debug signing config so
+5. **No release signing configuration.** `assembleRelease` uses the debug signing config so
    it is runnable locally and in CI. A real keystore would be required for Play Store
    distribution.
-7. **English only.** Strings are externalised, but no translations exist and
+6. **English only.** Strings are externalised, but no translations exist and
    `androidResources.localeFilters` ships only `en`.
 
 ### Future improvements
 
-- Finish the three placeholder screens.
 - **Widgets**, WidgetKit and Glance widgets showing the primary location's current
   temperature. Both platforms' data layers already support this.
 - **Background refresh**, `BGAppRefreshTask` on iOS, `WorkManager` on Android, so the
