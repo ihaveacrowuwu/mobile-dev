@@ -109,6 +109,7 @@ implemented:
 | **Per-metric visuals** | Each reading draws itself the way it should: an arc gauge for anything with a range, a compass for wind (pointing where it blows *from*), and a full-width arc for the sun's day with a marker at now. Surfaces wind direction and cloud cover, both fetched since the first commit and never shown. | ✅ Built |
 | **Draggable page indicator** | Centred under the reading; press and slide to run through your places, with a haptic tick per change. `UIPageControl` on iOS, drawn by hand on Android. | ✅ Built |
 | **METAR** | The nearest reporting airport's aviation observation: flight category, the raw coded line, and the decoded fields in knots, statute miles and inches of mercury. Nearest station chosen by great-circle distance; cached, so it works offline and says how old the observation is. | ✅ Built |
+| **Moon** | Phase drawn at its true terminator rather than snapped to one of eight icons, on a night sky, ringed by the lunar month with a marker at today. Illumination, age, distance with its apparent size, moonrise and moonset for your place, and the next four principal phases with dates. All **computed on the device**, no key, no network, exact for any date. Checked against PyEphem and against two eclipse instants. | ✅ Built |
 | **Derived readings** | Dew point (from temperature and humidity, which OpenWeather's free tier does not send) and length of day, on the detail screen. | ✅ Built |
 | **Temperature trend chart** | The whole forecast period as one line, with its extremes annotated, Swift Charts on iOS, drawn on a Compose `Canvas` on Android, no chart dependency on either. | ✅ Built |
 | **Theming that follows the weather** | The condition's hue reaches the detail tiles and, on Android, the navigation bar while Today is open, so the screen shifts as you swipe between a clear place and an overcast one. | ✅ Built |
@@ -133,6 +134,7 @@ implemented:
 | --- | --- | --- |
 | **Home** | ![iOS Home](docs/screenshots/ios/01-home.png) | ![Android Home](docs/screenshots/android/01-home.png) |
 | **METAR** | ![iOS METAR](docs/screenshots/ios/02-metar.png) | ![Android METAR](docs/screenshots/android/02-metar.png) |
+| **Moon** | ![iOS Moon](docs/screenshots/ios/11-moon.png) | ![Android Moon](docs/screenshots/android/11-moon.png) |
 | **Locations** | ![iOS Locations](docs/screenshots/ios/03-locations.png) | ![Android Locations](docs/screenshots/android/03-locations.png) |
 | **Add location** | ![iOS Add](docs/screenshots/ios/04-add-location.png) | ![Android Add](docs/screenshots/android/04-add-location.png) |
 | **Settings** | ![iOS Settings](docs/screenshots/ios/05-settings.png) | ![Android Settings](docs/screenshots/android/05-settings.png) |
