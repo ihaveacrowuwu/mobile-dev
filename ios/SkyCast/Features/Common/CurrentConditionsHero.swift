@@ -78,6 +78,14 @@ struct CurrentConditionsHero: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .skyGlass(.hero)
+        // No glass. This is the page's content, not a floating layer over it, and Liquid Glass is
+        // for the latter. Two things made the card actively wrong
+        // once the rest of Today came together: the toolbar's own glass now passes directly over it
+        // as the page scrolls, which is glass on glass; and a pane around the largest text on the
+        // screen boxes in the one element that should feel like it is simply *on* the sky.
+        //
+        // Vertical padding only. The horizontal inset comes from the page, so the reading stays
+        // aligned with the strip and tiles beneath it rather than sitting in its own margin.
+        .padding(.vertical, Spacing.lg)
     }
 }

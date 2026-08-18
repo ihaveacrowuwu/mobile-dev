@@ -16,20 +16,23 @@ import SwiftUI
 /// above content. It is explicitly *not* for large content backgrounds: Apple's guidance is
 /// that glass on glass, or glass behind long-form text, destroys legibility. So:
 ///
-/// - ✅ the hero reading, the stale-data banner, action buttons, the condition badge
-/// - ❌ the page background, list row fills, or anything already inside a glass container
+/// - ✅ the stale-data banner, action buttons
+/// - ❌ the page background, list row fills, the main reading, or anything already inside a glass
+///   container
+///
+/// The Today hero belongs on the second list. It is the page's
+/// content rather than a layer floating over it, and once the toolbar became a set of floating glass
+/// controls the hero sat directly under them as the page scrolled, glass over glass, the rule this
+/// file exists to keep.
 ///
 /// Standard SwiftUI components (`TabView`, toolbars, sheets, `Form`) adopt Liquid Glass
 /// **automatically** when built against the iOS 26 SDK. Nothing in this file is needed for
 /// those, it exists only for our custom surfaces.
 enum GlassRole {
-    /// A prominent floating card, e.g. the Today hero. Regular glass reads clearly over
-    /// any wallpaper or content.
-    case hero
     /// A transient notice layered over content, e.g. the stale-data banner. Tinted so it
     /// carries meaning as well as depth.
     case notice
-    /// A small decorative container, e.g. the condition badge.
+    /// A small decorative container.
     case badge
 }
 
@@ -71,14 +74,13 @@ private struct SkyGlassModifier: ViewModifier {
             return tint
         }
         switch role {
-        case .hero, .badge: return nil
+        case .badge: return nil
         case .notice: return .skyWarning
         }
     }
 
     private var shape: AnyShape {
         switch role {
-        case .hero: AnyShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
         case .notice: AnyShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
         case .badge: AnyShape(Circle())
         }
@@ -86,8 +88,6 @@ private struct SkyGlassModifier: ViewModifier {
 
     private var padding: EdgeInsets {
         switch role {
-        case .hero:
-            EdgeInsets(top: Spacing.lg, leading: Spacing.md, bottom: Spacing.lg, trailing: Spacing.md)
         case .notice:
             EdgeInsets(top: Spacing.sm, leading: Spacing.md, bottom: Spacing.sm, trailing: Spacing.sm)
         case .badge:
