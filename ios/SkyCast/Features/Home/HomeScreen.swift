@@ -1,19 +1,13 @@
 import SwiftUI
 
-/// The Today tab.
+/// The Home tab.
 ///
-/// Two views, deliberately:
-///
-/// - ``TodayScreen`` is the **stateful** entry point. It builds the view model from the
+/// - ``HomeScreen`` is the **stateful** entry point. It builds the view model from the
 ///   environment container and does nothing else.
-/// - ``TodayContent`` is **stateless**, state in, closures out. That is what makes it previewable
-///   in every state and assertable without a live network or database.
-///
-/// Follow this split for every screen. It is the exact counterpart of the `TodayScreen` /
-/// `TodayContent` pair on Android.
-struct TodayScreen: View {
+/// - ``HomeContent`` is **stateless**: state in, closures out.
+struct HomeScreen: View {
     @Environment(AppContainer.self) private var container
-    @State private var viewModel: TodayViewModel?
+    @State private var viewModel: HomeViewModel?
     /// The pushed detail destination. `nil` means nothing is pushed; driving the stack from a value
     /// rather than a `NavigationLink` inside the hero keeps the hero reusable on the detail screen
     /// itself, where there is nowhere further to push.
@@ -22,7 +16,7 @@ struct TodayScreen: View {
     var body: some View {
         Group {
             if let viewModel {
-                TodayContent(
+                HomeContent(
                     state: viewModel.state,
                     onRefresh: { await viewModel.refresh() },
                     onDismissBanner: viewModel.dismissBanner,
@@ -40,7 +34,7 @@ struct TodayScreen: View {
         .task {
             // @Environment is not available during init, so the view model is built here.
             if viewModel == nil {
-                viewModel = TodayViewModel(
+                viewModel = HomeViewModel(
                     weatherRepository: container.weatherRepository,
                     locationRepository: container.locationRepository,
                     settingsStore: container.settingsStore
@@ -57,8 +51,8 @@ struct TodayScreen: View {
 }
 
 /// The stateless half.
-struct TodayContent: View {
-    let state: TodayUiState
+struct HomeContent: View {
+    let state: HomeUiState
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
     let onSelectPage: (Int) -> Void
@@ -94,7 +88,7 @@ struct TodayContent: View {
         GeometryReader { proxy in
             TabView(selection: selectionBinding) {
                 ForEach(Array(state.pages.enumerated()), id: \.element.id) { index, page in
-                    TodayPageView(
+                    HomePageView(
                         page: page,
                         state: state,
                         isSelected: index == state.selectedIndex,
@@ -146,15 +140,15 @@ struct TodayContent: View {
 }
 
 /// One page: the hero reading, the hourly strip and the detail tiles for a single place.
-private struct TodayPageView: View {
-    let page: TodayPage
-    let state: TodayUiState
+private struct HomePageView: View {
+    let page: HomePage
+    let state: HomeUiState
     let isSelected: Bool
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
     let onOpenDetail: (Int64) -> Void
-    /// The insets the pager gave up so content could run behind the bars, see
-    /// ``TodayContent/pager``. Re-applied here as content padding.
+    /// The insets the pager gave up so content could run behind the bars; see
+    /// ``HomeContent/pager``. Re-applied here as content padding.
     let chromeInsets: EdgeInsets
 
     var body: some View {
@@ -180,7 +174,7 @@ private struct TodayPageView: View {
                             // The switcher above already names the place.
                             showsLocationName: false,
                             // Tapping the hero pushes the full detail screen, the push half of
-                            // the navigation hierarchy, reachable from Today.
+                            // the navigation hierarchy, reachable from Home.
                             onTap: { onOpenDetail(weather.locationID) }
                         )
 
@@ -219,9 +213,9 @@ private struct TodayPageView: View {
 /// The place currently shown, and a menu of the others.
 ///
 /// Lives in the toolbar, so it is a floating glass control rather than a strip of the page, see
-/// ``TodayContent/pager``.
+/// ``HomeContent/pager``.
 private struct LocationMenu: View {
-    let state: TodayUiState
+    let state: HomeUiState
     let onSelectPage: (Int) -> Void
 
     var body: some View {
@@ -298,8 +292,8 @@ private struct PageIndicator: View {
 
 #Preview("Loading") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(isLoading: true),
+        HomeContent(
+            state: HomeUiState(isLoading: true),
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },
@@ -310,8 +304,8 @@ private struct PageIndicator: View {
 
 #Preview("Empty") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(hasNoLocation: true),
+        HomeContent(
+            state: HomeUiState(hasNoLocation: true),
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },
@@ -322,8 +316,8 @@ private struct PageIndicator: View {
 
 #Preview("Offline, no cache") {
     NavigationStack {
-        TodayContent(
-            state: TodayUiState(refreshError: .offline),
+        HomeContent(
+            state: HomeUiState(refreshError: .offline),
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },

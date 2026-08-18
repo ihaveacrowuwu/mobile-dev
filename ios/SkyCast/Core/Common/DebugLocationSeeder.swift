@@ -31,7 +31,7 @@
         /// That exercises the location-timezone forecast grouping and the day/night symbol logic,
         /// which two nearby cities would not.
         ///
-        /// The first entry becomes primary and is what the Today tab shows. Kept identical to
+        /// The first entry becomes primary and is what the Home tab shows. Kept identical to
         /// Android's `DebugLocationSeeder.SAMPLE_LOCATIONS` so both platforms demonstrate and
         /// screenshot the same data.
         private static let sampleLocations: [LocationSearchResult] = [

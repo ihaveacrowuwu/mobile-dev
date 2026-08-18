@@ -24,7 +24,7 @@ import SwiftUI
 /// (Android needs the opposite: `TopLevelDestination.testTag`, because Compose offers no
 /// equivalent scoping and the bar label collides with the heading.)
 struct RootView: View {
-    @State private var selectedTab: AppTab = .today
+    @State private var selectedTab: AppTab = .home
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -46,7 +46,7 @@ struct RootView: View {
 
 /// The four top-level destinations.
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
-    case today
+    case home
     case forecast
     case locations
     case settings
@@ -57,7 +57,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .today: "Today"
+        case .home: "Home"
         case .forecast: "Forecast"
         case .locations: "Locations"
         case .settings: "Settings"
@@ -66,7 +66,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .today: "sun.max"
+        case .home: "house"
         case .forecast: "calendar"
         case .locations: "mappin.and.ellipse"
         case .settings: "gearshape"
@@ -76,7 +76,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     @ViewBuilder
     var destination: some View {
         switch self {
-        case .today: TodayScreen()
+        case .home: HomeScreen()
         case .forecast: ForecastScreen()
         case .locations: LocationsScreen()
         case .settings: SettingsScreen()

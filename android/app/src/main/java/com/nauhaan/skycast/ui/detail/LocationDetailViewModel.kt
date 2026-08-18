@@ -35,7 +35,7 @@ data class LocationDetailUiState(
     /**
      * The multi-day forecast for the same place.
      *
-     * The detail screen is where someone goes when the Today card was not enough, so it carries
+     * The detail screen is where someone goes when the Home card was not enough, so it carries
      * the hour-by-hour and day-by-day picture too. It is nullable and never blocks: the current
      * reading renders the moment it arrives, and the forecast sections appear when they do.
      */
@@ -56,7 +56,7 @@ data class LocationDetailUiState(
     val hourlyReadings: List<HourlyForecast>
         get() = forecast?.days?.flatMap { it.hourly }.orEmpty()
 
-    /** The hours from now on, for the strip. Past readings belong on Today, not here. */
+    /** The hours from now on, for the strip. Past readings belong on Home, not here. */
     fun upcomingHours(now: Instant = Instant.now()): List<HourlyForecast> =
         hourlyReadings.filter { !it.time.isBefore(now) }
 }
@@ -83,7 +83,7 @@ constructor(
 
     private val manualRefreshInFlight = MutableStateFlow(false)
 
-    /** See `TodayViewModel.manualRefreshError`, a failed manual refresh is otherwise silent. */
+    /** See `HomeViewModel.manualRefreshError`: a failed manual refresh is otherwise silent. */
     private val manualRefreshError = MutableStateFlow<AppError?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -46,7 +46,7 @@ final class NavigationFlowUITests: XCTestCase {
     }
 
     func testEveryTabIsReachable() {
-        for title in ["Today", "Forecast", "Locations", "Settings"] {
+        for title in ["Home", "Forecast", "Locations", "Settings"] {
             let tab = tabButton(title)
             XCTAssertTrue(tab.waitForExistence(timeout: 5), "Tab \(title) is missing")
             tab.tap()
@@ -88,7 +88,7 @@ final class NavigationFlowUITests: XCTestCase {
         tabButton("Locations").tap()
 
         // The debug seeder guarantees London is saved on first launch.
-        let row = app.buttons["London, England, GB, shown on the Today tab"]
+        let row = app.buttons["London, England, GB, shown on the Home tab"]
         XCTAssertTrue(row.waitForExistence(timeout: 5), "Seeded London row is missing")
         row.tap()
 
@@ -142,7 +142,7 @@ final class NavigationFlowUITests: XCTestCase {
 
         // Leave the tab and come back. Each tab owns its own NavigationStack, and the value
         // itself is restored from UserDefaults, this is the persistence proof.
-        tabButton("Today").tap()
+        tabButton("Home").tap()
         tabButton("Settings").tap()
 
         let restored = pickerRow(titled: "Temperature")

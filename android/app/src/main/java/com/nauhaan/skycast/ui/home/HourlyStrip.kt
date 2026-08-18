@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,7 +51,7 @@ fun HourlyStrip(
     now: Instant = Instant.now(),
     // Overridable because the detail screen shows only what is ahead, where "Through the day" does
     // not apply.
-    title: String = stringResource(R.string.today_hourly_heading),
+    title: String = stringResource(R.string.home_hourly_heading),
 ) {
     if (hours.isEmpty()) return
 
@@ -111,7 +111,7 @@ private fun HourColumn(
     // order right, which is how the difference showed up.
     val isPast = hour.time.isBefore(now) && !isCurrent
     val label = if (isCurrent) {
-        stringResource(R.string.today_hourly_now)
+        stringResource(R.string.home_hourly_now)
     } else {
         TIME_FORMAT.format(localTime)
     }
@@ -122,7 +122,7 @@ private fun HourColumn(
     val isDaytime = localTime.hour in DAWN_HOUR until DUSK_HOUR
 
     val announcement = buildString {
-        append(stringResource(R.string.today_hourly_accessibility, label, temperature, unit.symbol))
+        append(stringResource(R.string.home_hourly_accessibility, label, temperature, unit.symbol))
         if (rain > 0) {
             append(", ")
             append(stringResource(R.string.day_detail_rain_accessibility, rain))

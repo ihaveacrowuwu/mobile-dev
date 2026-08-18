@@ -50,7 +50,7 @@ data class AddLocationUiState(
  * The Locations tab: the user's saved places.
  *
  * Reads straight from the Room-backed `Flow`, so adding a place on the search screen updates
- * this list, and the Today tab, with no manual invalidation.
+ * this list, and the Home tab, with no manual invalidation.
  */
 @HiltViewModel
 class LocationsViewModel

@@ -75,7 +75,7 @@ struct LocationsContent: View {
                     }
                     .swipeActions(edge: .leading) {
                         if !location.isPrimary {
-                            Button("Show on Today", systemImage: "star") {
+                            Button("Show on Home", systemImage: "star") {
                                 onSetPrimary(location)
                             }
                             .tint(.skyAccent)
@@ -112,7 +112,7 @@ private struct LocationRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             location.isPrimary
-                ? "\(location.displayName), shown on the Today tab"
+                ? "\(location.displayName), shown on the Home tab"
                 : location.displayName
         )
     }

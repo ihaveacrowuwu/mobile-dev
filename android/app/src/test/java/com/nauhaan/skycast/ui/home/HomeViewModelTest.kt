@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import app.cash.turbine.test
 import com.nauhaan.skycast.core.common.AppError
@@ -24,7 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * [TodayViewModel] behaviour, with an emphasis on the **offline and error paths**.
+ * [HomeViewModel] behaviour, with an emphasis on the **offline and error paths**.
  *
  * The happy path is the easy half. The cases that matter most
  * are the last two tests: a failed refresh
@@ -34,21 +34,21 @@ import org.junit.Test
  * the documented way to drain a `StandardTestDispatcher`, hence the opt-in below.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TodayViewModelTest {
+class HomeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var weatherRepository: FakeWeatherRepository
     private lateinit var locationRepository: FakeLocationRepository
     private lateinit var settingsRepository: FakeSettingsRepository
-    private lateinit var viewModel: TodayViewModel
+    private lateinit var viewModel: HomeViewModel
 
     @Before
     fun setUp() {
         weatherRepository = FakeWeatherRepository()
         locationRepository = FakeLocationRepository()
         settingsRepository = FakeSettingsRepository()
-        viewModel = TodayViewModel(
+        viewModel = HomeViewModel(
             observeTodayWeather = ObserveTodayWeatherUseCase(
                 locationRepository = locationRepository,
                 weatherRepository = weatherRepository,
@@ -116,7 +116,7 @@ class TodayViewModelTest {
     }
 
     /**
-     * The Today screen pages over **every** saved location, so a test that sets only the primary
+     * The Home screen pages over **every** saved location, so a test that sets only the primary
      * one leaves the board empty and every assertion fails for the wrong reason.
      */
     private fun givenOneSavedLocation() {

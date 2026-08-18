@@ -57,7 +57,7 @@ interface SavedLocationDao {
      *
      * `@Transaction` is essential: without it a crash between the two statements
      * would leave the database with zero primary locations and a permanently empty
-     * Today screen.
+     * Home screen.
      */
     @Transaction
     suspend fun setPrimaryExclusively(id: Long) {

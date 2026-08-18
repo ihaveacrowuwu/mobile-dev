@@ -13,7 +13,7 @@ struct SavedLocation: Equatable, Sendable, Identifiable, Hashable {
     let longitude: Double
     /// Position in the user's list; lets them reorder without touching other fields.
     var sortOrder: Int
-    /// Exactly one saved location is primary, it is what the Today tab shows.
+    /// Exactly one saved location is primary, it is what the Home tab shows.
     var isPrimary: Bool
 
     init(

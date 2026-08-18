@@ -2,32 +2,19 @@ import SwiftUI
 
 /// SkyCast's **Liquid Glass** vocabulary.
 ///
-/// Every use of the iOS 26 glass APIs in the app goes through this file. Two reasons:
+/// Every use of the iOS 26 glass APIs in the app goes through this file, so there is one place to
+/// tune the treatment and one place to change if a signature shifts.
 ///
-/// 1. **One place to tune.** Glass has a small number of knobs (regular vs clear, tint,
-///    interactivity, shape) and scattering ad-hoc `.glassEffect(...)` calls across screens
-///    is how an app ends up with six subtly different glass treatments.
-/// 2. **One place to fix.** These are new APIs; if a signature shifts, the change lands
-///    here rather than in every view.
-///
-/// ## When to use glass, and when not to
-///
-/// Liquid Glass is for **floating, functional layers**, controls, bars, cards that sit
-/// above content. It is explicitly *not* for large content backgrounds: Apple's guidance is
-/// that glass on glass, or glass behind long-form text, destroys legibility. So:
+/// Liquid Glass is for **floating, functional layers**: controls, bars, and cards that sit above
+/// content. It is not for large content backgrounds, because glass on glass, or glass behind
+/// long-form text, destroys legibility.
 ///
 /// - ✅ the stale-data banner, action buttons
 /// - ❌ the page background, list row fills, the main reading, or anything already inside a glass
 ///   container
 ///
-/// The Today hero belongs on the second list. It is the page's
-/// content rather than a layer floating over it, and once the toolbar became a set of floating glass
-/// controls the hero sat directly under them as the page scrolled, glass over glass, the rule this
-/// file exists to keep.
-///
 /// Standard SwiftUI components (`TabView`, toolbars, sheets, `Form`) adopt Liquid Glass
-/// **automatically** when built against the iOS 26 SDK. Nothing in this file is needed for
-/// those, it exists only for our custom surfaces.
+/// **automatically** when built against the iOS 26 SDK. This file exists only for custom surfaces.
 enum GlassRole {
     /// A transient notice layered over content, e.g. the stale-data banner. Tinted so it
     /// carries meaning as well as depth.

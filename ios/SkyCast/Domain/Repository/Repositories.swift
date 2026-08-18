@@ -75,7 +75,7 @@ protocol LocationRepository: Sendable {
     /// All saved locations, ordered by the user's arrangement.
     func savedLocations() async throws -> [SavedLocation]
 
-    /// The location shown on the Today tab. `nil` only before the first is added.
+    /// The location shown on the Home tab. `nil` only before the first is added.
     func primaryLocation() async throws -> SavedLocation?
 
     func location(id: Int64) async throws -> SavedLocation?

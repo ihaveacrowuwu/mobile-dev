@@ -14,11 +14,11 @@ import androidx.navigation.compose.composable
 import com.nauhaan.skycast.ui.detail.DayDetailScreen
 import com.nauhaan.skycast.ui.detail.LocationDetailScreen
 import com.nauhaan.skycast.ui.forecast.ForecastScreen
+import com.nauhaan.skycast.ui.home.HomeScreen
 import com.nauhaan.skycast.ui.locations.AddLocationScreen
 import com.nauhaan.skycast.ui.locations.LocationsScreen
 import com.nauhaan.skycast.ui.settings.AboutScreen
 import com.nauhaan.skycast.ui.settings.SettingsScreen
-import com.nauhaan.skycast.ui.today.TodayScreen
 
 /**
  * The app's single navigation graph.
@@ -49,7 +49,7 @@ fun SkyCastNavHost(
 
     NavHost(
         navController = navigator.navController,
-        startDestination = Route.Today,
+        startDestination = Route.Home,
         modifier = modifier,
         // Horizontal slide for pushes reads as "deeper in"; tab switches cross-fade
         // because they are lateral moves, not descents.
@@ -80,11 +80,11 @@ fun SkyCastNavHost(
     ) {
         // ── Tabs ───────────────────────────────────────────────────────────
 
-        composable<Route.Today>(
+        composable<Route.Home>(
             enterTransition = { fadeIn(fadeSpec) },
             exitTransition = { fadeOut(fadeSpec) },
         ) {
-            TodayScreen(
+            HomeScreen(
                 onNavigateToLocationDetail = navigator::navigateToLocationDetail,
                 onNavigateToAddLocation = navigator::navigateToAddLocation,
                 onWeatherTintChanged = onTodayWeatherTintChanged,

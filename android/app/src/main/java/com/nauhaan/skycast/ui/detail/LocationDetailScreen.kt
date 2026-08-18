@@ -49,14 +49,14 @@ import com.nauhaan.skycast.ui.common.previewWeather
 import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
-import com.nauhaan.skycast.ui.today.HourlyStrip
+import com.nauhaan.skycast.ui.home.HourlyStrip
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import com.nauhaan.skycast.core.designsystem.R as DesignSystemR
 
-/** Full conditions for one saved location, pushed from Today or Locations. */
+/** Full conditions for one saved location, pushed from Home or Locations. */
 @Composable
 fun LocationDetailScreen(
     onNavigateBack: () -> Unit,
@@ -133,7 +133,7 @@ internal fun LocationDetailContent(
                     // Identity first, and unconditionally. Which place this is comes from Room, so it
                     // is known before any network call, and hiding it behind a spinner would blank a
                     // screen whose most important fact is already in hand. This is the same
-                    // offline-first rule the Today tab follows, applied to a pushed screen.
+                    // offline-first rule the Home tab follows, applied to a pushed screen.
                     uiState.location?.let { location ->
                         LocationIdentity(location = location, modifier = Modifier.padding(Spacing.md))
                     }
@@ -161,9 +161,7 @@ internal fun LocationDetailContent(
                         )
 
                         WeatherDetailGrid(
-                            // Eight tiles rather than Today's six: dew point and length of day are
-                            // derived readings, and this is the screen someone opens because the
-                            // glance was not enough.
+                            // Eight tiles: dew point and length of day are derived readings.
                             details = weather.toDetails(
                                 preferences = uiState.preferences,
                                 labels = rememberWeatherDetailLabels(),
@@ -302,7 +300,7 @@ private fun WeatherStatusNotice(error: AppError?, onRetry: () -> Unit, modifier:
         if (error == null) {
             LoadingIndicator()
             Text(
-                text = stringResource(R.string.today_loading),
+                text = stringResource(R.string.home_loading),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

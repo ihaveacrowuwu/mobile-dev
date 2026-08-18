@@ -16,7 +16,7 @@ data class SavedLocation(
     val longitude: Double,
     /** Position in the user's list; lets them reorder without touching other fields. */
     val sortOrder: Int = 0,
-    /** Exactly one saved location is primary, it is what the Today tab shows. */
+    /** Exactly one saved location is primary, it is what the Home tab shows. */
     val isPrimary: Boolean = false,
 ) {
     /** e.g. "London, England, GB", falls back gracefully when [state] is absent. */

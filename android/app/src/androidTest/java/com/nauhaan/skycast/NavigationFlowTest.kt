@@ -88,7 +88,7 @@ class NavigationFlowTest {
     private fun awaitNavigationBar() {
         await("the navigation bar") {
             composeRule
-                .onAllNodesWithTag(TAB_TODAY)
+                .onAllNodesWithTag(TAB_HOME)
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .isNotEmpty()
         }
@@ -165,8 +165,8 @@ class NavigationFlowTest {
 
     @Test
     fun everyTabIsReachableAndSelectable() {
-        // Today is the start destination.
-        composeRule.onNodeWithTag(TAB_TODAY).assertIsSelected()
+        // Home is the start destination.
+        composeRule.onNodeWithTag(TAB_HOME).assertIsSelected()
 
         composeRule.onNodeWithTag(TAB_FORECAST).performClick()
         settle()
@@ -260,7 +260,7 @@ class NavigationFlowTest {
         composeRule.onNodeWithText("Fahrenheit (°F)").performClick()
         settle()
 
-        composeRule.onNodeWithTag(TAB_TODAY).performClick()
+        composeRule.onNodeWithTag(TAB_HOME).performClick()
         settle()
         composeRule.onNodeWithTag(TAB_SETTINGS).performClick()
         settle()
@@ -273,7 +273,7 @@ class NavigationFlowTest {
     }
 
     private companion object {
-        const val TAB_TODAY = "tab_today"
+        const val TAB_HOME = "tab_home"
         const val TAB_FORECAST = "tab_forecast"
         const val TAB_LOCATIONS = "tab_locations"
         const val TAB_SETTINGS = "tab_settings"

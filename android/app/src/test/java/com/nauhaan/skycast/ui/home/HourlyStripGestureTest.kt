@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource

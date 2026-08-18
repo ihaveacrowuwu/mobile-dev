@@ -17,22 +17,16 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
- * Everything the Today screen needs, as one stream.
+ * Everything the Home screen needs, as one stream.
  *
- * This use case exists because the Today screen genuinely composes several sources, every saved
- * location, each one's current weather and forecast, and the unit preferences, and re-subscribing
- * when the saved list changes is real orchestration logic. Keeping it here rather than in the view
- * model makes it unit-testable in isolation and stops the same wiring being duplicated.
+ * Composes several sources: every saved location, each one's current weather and forecast, and the
+ * unit preferences, re-subscribing when the saved list changes. Keeping that orchestration here
+ * makes it unit-testable in isolation.
  *
- * Use cases are added only where there is logic like this. A use case that merely forwards one call
- * to one repository is ceremony, and we do not write them.
- *
- * ## Why every location, not just the primary
- *
- * Today is swipeable: the user pages between their saved places. Loading only the visible one would
- * mean every swipe lands on a spinner. Observing them all costs nothing extra in practice, the
- * repository serves each from cache and honours its TTL, so a handful of locations produce a
- * handful of network calls per TTL window, not per swipe.
+ * Every location is observed, not just the primary, because Home pages between saved places and
+ * loading only the visible one would land every swipe on a spinner. The repository serves each from
+ * cache and honours its TTL, so a handful of locations produce a handful of network calls per TTL
+ * window, not per swipe.
  */
 class ObserveTodayWeatherUseCase
 @Inject

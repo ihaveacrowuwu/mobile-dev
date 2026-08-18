@@ -8,9 +8,8 @@ struct LocationDetailUiState: Equatable {
     var weather: Weather?
     /// The multi-day forecast for the same place.
     ///
-    /// The detail screen is where someone goes when the Today card was not enough, so it carries
-    /// the hour-by-hour and day-by-day picture too. It is optional and never blocks: the current
-    /// reading renders the moment it arrives, and the forecast sections appear when they do.
+    /// Optional and never blocking: the current reading renders the moment it arrives, and the
+    /// forecast sections appear when they do.
     var forecast: Forecast?
     var preferences: UserPreferences = .init()
     var isLoading = true
@@ -20,14 +19,13 @@ struct LocationDetailUiState: Equatable {
     /// The id resolved to no saved record: the location was deleted while this screen was open.
     var isMissing = false
 
-    /// The readings from now on. Past hours belong on Today, which is about the day in progress.
+    /// The readings from now on. Past hours belong on Home, which is about the day in progress.
     func upcomingHours(now: Date = .now, limit: Int) -> [HourlyForecast] {
         Array((forecast?.days.flatMap(\.hourly) ?? []).filter { $0.time >= now }.prefix(limit))
     }
 
-    /// No `showsFullScreenLoader` / `showsFullScreenError` counterparts to ``TodayUiState`` here,
-    /// deliberately: this screen always has the location's identity to render, so it never shows a
-    /// full-screen state over it. Loading and errors for the weather half are inline instead.
+    /// This screen always has the location's identity to render, so loading and errors for the
+    /// weather half are inline rather than full-screen.
     var showsStaleBanner: Bool {
         weather != nil && (error != nil || isStale)
     }
@@ -128,7 +126,7 @@ final class LocationDetailViewModel {
     }
 }
 
-/// Full conditions for one saved location, pushed from Today or Locations.
+/// Full conditions for one saved location, pushed from Home or Locations.
 struct LocationDetailScreen: View {
     let locationID: Int64
 
@@ -191,10 +189,8 @@ struct LocationDetailContent: View {
                         )
                     }
 
-                    // Identity first, and unconditionally. Which place this is comes from
-                    // SwiftData, so it is known before any network call, hiding it behind a
-                    // spinner would blank a screen whose most important fact is already in hand.
-                    // Same offline-first rule as the Today tab, applied to a pushed screen.
+                    // Which place this is comes from SwiftData, so it renders unconditionally,
+                    // before any network call.
                     if let location = state.location {
                         LocationIdentity(location: location)
                     }
@@ -214,9 +210,7 @@ struct LocationDetailContent: View {
                         SectionHeader("Conditions")
 
                         WeatherDetailGrid(
-                            // Eight tiles rather than Today's six: dew point and length of day are
-                            // derived readings, and this is the screen someone opens because the
-                            // glance was not enough.
+                            // Eight tiles: dew point and length of day are derived readings.
                             details: weather.details(preferences: state.preferences, includeDerived: true)
                         )
 
@@ -237,7 +231,7 @@ struct LocationDetailContent: View {
             }
         }
         // The weather background supplies the grouped base the tiles read against, plus a hint
-        // of the condition, see TodayScreen.
+        // of the condition.
         .weatherBackground(
             condition: state.weather?.condition ?? .unknown,
             isDaytime: state.weather?.isDaytime ?? true,
@@ -265,8 +259,8 @@ private struct ForecastSections: View {
             let days = forecast.dayRanges(unit: unit)
 
             if !hours.isEmpty {
-                // The detail screen shows only what is ahead, so it cannot borrow Today's
-                // "Through the day", the day may be nearly over.
+                // The detail screen shows only what is ahead, so it does not reuse Home's
+                // "Through the day".
                 HourlyStrip(
                     hours: hours,
                     timeZone: forecast.timeZone,

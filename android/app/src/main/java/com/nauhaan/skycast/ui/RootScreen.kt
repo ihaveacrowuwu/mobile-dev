@@ -30,20 +30,12 @@ import com.nauhaan.skycast.ui.navigation.rememberSkyCastNavigator
 /**
  * The app shell: bottom navigation bar plus the navigation graph.
  *
- * The bar hides itself on pushed destinations (detail screens, search) because the user
- * is no longer "on" a tab there and highlighting one would be misleading. That is also
- * why [currentTopLevelDestination] is nullable.
+ * The bar hides itself on pushed destinations (detail screens, search), which is why
+ * [currentTopLevelDestination] is nullable.
  *
- * ## The bar joins in on Today
- *
- * Today paints the whole screen with the condition's mood, and a navigation bar that stayed a flat
- * theme surface underneath it read as a different app stuck to the bottom. It therefore takes the
- * same wash, but **only on Today**, because that is the only tab that is about one place's weather
- * right now. A list of saved cities has no single condition to reflect, and tinting it would be
- * decoration rather than information.
- *
- * The tint arrives by lambda from `TodayScreen`: the bar is a sibling of the content, not a
- * descendant, so the CompositionLocal the tiles read cannot reach it.
+ * The bar takes Today's condition wash, and only on Today. The tint arrives by lambda from
+ * `HomeScreen`, because the bar is a sibling of the content rather than a descendant, so the
+ * CompositionLocal the tiles read cannot reach it.
  */
 @Composable
 fun RootScreen(modifier: Modifier = Modifier) {
@@ -52,7 +44,7 @@ fun RootScreen(modifier: Modifier = Modifier) {
 
     var todayTint by remember { mutableStateOf<Color?>(null) }
     val base = NavigationBarDefaults.containerColor
-    val tint = todayTint.takeIf { currentTab == TopLevelDestination.TODAY }
+    val tint = todayTint.takeIf { currentTab == TopLevelDestination.HOME }
     // Effects spec, not spatial: this is a colour, and a spatial spec would overshoot past the
     // target colour on the way to it.
     val barContainer by animateColorAsState(

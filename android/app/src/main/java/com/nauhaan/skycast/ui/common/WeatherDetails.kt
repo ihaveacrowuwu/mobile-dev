@@ -11,12 +11,11 @@ import kotlin.math.roundToInt
 /**
  * Formats a [Weather] into the secondary readings shown under the hero block.
  *
- * Lives in `ui` rather than `domain` because every decision here is presentational: how many
- * decimal places, which unit symbol, what time format. Labels arrive already resolved, so this
- * stays free of Android's `Context` and remains a plain testable function.
+ * Lives in `ui`, not `domain`, because everything here is presentational: decimal places, unit
+ * symbols, time format. Labels arrive already resolved, so this stays free of Android's `Context`
+ * and remains a plain testable function.
  *
- * @param includeDerived adds dew point and length of day. Off for Today, which stays a glance; on
- *   for the detail screen, which is where someone goes precisely because the glance was not enough.
+ * @param includeDerived adds dew point and length of day. Off for Home, on for the detail screen.
  */
 fun Weather.toDetails(
     preferences: UserPreferences,

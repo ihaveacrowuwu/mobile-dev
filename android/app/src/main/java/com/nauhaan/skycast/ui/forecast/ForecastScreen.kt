@@ -75,8 +75,8 @@ internal fun ForecastContent(
         uiState.showsFullScreenLoader -> LoadingView(modifier = modifier)
 
         uiState.showsEmptyState -> EmptyStateView(
-            title = stringResource(R.string.today_empty_title),
-            message = stringResource(R.string.today_empty_message),
+            title = stringResource(R.string.home_empty_title),
+            message = stringResource(R.string.home_empty_message),
             icon = Icons.Filled.AddLocationAlt,
             modifier = modifier,
         )

@@ -4,17 +4,14 @@ import Testing
 
 /// The hourly window, which is pure and therefore worth pinning precisely.
 ///
-/// The first test is the one that matters. If the window were read off the *selected* page,
-/// every other page in the pager drew an empty strip and "Through the day" appeared to pop into
-/// existence as a swipe finished. Nothing caught it, because nothing asked a page that was not the
-/// selected one what it would draw.
+/// The first test asserts that a page which is not the selected one still draws its own strip.
 ///
-/// Mirrors `TodayUiStateTest.kt` on Android.
-@Suite("Today hourly window")
-struct TodayUiStateTests {
+/// Mirrors `HomeUiStateTest.kt` on Android.
+@Suite("Home hourly window")
+struct HomeUiStateTests {
     @Test("Window describes the page it is given, not the selected one")
     func windowFollowsItsPage() {
-        let state = TodayUiState(
+        let state = HomeUiState(
             pages: [page(id: 1, firstTemperature: 10), page(id: 2, firstTemperature: 30)],
             selectedIndex: 0
         )
@@ -26,7 +23,7 @@ struct TodayUiStateTests {
 
     @Test("Window keeps two readings behind now and runs eight ahead")
     func windowSpansPastAndFuture() {
-        let state = TodayUiState(pages: [page(id: 1, firstTemperature: 0)])
+        let state = HomeUiState(pages: [page(id: 1, firstTemperature: 0)])
 
         let window = state.hourlyWindow(for: state.pages[0], now: Fixtures.now)
 
@@ -43,7 +40,7 @@ struct TodayUiStateTests {
             firstTemperature: 0,
             start: Fixtures.now.addingTimeInterval(-48 * 3_600)
         )
-        let state = TodayUiState(pages: [stale])
+        let state = HomeUiState(pages: [stale])
 
         let window = state.hourlyWindow(for: stale, now: Fixtures.now)
 
@@ -53,9 +50,9 @@ struct TodayUiStateTests {
 
     @Test("A page with no forecast yet has an empty window")
     func missingForecastGivesNothing() {
-        let page = TodayPage(location: Fixtures.location(), weather: DataState(data: Fixtures.weather()))
+        let page = HomePage(location: Fixtures.location(), weather: DataState(data: Fixtures.weather()))
 
-        #expect(TodayUiState().hourlyWindow(for: page, now: Fixtures.now).isEmpty)
+        #expect(HomeUiState().hourlyWindow(for: page, now: Fixtures.now).isEmpty)
     }
 
     /// Twelve three-hourly readings, the third of which is `now`. Temperatures ascend from
@@ -65,7 +62,7 @@ struct TodayUiStateTests {
         firstTemperature: Double,
         start: Date = Fixtures.now.addingTimeInterval(-6 * 3_600)
     )
-        -> TodayPage
+        -> HomePage
     {
         let hours = (0..<12).map { index in
             HourlyForecast(
@@ -95,7 +92,7 @@ struct TodayUiStateTests {
             cachedAt: Fixtures.now,
             timeZoneOffsetSeconds: 0
         )
-        return TodayPage(
+        return HomePage(
             location: Fixtures.location(id: id, name: "Place \(id)"),
             weather: DataState(data: Fixtures.weather(locationID: id)),
             forecast: DataState(data: forecast)

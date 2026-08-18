@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.domain.model.HourlyForecast
@@ -9,17 +9,17 @@ import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import java.time.Instant
 
 /**
- * Everything the Today screen renders, one immutable value, one source of truth.
+ * Everything the Home screen renders: one immutable value, one source of truth.
  *
  * The derived properties are the important part. They encode the offline-first presentation rules
  * **once**, so the composable contains no `if (isLoading && weather == null && !isRefreshing)`
  * tangles and cannot accidentally show a spinner over perfectly good cached data.
  *
- * Today shows one of several saved places at a time, [pages] holds them all in the order the
+ * Home shows one of several saved places at a time; [pages] holds them all in the order the
  * Locations tab lists them, and [selectedIndex] says which is on screen. The screen-level flags
  * below all describe **the selected page**, so the composable never indexes into the list itself.
  */
-data class TodayUiState(
+data class HomeUiState(
     val pages: List<TodayLocationWeather> = emptyList(),
     val selectedIndex: Int = 0,
     val preferences: UserPreferences = UserPreferences(),

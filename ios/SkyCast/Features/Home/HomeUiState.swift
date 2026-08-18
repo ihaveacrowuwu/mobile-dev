@@ -3,7 +3,7 @@ import Foundation
 /// One saved location's current conditions and forecast.
 ///
 /// Mirrors `TodayLocationWeather` on Android.
-struct TodayPage: Equatable, Identifiable {
+struct HomePage: Equatable, Identifiable {
     let location: SavedLocation
     var weather: DataState<Weather> = .init()
     var forecast: DataState<Forecast> = .init()
@@ -13,19 +13,19 @@ struct TodayPage: Equatable, Identifiable {
     }
 }
 
-/// Everything the Today screen renders, one immutable value, one source of truth.
+/// Everything the Home screen renders, one immutable value, one source of truth.
 ///
 /// The computed properties are the important part. They encode the offline-first presentation
 /// rules **once**, so the view contains no `if isLoading && weather == nil && !isRefreshing`
 /// tangles and cannot accidentally show a spinner over perfectly good cached data.
 ///
-/// Today shows one of several saved places at a time, ``pages`` holds them all in the order the
+/// Home shows one of several saved places at a time, ``pages`` holds them all in the order the
 /// Locations tab lists them, and ``selectedIndex`` says which is on screen. The screen-level flags
 /// below all describe **the selected page**, so the view never indexes into the list itself.
 ///
-/// Identical in shape to `TodayUiState.kt` on Android.
-struct TodayUiState: Equatable {
-    var pages: [TodayPage] = []
+/// Identical in shape to `HomeUiState.kt` on Android.
+struct HomeUiState: Equatable {
+    var pages: [HomePage] = []
     var selectedIndex: Int = 0
     var preferences: UserPreferences = .init()
     var isLoading = false
@@ -37,7 +37,7 @@ struct TodayUiState: Equatable {
     var refreshError: AppError?
 
     /// The page currently on screen, or `nil` before anything has loaded.
-    var selected: TodayPage? {
+    var selected: HomePage? {
         pages.indices.contains(selectedIndex) ? pages[selectedIndex] : nil
     }
 
@@ -64,7 +64,7 @@ struct TodayUiState: Equatable {
     /// Past hours are kept so that "it was 4° colder this morning" is available as context.
     ///
     /// Takes the **page** rather than the selected one, so every page draws its own strip.
-    func hourlyWindow(for page: TodayPage, now: Date = .now) -> [HourlyForecast] {
+    func hourlyWindow(for page: HomePage, now: Date = .now) -> [HourlyForecast] {
         let hours = page.forecast.data?.days.flatMap(\.hourly) ?? []
         guard !hours.isEmpty else { return [] }
 
@@ -110,7 +110,7 @@ struct TodayUiState: Equatable {
     /// Copy for the banner. Prefers the specific error, falling back to a generic staleness note
     /// when the data is merely old rather than un-refreshable.
     var staleBannerMessage: String {
-        error?.message ?? "Showing saved data, it may be out of date."
+        error?.message ?? "Showing saved data. It may be out of date."
     }
 
     /// Two three-hourly readings back, enough for "this morning" without clutter.

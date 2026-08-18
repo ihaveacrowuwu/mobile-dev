@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.Flow
  *
  * Saved locations are the app's durable, user-owned state, the clearest
  * demonstration of the persistence requirement. They are read as a [Flow] so that
- * adding a location on the Locations tab immediately updates the Today tab without
+ * adding a location on the Locations tab immediately updates the Home tab without
  * any manual invalidation.
  */
 interface LocationRepository {
     /** All saved locations, ordered by the user's arrangement. Emits on every change. */
     fun observeSavedLocations(): Flow<List<SavedLocation>>
 
-    /** The location shown on the Today tab. `null` only before the user adds their first. */
+    /** The location shown on the Home tab. `null` only before the user adds their first. */
     fun observePrimaryLocation(): Flow<SavedLocation?>
 
     suspend fun getById(id: Long): SavedLocation?

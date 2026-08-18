@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,22 +62,18 @@ import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
 
 /**
- * The Today tab.
+ * The Home tab.
  *
- * Two composables, deliberately:
- *
- * - [TodayScreen] is the **stateful** entry point. It obtains the view model and does nothing else.
- * - [TodayContent] is **stateless**, state in, lambdas out. That is what makes it previewable in
- *   every state and assertable in a Compose test without Hilt.
- *
- * Follow this split for every screen.
+ * - [HomeScreen] is the **stateful** entry point. It obtains the view model and does nothing else.
+ * - [HomeContent] is **stateless**: state in, lambdas out, so it is previewable in every state and
+ *   assertable in a Compose test without Hilt.
  */
 @Composable
-fun TodayScreen(
+fun HomeScreen(
     onNavigateToLocationDetail: (Long) -> Unit,
     onNavigateToAddLocation: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: TodayViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = hiltViewModel(),
     onWeatherTintChanged: (Color?) -> Unit = {},
 ) {
     // collectAsStateWithLifecycle, not collectAsState: stops collection when the
@@ -91,7 +87,7 @@ fun TodayScreen(
     val tint = weather?.let { weatherSurfaceTint(it.condition, it.isDaytime) }
     LaunchedEffect(tint) { onWeatherTintChanged(tint) }
 
-    TodayContent(
+    HomeContent(
         uiState = uiState,
         onRefresh = viewModel::refresh,
         onDismissBanner = viewModel::dismissBanner,
@@ -103,8 +99,8 @@ fun TodayScreen(
 }
 
 @Composable
-internal fun TodayContent(
-    uiState: TodayUiState,
+internal fun HomeContent(
+    uiState: HomeUiState,
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onSelectPage: (Int) -> Unit,
@@ -116,12 +112,12 @@ internal fun TodayContent(
     // The offline-first read algorithm: content wins over errors whenever a cache exists.
     when {
         uiState.showsFullScreenLoader ->
-            LoadingView(modifier = modifier, message = stringResource(R.string.today_loading))
+            LoadingView(modifier = modifier, message = stringResource(R.string.home_loading))
 
         uiState.showsEmptyState ->
             EmptyStateView(
-                title = stringResource(R.string.today_empty_title),
-                message = stringResource(R.string.today_empty_message),
+                title = stringResource(R.string.home_empty_title),
+                message = stringResource(R.string.home_empty_message),
                 icon = Icons.Filled.AddLocationAlt,
                 actionLabel = stringResource(R.string.action_add_location),
                 onAction = onAddLocation,
@@ -139,7 +135,7 @@ internal fun TodayContent(
             )
         }
 
-        else -> TodayPager(
+        else -> HomePager(
             uiState = uiState,
             onRefresh = onRefresh,
             onDismissBanner = onDismissBanner,
@@ -163,8 +159,8 @@ internal fun TodayContent(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TodayPager(
-    uiState: TodayUiState,
+private fun HomePager(
+    uiState: HomeUiState,
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
     onSelectPage: (Int) -> Unit,
@@ -211,7 +207,7 @@ private fun TodayPager(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 HorizontalPager(state = pagerState) { page ->
-                    TodayPage(
+                    HomePage(
                         page = uiState.pages[page],
                         uiState = uiState,
                         isSelected = page == uiState.selectedIndex,
@@ -227,9 +223,9 @@ private fun TodayPager(
 
 /** One page: the hero reading, the hourly strip and the detail tiles for a single place. */
 @Composable
-private fun TodayPage(
+private fun HomePage(
     page: TodayLocationWeather,
-    uiState: TodayUiState,
+    uiState: HomeUiState,
     isSelected: Boolean,
     onRefresh: () -> Unit,
     onDismissBanner: () -> Unit,
@@ -254,7 +250,7 @@ private fun TodayPage(
 
         if (weather == null) {
             // A page reached by swiping ahead of its data.
-            LoadingView(message = stringResource(R.string.today_loading))
+            LoadingView(message = stringResource(R.string.home_loading))
             return@Column
         }
 
@@ -263,7 +259,7 @@ private fun TodayPage(
             unit = uiState.preferences.temperatureUnit,
             showsLocationName = false,
             // Tapping the hero block pushes the full detail screen, the push half of the
-            // navigation hierarchy, reachable from Today.
+            // navigation hierarchy, reachable from Home.
             onClick = { onOpenDetail(weather.locationId) },
             modifier = Modifier.padding(Spacing.md),
         )
@@ -278,7 +274,7 @@ private fun TodayPage(
         )
 
         WeatherDetailGrid(
-            // Six tiles here, eight on the detail screen: Today is a glance, and the derived
+            // Six tiles here, eight on the detail screen: Home is a glance, and the derived
             // readings are why someone taps through.
             details = weather.toDetails(
                 preferences = uiState.preferences,
@@ -296,7 +292,7 @@ private fun TodayPage(
  * Making six-pixel dots a tap target would fail the 48 dp minimum for no gain.
  */
 @Composable
-private fun LocationSwitcher(uiState: TodayUiState, onSelectPage: (Int) -> Unit, modifier: Modifier = Modifier) {
+private fun LocationSwitcher(uiState: HomeUiState, onSelectPage: (Int) -> Unit, modifier: Modifier = Modifier) {
     var isMenuOpen by remember { mutableStateOf(false) }
     val current = uiState.location ?: return
 
@@ -310,7 +306,7 @@ private fun LocationSwitcher(uiState: TodayUiState, onSelectPage: (Int) -> Unit,
                 Text(text = current.name, style = MaterialTheme.typography.titleMedium)
                 Icon(
                     imageVector = Icons.Filled.ExpandMore,
-                    contentDescription = stringResource(R.string.today_select_location),
+                    contentDescription = stringResource(R.string.home_select_location),
                 )
             }
             DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
@@ -339,7 +335,7 @@ private fun LocationSwitcher(uiState: TodayUiState, onSelectPage: (Int) -> Unit,
 @Composable
 private fun PageDots(count: Int, selectedIndex: Int, currentName: String, modifier: Modifier = Modifier) {
     val announcement = stringResource(
-        R.string.today_showing_location,
+        R.string.home_showing_location,
         currentName,
         selectedIndex + 1,
         count,
@@ -380,8 +376,8 @@ private val SelectedDotSize = 8.dp
 @Composable
 private fun TodayLoadingPreview() {
     SkyCastTheme {
-        TodayContent(
-            uiState = TodayUiState(isLoading = true),
+        HomeContent(
+            uiState = HomeUiState(isLoading = true),
             onRefresh = {},
             onDismissBanner = {},
             onSelectPage = {},
@@ -395,8 +391,8 @@ private fun TodayLoadingPreview() {
 @Composable
 private fun TodayEmptyPreview() {
     SkyCastTheme {
-        TodayContent(
-            uiState = TodayUiState(hasNoLocation = true),
+        HomeContent(
+            uiState = HomeUiState(hasNoLocation = true),
             onRefresh = {},
             onDismissBanner = {},
             onSelectPage = {},

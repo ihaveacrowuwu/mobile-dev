@@ -76,7 +76,7 @@ fun SkyCastNavigator.currentTopLevelDestination(): TopLevelDestination? {
     val destination = backStackEntry?.destination ?: return null
     return TopLevelDestination.entries.firstOrNull { tab ->
         when (tab.route) {
-            Route.Today -> destination.hasRoute(Route.Today::class)
+            Route.Home -> destination.hasRoute(Route.Home::class)
             Route.Forecast -> destination.hasRoute(Route.Forecast::class)
             Route.Locations -> destination.hasRoute(Route.Locations::class)
             Route.Settings -> destination.hasRoute(Route.Settings::class)

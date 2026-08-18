@@ -29,7 +29,7 @@ import kotlin.math.roundToInt
 /**
  * The hero reading: place, condition, and one very large temperature.
  *
- * Shared by the Today tab and the pushed location-detail screen. Extracted rather than duplicated
+ * Shared by the Home tab and the pushed location-detail screen. Extracted rather than duplicated
  * so the two cannot drift, a detail screen showing a differently-rounded temperature from the tab
  * that pushed it would read as a bug.
  *
@@ -55,14 +55,14 @@ fun CurrentConditionsHeader(
     val displayed = unit.convertFromCelsius(weather.temperatureCelsius).roundToInt()
     val displayedFeelsLike = unit.convertFromCelsius(weather.feelsLikeCelsius).roundToInt()
     val announcement = stringResource(
-        R.string.today_conditions_accessibility,
+        R.string.home_conditions_accessibility,
         weather.locationName,
         displayed,
         unit.symbol,
         weather.description,
         displayedFeelsLike,
     )
-    val openDetailLabel = stringResource(R.string.today_open_detail_action)
+    val openDetailLabel = stringResource(R.string.home_open_detail_action)
 
     Column(
         modifier = modifier
@@ -85,7 +85,7 @@ fun CurrentConditionsHeader(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
-        // Hidden where the screen already names the place above, Today has a location switcher
+        // Hidden where the screen already names the place above, since Home has a location switcher
         // and the detail screen an identity block, and "London" twice within a hundred pixels
         // reads as a mistake. The spoken announcement still includes it either way, since a
         // screen-reader user has no such visual context.
@@ -116,7 +116,7 @@ fun CurrentConditionsHeader(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = stringResource(R.string.today_feels_like, displayedFeelsLike, unit.symbol),
+            text = stringResource(R.string.home_feels_like, displayedFeelsLike, unit.symbol),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

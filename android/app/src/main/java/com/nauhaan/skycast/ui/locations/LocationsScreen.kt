@@ -36,7 +36,7 @@ import com.nauhaan.skycast.domain.model.SavedLocation
 /**
  * The Locations tab: the user's saved places.
  *
- * Same stateful/stateless split as [com.nauhaan.skycast.ui.today.TodayScreen]: this composable
+ * Same stateful/stateless split as [com.nauhaan.skycast.ui.home.HomeScreen]: this composable
  * only obtains the view model, [LocationsContent] does the rendering and is previewable.
  */
 @Composable
@@ -140,7 +140,7 @@ private fun SavedLocationRow(
             }
         },
         trailingContent = {
-            // The last location cannot be deleted: with none saved, Today has nothing to show
+            // The last location cannot be deleted: with none saved, Home has nothing to show
             // and the user is stranded on an empty state they did not ask for.
             if (canDelete) {
                 IconButton(onClick = onDelete) {

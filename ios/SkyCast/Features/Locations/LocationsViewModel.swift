@@ -11,7 +11,7 @@ struct LocationsUiState: Equatable {
         locations.isEmpty && !isLoading
     }
 
-    /// The last remaining location cannot be removed: with none saved, Today has nothing to show
+    /// The last remaining location cannot be removed: with none saved, Home has nothing to show
     /// and the user is stranded on an empty state they did not ask for.
     var canDelete: Bool {
         locations.count > 1

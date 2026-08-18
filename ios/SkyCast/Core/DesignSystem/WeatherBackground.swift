@@ -2,7 +2,7 @@ import SwiftUI
 
 /// How strongly a weather background reads.
 ///
-/// Today gets the full treatment because it is the screen about the weather right now. Everything
+/// Home gets the full treatment because it is the screen about the weather right now. Everything
 /// else gets a whisper of the same hue: enough that the app feels like one place, not so much that
 /// a list of saved cities competes with the forecast for attention.
 enum BackgroundIntensity {

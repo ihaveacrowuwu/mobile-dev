@@ -54,7 +54,7 @@ constructor(
 
     override suspend fun save(result: LocationSearchResult): Long = withContext(dispatchers.io) {
         try {
-            // The very first location the user adds becomes primary, so the Today tab
+            // The very first location the user adds becomes primary, so the Home tab
             // is never left with nothing to show.
             val isFirst = dao.count() == 0
             val id = dao.insert(result.toEntity(sortOrder = dao.nextSortOrder(), isPrimary = isFirst))

@@ -4,7 +4,7 @@ import Network
 /// Observes whether the device currently has a usable network path.
 ///
 /// A protocol so repository and view model tests can drive connectivity synthetically,
-/// "what does the Today screen look like offline?" becomes a unit test rather than a
+/// "what does the Home screen look like offline?" becomes a unit test rather than a
 /// manual aeroplane-mode check.
 protocol NetworkMonitoring: Sendable {
     /// The current state, sampled at the moment of the call.

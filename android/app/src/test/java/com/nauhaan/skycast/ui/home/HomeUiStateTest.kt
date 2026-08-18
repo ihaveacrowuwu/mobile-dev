@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import com.nauhaan.skycast.domain.model.Forecast
 import com.nauhaan.skycast.domain.model.ForecastDay
@@ -19,10 +19,10 @@ import java.time.ZoneOffset
  *
  * The first test asserts that a page which is not the selected one still draws its own strip.
  */
-class TodayUiStateTest {
+class HomeUiStateTest {
     @Test
     fun `window describes the page it is given, not the selected one`() {
-        val state = TodayUiState(
+        val state = HomeUiState(
             pages = listOf(page(id = 1, firstTemperature = 10.0), page(id = 2, firstTemperature = 30.0)),
             selectedIndex = 0,
         )
@@ -37,7 +37,7 @@ class TodayUiStateTest {
 
     @Test
     fun `window keeps two readings behind now and runs eight ahead`() {
-        val state = TodayUiState(pages = listOf(page(id = 1, firstTemperature = 0.0)))
+        val state = HomeUiState(pages = listOf(page(id = 1, firstTemperature = 0.0)))
 
         val window = state.hourlyWindow(state.pages[0], now = TestInstant)
 
@@ -50,7 +50,7 @@ class TodayUiStateTest {
     fun `a cache with nothing upcoming shows its tail rather than nothing`() {
         // Every reading behind us: a forecast cached long enough ago that it has run out.
         val stale = page(id = 1, firstTemperature = 0.0, start = TestInstant.minusSeconds(48 * 60 * 60))
-        val state = TodayUiState(pages = listOf(stale))
+        val state = HomeUiState(pages = listOf(stale))
 
         val window = state.hourlyWindow(stale, now = TestInstant)
 
@@ -66,7 +66,7 @@ class TodayUiStateTest {
             forecast = DataState(),
         )
 
-        assertEquals(emptyList<HourlyForecast>(), TodayUiState().hourlyWindow(page, now = TestInstant))
+        assertEquals(emptyList<HourlyForecast>(), HomeUiState().hourlyWindow(page, now = TestInstant))
     }
 
     /**

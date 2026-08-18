@@ -2,24 +2,23 @@ import Foundation
 import Testing
 @testable import SkyCast
 
-/// ``TodayViewModel`` behaviour, with an emphasis on the **offline and error paths**.
+/// ``HomeViewModel`` behaviour, with an emphasis on the **offline and error paths**.
 ///
-/// The happy path is the easy half. The cases that matter most
-/// are the tests asserting that a failed refresh never
-/// blanks the screen and that stale cached data still renders.
+/// The cases that matter most are the tests asserting that a failed refresh never blanks the screen
+/// and that stale cached data still renders.
 ///
-/// `@MainActor` because the view model is main-actor isolated; the suite runs there too so
-/// no `await` hop is needed to read its state.
+/// `@MainActor` because the view model is main-actor isolated; the suite runs there too so no
+/// `await` hop is needed to read its state.
 @MainActor
-@Suite("TodayViewModel")
-struct TodayViewModelTests {
+@Suite("HomeViewModel")
+struct HomeViewModelTests {
     private func makeViewModel(
         weather: FakeWeatherRepository,
         locations: FakeLocationRepository
     )
-        -> TodayViewModel
+        -> HomeViewModel
     {
-        TodayViewModel(
+        HomeViewModel(
             weatherRepository: weather,
             locationRepository: locations,
             // A dedicated suite so tests never read or write the real app's settings.
@@ -171,7 +170,7 @@ struct TodayViewModelTests {
     }
 }
 
-private extension TodayViewModel {
+private extension HomeViewModel {
     /// Waits until the view model's start-up task has produced a settled state.
     ///
     /// `start()` launches an *unstructured* `Task`, and the cooperative scheduler makes no promise

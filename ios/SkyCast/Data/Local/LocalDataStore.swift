@@ -43,7 +43,7 @@ actor LocalDataStore {
     /// Saves a search hit, or updates the existing record when the same coordinates were
     /// already saved, re-adding a place must not create a duplicate.
     ///
-    /// The first location added becomes primary, so the Today tab is never left with
+    /// The first location added becomes primary, so the Home tab is never left with
     /// nothing to show.
     @discardableResult
     func save(_ result: LocationSearchResult) throws -> Int64 {
@@ -90,7 +90,7 @@ actor LocalDataStore {
         modelContext.delete(model)
         try modelContext.save()
 
-        // Exactly one primary must always survive, or the Today tab goes permanently empty.
+        // Exactly one primary must always survive, or the Home tab goes permanently empty.
         guard wasPrimary else { return }
         if let replacement = try modelContext.fetch(
             FetchDescriptor<PersistentSavedLocation>(

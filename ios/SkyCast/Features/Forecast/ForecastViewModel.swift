@@ -3,7 +3,7 @@ import Observation
 
 /// Everything the Forecast screen renders.
 ///
-/// Same derived-property approach as ``TodayUiState``: the offline-first display rules live on
+/// Same derived-property approach as ``HomeUiState``: the offline-first display rules live on
 /// the state, so the view never combines flags itself.
 struct ForecastUiState: Equatable {
     var location: SavedLocation?
@@ -43,7 +43,7 @@ struct ForecastUiState: Equatable {
 
 /// View model for the Forecast tab.
 ///
-/// Mirrors ``TodayViewModel`` deliberately, including the single held `observationTask`: starting
+/// Mirrors ``HomeViewModel`` deliberately, including the single held `observationTask`: starting
 /// a second stream without cancelling the first would leave two writers racing on `state`.
 @MainActor
 @Observable

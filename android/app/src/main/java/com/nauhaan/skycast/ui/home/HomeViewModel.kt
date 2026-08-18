@@ -1,4 +1,4 @@
-package com.nauhaan.skycast.ui.today
+package com.nauhaan.skycast.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,14 +16,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * View model for the Today screen.
+ * View model for the Home screen.
  *
  * Note what is **not** here: no `Context`, no Retrofit, no Room, no `Dispatchers`. Its
  * only collaborators are a use case and a repository interface, both from `domain`, so
- * `TodayViewModelTest` runs on the JVM in milliseconds with hand-written fakes.
+ * `HomeViewModelTest` runs on the JVM in milliseconds with hand-written fakes.
  */
 @HiltViewModel
-class TodayViewModel
+class HomeViewModel
 @Inject
 constructor(
     private val observeTodayWeather: ObserveTodayWeatherUseCase,
@@ -58,7 +58,7 @@ constructor(
         }
     }
 
-    val uiState: StateFlow<TodayUiState> =
+    val uiState: StateFlow<HomeUiState> =
         combine(
             observeTodayWeather(),
             selectedIndex,
@@ -66,7 +66,7 @@ constructor(
             manualRefreshInFlight,
             manualRefreshError,
         ) { board, index, dismissed, manualRefresh, refreshError ->
-            TodayUiState(
+            HomeUiState(
                 pages = board.entries,
                 // Clamped rather than trusted: deleting the last location while it is on screen
                 // would otherwise leave the index pointing past the end of the list.
@@ -83,7 +83,7 @@ constructor(
             // WhileSubscribed with a 5 s grace period: survives a configuration change
             // without re-querying, but stops work when the screen is truly gone.
             started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MILLIS),
-            initialValue = TodayUiState(isLoading = true),
+            initialValue = HomeUiState(isLoading = true),
         )
 
     /** Called when the user swipes the pager or picks a place from the menu. */

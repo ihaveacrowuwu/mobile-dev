@@ -64,7 +64,7 @@ constructor(
          * exercises the location-timezone forecast grouping and the day/night icon logic, which
          * two nearby cities would not.
          *
-         * The first entry becomes primary and is what the Today tab shows.
+         * The first entry becomes primary and is what the Home tab shows.
          */
         val SAMPLE_LOCATIONS = listOf(
             LocationSearchResult(

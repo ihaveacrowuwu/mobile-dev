@@ -54,12 +54,12 @@ final class ScreenshotUITests: XCTestCase {
         // A clean install has no cache, so the hero would otherwise be captured mid-spinner.
         settle(seconds: 8)
         // Away and back before capturing. On a *first* launch the seeder inserts the second place
-        // after Today has already read the list, SwiftData has no live observation, so Today
+        // after Home has already read the list, SwiftData has no live observation, so Home
         // re-reads when the tab reappears, exactly as it does after a user adds a place. Without
-        // this the capture shows a one-page Today and no page indicator, which is a fresh-install
+        // this the capture shows a one-page Home and no page indicator, which is a fresh-install
         // artefact rather than what the screen looks like in use.
         selectTab(.locations)
-        selectTab(.today)
+        selectTab(.home)
         settle(seconds: 2)
         try capture("01-today")
 
@@ -130,7 +130,7 @@ final class ScreenshotUITests: XCTestCase {
     /// screen indefinitely. A normalised coordinate always resolves, so a wrong guess produces a
     /// visibly wrong screenshot, which is a diagnosable failure rather than a hang.
     private enum Tab: CGFloat {
-        case today = 0.16
+        case home = 0.16
         case forecast = 0.38
         case locations = 0.62
         case settings = 0.85

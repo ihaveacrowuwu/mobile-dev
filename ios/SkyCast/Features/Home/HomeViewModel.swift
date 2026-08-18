@@ -1,10 +1,10 @@
 import Foundation
 import Observation
 
-/// View model for the Today screen.
+/// View model for the Home screen.
 ///
 /// Note what is **not** here: no SwiftUI, no URLSession, no SwiftData, no `ModelContext`. Its only
-/// collaborators are `Domain` protocols, so `TodayViewModelTests` runs on the simulator in
+/// collaborators are `Domain` protocols, so `HomeViewModelTests` runs on the simulator in
 /// milliseconds against hand-written fakes.
 ///
 /// `@Observable` + `@MainActor`: state mutations happen on the main actor and SwiftUI observes the
@@ -13,14 +13,14 @@ import Observation
 ///
 /// ## Observing every saved place
 ///
-/// Today pages between the user's locations, so it holds a stream per location rather than one for
+/// Home pages between the user's locations, so it holds a stream per location rather than one for
 /// the primary. Loading only the visible page would put a spinner behind every swipe. Each stream
 /// is served from cache and honours its TTL, so a handful of places produce a handful of requests
 /// per TTL window, not per swipe.
 @MainActor
 @Observable
-final class TodayViewModel {
-    private(set) var state = TodayUiState(isLoading: true)
+final class HomeViewModel {
+    private(set) var state = HomeUiState(isLoading: true)
 
     private let weatherRepository: any WeatherRepository
     private let locationRepository: any LocationRepository
@@ -113,7 +113,7 @@ final class TodayViewModel {
             // Keep whatever is already loaded for locations that survived, so a reload after
             // adding a place does not blank the pages the user was looking at.
             let existing = Dictionary(uniqueKeysWithValues: state.pages.map { ($0.id, $0) })
-            state.pages = locations.map { existing[$0.id] ?? TodayPage(location: $0) }
+            state.pages = locations.map { existing[$0.id] ?? HomePage(location: $0) }
 
             // Open on the primary place, but only before the user has chosen for themselves.
             if state.selectedIndex == 0, let primary = locations.firstIndex(where: \.isPrimary) {
@@ -185,7 +185,7 @@ final class TodayViewModel {
     ///
     /// By id, not position: a stream can deliver while the list is being reordered or trimmed, and
     /// writing to a stale index would put one location's weather under another's name.
-    private func update(_ location: SavedLocation, _ change: (inout TodayPage) -> Void) {
+    private func update(_ location: SavedLocation, _ change: (inout HomePage) -> Void) {
         guard let index = state.pages.firstIndex(where: { $0.id == location.id }) else { return }
         change(&state.pages[index])
         state.isLoading = state.pages.contains { $0.weather.isLoading }

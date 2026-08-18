@@ -7,13 +7,13 @@
     <string name="app_name">SkyCast</string>
 
     <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
-    <string name="tab_today">Today</string>
+    <string name="tab_home">Home</string>
     <string name="tab_forecast">Forecast</string>
     <string name="tab_locations">Locations</string>
     <string name="tab_settings">Settings</string>
 
     <!-- Longer descriptions announced by TalkBack, where the short label is ambiguous. -->
-    <string name="tab_today_description">Today\'s weather</string>
+    <string name="tab_home_description">Current weather for your places</string>
     <string name="tab_forecast_description">Five day forecast</string>
     <string name="tab_locations_description">Saved locations</string>
     <string name="tab_settings_description">Settings</string>
@@ -22,23 +22,23 @@
     <string name="action_add_location">Add location</string>
     <string name="action_back">Back</string>
 
-    <!-- ── Today ────────────────────────────────────────────────────────── -->
-    <string name="today_loading">Fetching the latest weather…</string>
-    <string name="today_empty_title">No locations yet</string>
-    <string name="today_empty_message">Add a place and SkyCast will keep its forecast ready, even offline.</string>
-    <string name="today_feels_like">Feels like %1$d%2$s</string>
+    <!-- ── Home ─────────────────────────────────────────────────────────── -->
+    <string name="home_loading">Fetching the latest weather…</string>
+    <string name="home_empty_title">No locations yet</string>
+    <string name="home_empty_message">Add a place and SkyCast will keep its forecast ready, even offline.</string>
+    <string name="home_feels_like">Feels like %1$d%2$s</string>
     <!--
       One combined announcement for the hero block. Without it a screen-reader user
       hears the place, the number, the unit and the description as four disconnected
       fragments.
     -->
-    <string name="today_conditions_accessibility">%1$s, %2$d%3$s, %4$s, feels like %5$d%3$s</string>
-    <string name="today_open_detail_action">Open full details</string>
-    <string name="today_hourly_heading">Through the day</string>
-    <string name="today_hourly_now">Now</string>
-    <string name="today_hourly_accessibility">%1$s, %2$d%3$s</string>
-    <string name="today_select_location">Choose a place</string>
-    <string name="today_showing_location">Showing %1$s, %2$d of %3$d</string>
+    <string name="home_conditions_accessibility">%1$s, %2$d%3$s, %4$s, feels like %5$d%3$s</string>
+    <string name="home_open_detail_action">Open full details</string>
+    <string name="home_hourly_heading">Through the day</string>
+    <string name="home_hourly_now">Now</string>
+    <string name="home_hourly_accessibility">%1$s, %2$d%3$s</string>
+    <string name="home_select_location">Choose a place</string>
+    <string name="home_showing_location">Showing %1$s, %2$d of %3$d</string>
 
     <!-- ── Banners ──────────────────────────────────────────────────────── -->
     <string name="banner_data_may_be_out_of_date">Showing saved data, it may be out of date.</string>
@@ -120,7 +120,7 @@
     <!-- ── Forecast ─────────────────────────────────────────────────────── -->
     <!--
       No unit symbol: TemperatureUnit.symbol is already "°C"/"°F", so appending it produced
-      "25° / 17°°C". The unit is established by the hero reading on Today, and a bare degree sign
+      "25° / 17°°C". The unit is established by the hero reading on Home, and a bare degree sign
       is what every weather app shows in a forecast row. The accessibility string below still
       spells the unit out, because a screen-reader user has no hero on screen to infer it from.
     -->
@@ -132,8 +132,8 @@
     <string name="locations_empty_title">No saved places</string>
     <string name="locations_empty_message">Search for a city to start tracking its weather.</string>
     <!-- %1$s is the place name, so TalkBack says which row the control belongs to. -->
-    <string name="locations_set_primary">Show %1$s on the Today tab</string>
-    <string name="locations_is_primary">%1$s is shown on the Today tab</string>
+    <string name="locations_set_primary">Show %1$s on the Home tab</string>
+    <string name="locations_is_primary">%1$s is shown on the Home tab</string>
     <string name="locations_delete">Remove %1$s</string>
 
     <!-- ── Add location (search) ────────────────────────────────────────── -->

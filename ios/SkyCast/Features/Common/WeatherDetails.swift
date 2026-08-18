@@ -10,7 +10,7 @@ import Foundation
 /// this function deliberately has none; on iOS a plain `String` literal is already a localisation
 /// key, so the indirection would buy nothing.
 extension Weather {
-    /// - Parameter includeDerived: adds dew point and length of day. Off for Today, which stays a
+    /// - Parameter includeDerived: adds dew point and length of day. Off for Home, which stays a
     ///   glance; on for the detail screen, which is where someone goes precisely because the
     ///   glance was not enough.
     func details(preferences: UserPreferences, includeDerived: Bool = false) -> [WeatherDetail] {

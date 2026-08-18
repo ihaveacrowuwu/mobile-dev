@@ -203,7 +203,7 @@ struct ForecastDayRow: View {
         return text
     }
 
-    /// Smaller than the Today hero badge, 44 pt is also the minimum touch target, so the row
+    /// Smaller than the Home hero badge, 44 pt is also the minimum touch target, so the row
     /// stays tappable at its natural height.
     private let forecastBadgeSize = TouchTarget.minimum
 }

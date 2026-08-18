@@ -24,7 +24,7 @@ sealed interface Route {
     // ── Top-level tab destinations ─────────────────────────────────────────
 
     @Serializable
-    data object Today : Route
+    data object Home : Route
 
     @Serializable
     data object Forecast : Route
@@ -76,13 +76,13 @@ enum class TopLevelDestination(
      */
     val testTag: String,
 ) {
-    TODAY(
-        route = Route.Today,
-        labelRes = R.string.tab_today,
-        contentDescriptionRes = R.string.tab_today_description,
+    HOME(
+        route = Route.Home,
+        labelRes = R.string.tab_home,
+        contentDescriptionRes = R.string.tab_home_description,
         selectedIcon = Icons.Filled.WbSunny,
         unselectedIcon = Icons.Outlined.WbSunny,
-        testTag = "tab_today",
+        testTag = "tab_home",
     ),
     FORECAST(
         route = Route.Forecast,

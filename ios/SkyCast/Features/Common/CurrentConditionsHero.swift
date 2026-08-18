@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The hero reading: place, condition badge, and one very large temperature.
 ///
-/// Shared by the Today tab and the pushed location-detail screen. Extracted rather than
+/// Shared by the Home tab and the pushed location-detail screen. Extracted rather than
 /// duplicated so the two can never drift, the detail screen showing a differently-rounded
 /// temperature from the tab that pushed it would read as a bug.
 ///
@@ -10,12 +10,12 @@ import SwiftUI
 struct CurrentConditionsHero: View {
     let weather: Weather
     let unit: TemperatureUnit
-    /// `false` where the surrounding screen already names the place, Today has a location
+    /// `false` where the surrounding screen already names the place, Home has a location
     /// switcher and the detail screen an identity block, and "London" twice within a hundred
     /// points reads as a mistake. The spoken announcement still includes it either way, since a
     /// VoiceOver user has no such visual context.
     var showsLocationName = true
-    /// `nil` makes the block inert. The Today tab passes a closure to push the detail screen;
+    /// `nil` makes the block inert. The Home tab passes a closure to push the detail screen;
     /// the detail screen itself has nowhere further to go.
     var onTap: (() -> Void)?
 
@@ -80,7 +80,7 @@ struct CurrentConditionsHero: View {
         .frame(maxWidth: .infinity)
         // No glass. This is the page's content, not a floating layer over it, and Liquid Glass is
         // for the latter. Two things made the card actively wrong
-        // once the rest of Today came together: the toolbar's own glass now passes directly over it
+        // once the rest of Home came together: the toolbar's own glass now passes directly over it
         // as the page scrolls, which is glass on glass; and a pane around the largest text on the
         // screen boxes in the one element that should feel like it is simply *on* the sky.
         //

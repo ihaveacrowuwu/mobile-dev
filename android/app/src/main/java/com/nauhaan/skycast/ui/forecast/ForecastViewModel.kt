@@ -25,7 +25,7 @@ import javax.inject.Inject
 /**
  * State for the Forecast tab.
  *
- * Same derived-property approach as `TodayUiState`: the offline-first display rules live on the
+ * Same derived-property approach as `HomeUiState`: the offline-first display rules live on the
  * state, so the composable never combines flags itself.
  */
 data class ForecastUiState(
@@ -48,7 +48,7 @@ data class ForecastUiState(
 /**
  * View model for the Forecast tab.
  *
- * Mirrors `TodayViewModel`: resubscribes when the primary location changes, and combines the
+ * Mirrors `HomeViewModel`: resubscribes when the primary location changes, and combines the
  * unit preferences in so switching °C→°F re-renders from cache with no network call.
  */
 @HiltViewModel
@@ -62,7 +62,7 @@ constructor(
     private val manualRefreshInFlight = MutableStateFlow(false)
 
     /**
-     * The error from the most recent **manual** refresh. See `TodayViewModel` for why this is
+     * The error from the most recent **manual** refresh. See `HomeViewModel` for why this is
      * kept apart from the observed `DataState.error`: a failed pull-to-refresh does not
      * necessarily make the stream re-emit, so without this the failure is silent.
      */
