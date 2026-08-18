@@ -12,10 +12,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.designsystem.component.WeatherConditionBadge
@@ -60,12 +65,33 @@ fun HourlyStrip(
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             contentPadding = PaddingValues(horizontal = Spacing.md),
+            modifier = Modifier.nestedScroll(StripKeepsItsOwnGesture),
         ) {
             items(hours, key = { it.time.epochSecond }) { hour ->
                 HourColumn(hour = hour, zoneOffset = zoneOffset, unit = unit, now = now)
             }
         }
     }
+}
+
+/**
+ * Stops a scroll of the strip turning into a swipe to the next place.
+ *
+ * Compose chains nested scrolling: when the row reaches its end, the horizontal delta it could not
+ * use travels up to the [HorizontalPager] behind it, and the *same* gesture carries on as a page
+ * change.
+ *
+ * This consumes whatever the row left over, in the horizontal axis only, so the pager sees nothing
+ * from a gesture that began here. Vertical is passed through untouched, so a drag up or down on the
+ * strip still scrolls the page. Swiping anywhere else still changes place.
+ *
+ * `internal` rather than private so `HourlyStripGestureTest` can assert both halves.
+ */
+internal val StripKeepsItsOwnGesture = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+        available.copy(y = 0f)
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available.copy(y = 0f)
 }
 
 @Composable
