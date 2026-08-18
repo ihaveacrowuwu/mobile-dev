@@ -53,6 +53,14 @@ final class ScreenshotUITests: XCTestCase {
         app.launch()
         // A clean install has no cache, so the hero would otherwise be captured mid-spinner.
         settle(seconds: 8)
+        // Away and back before capturing. On a *first* launch the seeder inserts the second place
+        // after Today has already read the list, SwiftData has no live observation, so Today
+        // re-reads when the tab reappears, exactly as it does after a user adds a place. Without
+        // this the capture shows a one-page Today and no page indicator, which is a fresh-install
+        // artefact rather than what the screen looks like in use.
+        selectTab(.locations)
+        selectTab(.today)
+        settle(seconds: 2)
         try capture("01-today")
 
         selectTab(.forecast)
