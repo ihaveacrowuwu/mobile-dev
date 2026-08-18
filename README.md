@@ -106,6 +106,8 @@ implemented:
 | **Weather-driven colour** | Each condition has its own hue, warm sun, cool night, blue rain, paired with contrast-checked text colours rather than one tonal palette that made every condition look alike. | ✅ Built |
 | **Condition backgrounds** | Today's background reflects the current condition and time of day and drifts slowly; the other weather screens carry a quieter version. Stops entirely under Reduce Motion. | ✅ Built |
 | **Value-aware detail tiles** | Each reading shows where it sits on its own scale, so "1014 hPa" reads as an ordinary day rather than as a number. | ✅ Built |
+| **Per-metric visuals** | Each reading draws itself the way it should: an arc gauge for anything with a range, a compass for wind (pointing where it blows *from*), and a full-width arc for the sun's day with a marker at now. Surfaces wind direction and cloud cover, both fetched since the first commit and never shown. | ✅ Built |
+| **Draggable page indicator** | Centred under the reading; press and slide to run through your places, with a haptic tick per change. `UIPageControl` on iOS, drawn by hand on Android. | ✅ Built |
 | **Derived readings** | Dew point (from temperature and humidity, which OpenWeather's free tier does not send) and length of day, on the detail screen. | ✅ Built |
 | **Temperature trend chart** | The whole forecast period as one line, with its extremes annotated, Swift Charts on iOS, drawn on a Compose `Canvas` on Android, no chart dependency on either. | ✅ Built |
 | **Theming that follows the weather** | The condition's hue reaches the detail tiles and, on Android, the navigation bar while Today is open, so the screen shifts as you swipe between a clear place and an overcast one. | ✅ Built |
