@@ -75,13 +75,16 @@ private fun HourColumn(
 ) {
     val localTime = hour.time.atOffset(zoneOffset)
     val temperature = unit.convertFromCelsius(hour.temperatureCelsius).roundToInt()
-    // "Now" for the reading covering the current moment: the nearest one that has not yet passed.
-    val isPast = hour.time.isBefore(now)
-    val label = if (isPast) {
-        TIME_FORMAT.format(localTime)
+    val isCurrent = hour.isCurrent(now)
+    // Checked before `isPast`, not after. The reading covering this moment *started* in the past,
+    // three-hourly readings always have, so testing "is it past?" first meant the current hour
+    // rendered as a time like any other, and only its bold weight hinted otherwise. iOS had the
+    // order right, which is how the difference showed up.
+    val isPast = hour.time.isBefore(now) && !isCurrent
+    val label = if (isCurrent) {
+        stringResource(R.string.today_hourly_now)
     } else {
-        stringResource(R.string.today_hourly_now).takeIf { hour.isCurrent(now) }
-            ?: TIME_FORMAT.format(localTime)
+        TIME_FORMAT.format(localTime)
     }
     val rain = (hour.precipitationProbability * PERCENT).roundToInt()
 
@@ -113,7 +116,7 @@ private fun HourColumn(
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
-            fontWeight = if (hour.isCurrent(now)) FontWeight.Bold else FontWeight.Normal,
+            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
         )
         WeatherConditionBadge(
             condition = hour.condition,

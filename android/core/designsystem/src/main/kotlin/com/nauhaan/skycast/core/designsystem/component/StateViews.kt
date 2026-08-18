@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.nauhaan.skycast.core.designsystem.R
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
+import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
 
 /**
  * The four screen states, implemented once and reused everywhere.
@@ -186,8 +187,14 @@ fun StaleDataBanner(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        // From the weather palette, not a scheme role. `tertiaryContainer` came out pink under
+        // Material You, which reads as an error rather than "heads up, this may be old", and it
+        // diverged from iOS, where the same banner is amber. A caution colour is semantic, so it
+        // belongs with the other semantic colours.
+        color = weatherPalette.sunset.copy(alpha = BANNER_TINT_ALPHA),
+        // The tint is a low-alpha wash over the surface, so the surface's own `on` colour is what
+        // contrasts against it.
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
@@ -256,6 +263,9 @@ private fun EmptyStateViewPreview() {
 @Composable
 private fun StaleDataBannerPreview() {
     SkyCastTheme {
-        StaleDataBanner(message = "Offline, showing data from 20 minutes ago", onRetry = {})
+        StaleDataBanner(message = "Offline: showing data from 20 minutes ago", onRetry = {})
     }
 }
+
+/** Enough tint to read as a caution strip, light enough that the text on it stays legible. */
+private const val BANNER_TINT_ALPHA = 0.22f

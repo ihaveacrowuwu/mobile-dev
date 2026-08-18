@@ -45,12 +45,11 @@ aeroplane mode.
 This is the submission for **UFCF7H-15-3 Mobile Applications**, Practical Skills
 Assessment (75% of the module).
 
-**Status:** both platforms build, lint clean and pass their full test suites, Android 26
-unit + 5 instrumented, iOS 35 unit + 6 UI. The architecture, data layer, navigation,
-persistence, theming and CI are complete and verified. Some feature screens are still
-placeholders,
-see [Known issues and future improvements](#known-issues-and-future-improvements) for
-exactly what is and is not built.
+**Status:** feature-complete on both platforms. Both build, lint clean and pass their full
+suites, 48 iOS unit tests across 8 suites plus 6 UI tests, the Android JVM suites plus 8
+instrumented tests covering the database and its migrations. Every screen is built; see
+[Known issues and future improvements](#known-issues-and-future-improvements) for what is
+deliberately out of scope.
 
 ---
 
@@ -89,7 +88,7 @@ implemented:
 | **Today** | Current conditions for the primary location: temperature, condition, "feels like". Pull to refresh. | ✅ Built |
 | **Offline-first caching** | Reads the local cache first, then refreshes in the background. Cached data is **never** discarded because a request failed. | ✅ Built |
 | **Stale-data banner** | When offline or after a failed refresh, a dismissible banner appears **over** the cached content instead of an error screen replacing it. | ✅ Built |
-| **Settings, units** | Celsius/Fahrenheit and m/s · km/h · mph. Applies instantly and works offline, because values are cached in Celsius and converted at render time. | ✅ Built |
+| **Settings, units** | Temperature (°C · °F · K), wind (m/s · km/h · mph · **knots** · Beaufort), pressure (hPa/mbar · **inHg** · mmHg) and visibility (km · statute miles · **nautical miles**). Applies instantly and works offline, because values are cached canonically and converted at render time. | ✅ Built |
 | **Settings, appearance** | Light / Dark / Follow system. Android additionally supports Material You dynamic colour. | ✅ Built |
 | **Settings, clear cache** | Removes cached forecasts while **keeping** saved locations. Confirmed before acting. | ✅ Built |
 | **Tab navigation** | Four tabs, each with an independent navigation stack, so per-tab state survives switching away and back. | ✅ Built |
@@ -102,6 +101,11 @@ implemented:
 | **Locations management** | Add by geocoding search (debounced, 400 ms), set which place Today shows, remove a place. The last remaining place cannot be deleted. | ✅ Built |
 | **Location detail** | Full conditions for any saved place: humidity, wind, pressure, visibility, sunrise/sunset, coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
 | **Correct local times** | Sunrise, sunset and hourly readings are shown in the **observed location's** time zone, not the device's, and the forecast's day grouping is identical whether served from the network or the cache. | ✅ Built |
+| **Swipe between places** | Today pages through every saved location in the order the Locations tab lists them, with a menu for direct selection and dots showing position. | ✅ Built |
+| **Hourly strip** | Three-hourly readings from a little before now to a day ahead, scrollable, with the current hour marked. | ✅ Built |
+| **Weather-driven colour** | Each condition has its own hue, warm sun, cool night, blue rain, paired with contrast-checked text colours rather than one tonal palette that made every condition look alike. | ✅ Built |
+| **Condition backgrounds** | Today's background reflects the current condition and time of day and drifts slowly; the other weather screens carry a quieter version. Stops entirely under Reduce Motion. | ✅ Built |
+| **Value-aware detail tiles** | Each reading shows where it sits on its own scale, so "1014 hPa" reads as an ordinary day rather than as a number. | ✅ Built |
 
 ---
 
