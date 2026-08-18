@@ -1,10 +1,13 @@
 package com.nauhaan.skycast.core.designsystem.theme
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.nauhaan.skycast.domain.model.WeatherCondition
 
 /**
  * Weather-semantic colours, as a Material 3 **extended colour set**.
@@ -124,3 +127,35 @@ val weatherPalette: WeatherPalette
     @Composable
     @ReadOnlyComposable
     get() = LocalWeatherPalette.current
+
+/**
+ * The mood colour of the screen currently being drawn, or `null` where there is no weather
+ * background.
+ *
+ * Provided by `WeatherBackground` around its content. Surfaces sitting on that background read it
+ * and mix a little into their own fill, so the detail tiles belong to a warm page or a cold one
+ * rather than staying the same grey on both.
+ *
+ * `compositionLocalOf`, not `staticCompositionLocalOf`: unlike the palette this changes on every
+ * swipe between places, and only the handful of composables that read it should recompose.
+ */
+val LocalWeatherTint = compositionLocalOf<Color?> { null }
+
+/**
+ * The single hue that carries a condition's mood.
+ *
+ * Defined here rather than inside the background, which is where it started and where nothing else
+ * could reach it, so a warm page could end up with cool cards on it.
+ */
+@Composable
+@ReadOnlyComposable
+fun weatherTint(condition: WeatherCondition, isDaytime: Boolean): Color = when (condition) {
+    WeatherCondition.CLEAR -> if (isDaytime) weatherPalette.sunrise else weatherPalette.onMoonContainer
+    WeatherCondition.CLOUDS -> if (isDaytime) weatherPalette.onCloudContainer else weatherPalette.onMoonContainer
+    WeatherCondition.RAIN -> weatherPalette.humidity
+    WeatherCondition.DRIZZLE -> weatherPalette.visibility
+    WeatherCondition.THUNDERSTORM -> weatherPalette.pressure
+    WeatherCondition.SNOW -> weatherPalette.onSnowContainer
+    WeatherCondition.MIST -> weatherPalette.onMistContainer
+    WeatherCondition.UNKNOWN -> MaterialTheme.colorScheme.surfaceVariant
+}

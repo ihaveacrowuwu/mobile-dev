@@ -29,6 +29,14 @@ enum BackgroundIntensity {
         case .subtle: 0.10
         }
     }
+
+    /// What the wash settles to at the very bottom of the screen, rather than fading to nothing.
+    var floorOpacity: Double {
+        switch self {
+        case .full: 0.06
+        case .subtle: 0.03
+        }
+    }
 }
 
 /// A background that reflects the current condition and time of day.
@@ -53,16 +61,7 @@ struct WeatherBackground: View {
     @State private var drift: Double = WeatherBackground.driftMidpoint
 
     private var tint: Color {
-        switch condition {
-        case .clear: isDaytime ? WeatherPalette.sunrise : WeatherPalette.onMoonContainer
-        case .clouds: isDaytime ? WeatherPalette.onCloudContainer : WeatherPalette.onMoonContainer
-        case .rain: WeatherPalette.humidity
-        case .drizzle: WeatherPalette.visibility
-        case .thunderstorm: WeatherPalette.pressure
-        case .snow: WeatherPalette.onSnowContainer
-        case .mist: WeatherPalette.onMistContainer
-        case .unknown: Color.secondary
-        }
+        WeatherPalette.tint(for: condition, isDaytime: isDaytime)
     }
 
     var body: some View {
@@ -70,14 +69,17 @@ struct WeatherBackground: View {
             ZStack {
                 Color.skyBackground
 
+                // Runs the full height, not to `.center`, so there is no hard edge across the page
+                // and the area behind the glass tab bar is not flat background. The floor opacity is
+                // non-zero for the same reason: glass needs something behind it to sample.
                 LinearGradient(
-                    colors: [
-                        tint.opacity(intensity.topOpacity),
-                        tint.opacity(intensity.midOpacity),
-                        .clear,
+                    stops: [
+                        .init(color: tint.opacity(intensity.topOpacity), location: 0),
+                        .init(color: tint.opacity(intensity.midOpacity), location: 0.45),
+                        .init(color: tint.opacity(intensity.floorOpacity), location: 1),
                     ],
                     startPoint: .top,
-                    endPoint: .center
+                    endPoint: .bottom
                 )
 
                 // A soft glow standing in for where the light is coming from. Both its position
@@ -142,5 +144,8 @@ extension View {
         background {
             WeatherBackground(condition: condition, isDaytime: isDaytime, intensity: intensity)
         }
+        // Published to the content in front, not just painted behind it: the detail tiles and any
+        // other surface on the page mix a little of it into their own fill.
+        .environment(\.weatherTint, WeatherPalette.tint(for: condition, isDaytime: isDaytime))
     }
 }

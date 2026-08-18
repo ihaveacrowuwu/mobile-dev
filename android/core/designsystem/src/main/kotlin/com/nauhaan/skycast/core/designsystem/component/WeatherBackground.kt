@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -20,7 +21,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
+import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
+import com.nauhaan.skycast.core.designsystem.theme.weatherTint
 import com.nauhaan.skycast.domain.model.WeatherCondition
 
 /**
@@ -42,7 +44,7 @@ fun WeatherBackground(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val surface = MaterialTheme.colorScheme.surface
-    val tint = condition.tint(isDaytime)
+    val tint = weatherTint(condition, isDaytime)
     val drift = animatedDrift()
 
     Box(
@@ -58,7 +60,9 @@ fun WeatherBackground(
                         colors = listOf(
                             tint.copy(alpha = intensity.topAlpha),
                             tint.copy(alpha = intensity.midAlpha),
-                            Color.Transparent,
+                            // Settles to a trace, so the bottom of the screen, where the navigation
+                            // bar sits, still belongs to the page.
+                            tint.copy(alpha = intensity.floorAlpha),
                         ),
                     ),
                 )
@@ -77,8 +81,13 @@ fun WeatherBackground(
                     ),
                 )
             },
-        content = content,
-    )
+    ) {
+        // Published to the content in front, not just painted behind it: the detail tiles and any
+        // other surface on the page mix a little of it into their own fill.
+        CompositionLocalProvider(LocalWeatherTint provides tint) {
+            content()
+        }
+    }
 }
 
 /**
@@ -88,9 +97,15 @@ fun WeatherBackground(
  * else gets a whisper of the same hue: enough that the app feels like one place, not so much that a
  * list of saved cities competes with the forecast for attention.
  */
-enum class BackgroundIntensity(val topAlpha: Float, val midAlpha: Float, val glowAlpha: Float) {
-    FULL(topAlpha = 0.30f, midAlpha = 0.10f, glowAlpha = 0.22f),
-    SUBTLE(topAlpha = 0.14f, midAlpha = 0.05f, glowAlpha = 0.10f),
+enum class BackgroundIntensity(
+    val topAlpha: Float,
+    val midAlpha: Float,
+    val glowAlpha: Float,
+    /** What the wash settles to at the very bottom of the screen. */
+    val floorAlpha: Float,
+) {
+    FULL(topAlpha = 0.30f, midAlpha = 0.10f, glowAlpha = 0.22f, floorAlpha = 0.06f),
+    SUBTLE(topAlpha = 0.14f, midAlpha = 0.05f, glowAlpha = 0.10f, floorAlpha = 0.03f),
 }
 
 /**
@@ -125,23 +140,6 @@ private fun animatedDrift(): Float {
         label = "weatherBackgroundDrift",
     )
     return drift
-}
-
-/** The hue that carries a condition's mood, from the shared weather palette. */
-@Composable
-private fun WeatherCondition.tint(isDaytime: Boolean): Color = when (this) {
-    WeatherCondition.CLEAR ->
-        if (isDaytime) weatherPalette.sunrise else weatherPalette.onMoonContainer
-
-    WeatherCondition.CLOUDS ->
-        if (isDaytime) weatherPalette.onCloudContainer else weatherPalette.onMoonContainer
-
-    WeatherCondition.RAIN -> weatherPalette.humidity
-    WeatherCondition.DRIZZLE -> weatherPalette.visibility
-    WeatherCondition.THUNDERSTORM -> weatherPalette.pressure
-    WeatherCondition.SNOW -> weatherPalette.onSnowContainer
-    WeatherCondition.MIST -> weatherPalette.onMistContainer
-    WeatherCondition.UNKNOWN -> MaterialTheme.colorScheme.surfaceVariant
 }
 
 /** Slow enough to read as changing light. */

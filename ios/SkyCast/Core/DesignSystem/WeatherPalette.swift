@@ -61,6 +61,33 @@ enum WeatherPalette {
         case .unknown: (Color(.secondarySystemFill), Color.secondary)
         }
     }
+
+    /// The single hue that carries a condition's mood.
+    ///
+    /// Used by the background wash and by every surface that harmonises with it, so a warm page
+    /// cannot end up with cool cards on it. Defined once here rather than in the background, which
+    /// is where it started and where nothing else could reach it.
+    static func tint(for condition: WeatherCondition, isDaytime: Bool) -> Color {
+        switch condition {
+        case .clear: isDaytime ? sunrise : onMoonContainer
+        case .clouds: isDaytime ? onCloudContainer : onMoonContainer
+        case .rain: humidity
+        case .drizzle: visibility
+        case .thunderstorm: pressure
+        case .snow: onSnowContainer
+        case .mist: onMistContainer
+        case .unknown: .secondary
+        }
+    }
+}
+
+/// The mood colour of the screen a view is on, or `nil` where there is no weather background.
+///
+/// Set by ``SwiftUI/View/weatherBackground(condition:isDaytime:intensity:)``. Surfaces that sit on
+/// the background read it and mix a little into their own fill, so the detail tiles belong to a
+/// warm page or a cold one rather than staying the same grey on both.
+extension EnvironmentValues {
+    @Entry var weatherTint: Color?
 }
 
 extension Color {
