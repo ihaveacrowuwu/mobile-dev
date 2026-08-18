@@ -36,6 +36,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -52,9 +53,11 @@ import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
+import com.nauhaan.skycast.core.designsystem.theme.weatherTint
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
+import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
 
@@ -75,10 +78,18 @@ fun TodayScreen(
     onNavigateToAddLocation: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
+    onWeatherTintChanged: (Color?) -> Unit = {},
 ) {
     // collectAsStateWithLifecycle, not collectAsState: stops collection when the
     // screen is not visible instead of doing work in the background.
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Reported upwards so the navigation bar can share this page's mood. The bar is a sibling of
+    // the content rather than a descendant, so the CompositionLocal the tiles read cannot reach
+    // it, state goes up by lambda and the colour comes back down as a parameter.
+    val weather = uiState.weather
+    val tint = weather?.let { weatherTint(it.condition, it.isDaytime) }
+    LaunchedEffect(tint) { onWeatherTintChanged(tint) }
 
     TodayContent(
         uiState = uiState,
@@ -267,14 +278,11 @@ private fun TodayPage(
         )
 
         WeatherDetailGrid(
+            // Six tiles here, eight on the detail screen: Today is a glance, and the derived
+            // readings are why someone taps through.
             details = weather.toDetails(
                 preferences = uiState.preferences,
-                humidityLabel = stringResource(R.string.detail_humidity),
-                windLabel = stringResource(R.string.detail_wind),
-                pressureLabel = stringResource(R.string.detail_pressure),
-                visibilityLabel = stringResource(R.string.detail_visibility),
-                sunriseLabel = stringResource(R.string.detail_sunrise),
-                sunsetLabel = stringResource(R.string.detail_sunset),
+                labels = rememberWeatherDetailLabels(),
             ),
             modifier = Modifier.padding(horizontal = Spacing.md),
         )

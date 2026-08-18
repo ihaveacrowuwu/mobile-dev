@@ -34,8 +34,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
 import com.nauhaan.skycast.core.common.AppError
 import com.nauhaan.skycast.core.designsystem.component.BackgroundIntensity
+import com.nauhaan.skycast.core.designsystem.component.DailyRangeList
 import com.nauhaan.skycast.core.designsystem.component.EmptyStateView
 import com.nauhaan.skycast.core.designsystem.component.StaleDataBanner
+import com.nauhaan.skycast.core.designsystem.component.TemperatureTrend
 import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
@@ -44,8 +46,10 @@ import com.nauhaan.skycast.domain.model.SavedLocation
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
 import com.nauhaan.skycast.ui.common.previewWeather
+import com.nauhaan.skycast.ui.common.rememberWeatherDetailLabels
 import com.nauhaan.skycast.ui.common.toDetails
 import com.nauhaan.skycast.ui.common.toPresentation
+import com.nauhaan.skycast.ui.today.HourlyStrip
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -144,15 +148,26 @@ internal fun LocationDetailContent(
                             modifier = Modifier.padding(Spacing.md),
                         )
 
+                        ForecastSections(uiState = uiState)
+
+                        SectionHeader(
+                            title = stringResource(R.string.detail_section_conditions),
+                            modifier = Modifier.padding(
+                                start = Spacing.md,
+                                end = Spacing.md,
+                                top = Spacing.md,
+                                bottom = Spacing.sm,
+                            ),
+                        )
+
                         WeatherDetailGrid(
+                            // Eight tiles rather than Today's six: dew point and length of day are
+                            // derived readings, and this is the screen someone opens because the
+                            // glance was not enough.
                             details = weather.toDetails(
                                 preferences = uiState.preferences,
-                                humidityLabel = stringResource(R.string.detail_humidity),
-                                windLabel = stringResource(R.string.detail_wind),
-                                pressureLabel = stringResource(R.string.detail_pressure),
-                                visibilityLabel = stringResource(R.string.detail_visibility),
-                                sunriseLabel = stringResource(R.string.detail_sunrise),
-                                sunsetLabel = stringResource(R.string.detail_sunset),
+                                labels = rememberWeatherDetailLabels(),
+                                includeDerived = true,
                             ),
                             modifier = Modifier.padding(horizontal = Spacing.md),
                         )
@@ -176,6 +191,68 @@ internal fun LocationDetailContent(
             }
         }
     }
+}
+
+/**
+ * The hour-by-hour and day-by-day picture, when the forecast has arrived.
+ *
+ * Silent when it has not, since the forecast and the current reading are separate requests.
+ */
+@Composable
+private fun ForecastSections(uiState: LocationDetailUiState, modifier: Modifier = Modifier) {
+    val forecast = uiState.forecast ?: return
+    val unit = uiState.preferences.temperatureUnit
+    val upcoming = uiState.upcomingHours().take(HOURS_ON_STRIP)
+
+    Column(modifier = modifier) {
+        if (upcoming.isNotEmpty()) {
+            HourlyStrip(
+                hours = upcoming,
+                zoneOffset = forecast.zoneOffset,
+                unit = unit,
+                title = stringResource(R.string.detail_section_hourly),
+                modifier = Modifier.padding(bottom = Spacing.md),
+            )
+        }
+
+        val points = forecast.toTrendPoints(unit)
+        if (points.size >= MINIMUM_TREND_POINTS) {
+            SectionHeader(
+                title = stringResource(R.string.detail_section_trend),
+                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            )
+            TemperatureTrend(
+                points = points,
+                contentDescription = forecast.trendDescription(unit),
+                modifier = Modifier.padding(horizontal = Spacing.md),
+            )
+        }
+
+        val days = forecast.toDayRanges(unit)
+        if (days.isNotEmpty()) {
+            SectionHeader(
+                title = stringResource(R.string.detail_section_days),
+                modifier = Modifier.padding(
+                    start = Spacing.md,
+                    end = Spacing.md,
+                    top = Spacing.md,
+                    bottom = Spacing.sm,
+                ),
+            )
+            DailyRangeList(days = days, modifier = Modifier.padding(horizontal = Spacing.md))
+        }
+    }
+}
+
+/** A section title, styled once so the screen's headings cannot drift apart. */
+@Composable
+private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
 }
 
 /** Place name, full display name and coordinates, all known from the local database. */
@@ -273,6 +350,10 @@ private fun ObservedAtFooter(observedAt: Instant, modifier: Modifier = Modifier)
         modifier = modifier.fillMaxWidth(),
     )
 }
+
+/** Enough to fill the strip without turning the top of the screen into a second forecast tab. */
+private const val HOURS_ON_STRIP = 8
+private const val MINIMUM_TREND_POINTS = 2
 
 @Preview(name = "Location detail", showBackground = true)
 @Composable

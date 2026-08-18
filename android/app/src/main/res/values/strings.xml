@@ -91,6 +91,31 @@
     <string name="detail_visibility">Visibility</string>
     <string name="detail_sunrise">Sunrise</string>
     <string name="detail_sunset">Sunset</string>
+    <string name="detail_dew_point">Dew point</string>
+    <string name="detail_daylight">Daylight</string>
+
+    <!-- ── Detail screen sections ───────────────────────────────────────── -->
+    <string name="detail_section_hourly">Next hours</string>
+    <string name="detail_section_trend">Temperature trend</string>
+    <string name="detail_section_days">Next days</string>
+    <string name="detail_section_conditions">Conditions</string>
+    <string name="detail_day_description">%1$s, %2$s, low %3$s, high %4$s</string>
+
+    <!--
+      Plurals rather than plain strings: both carry a count followed by a word, and Android Lint
+      correctly refuses that as a string because most languages inflect it even where English does
+      not. "Percent" happens not to, so both quantities read alike, the point is that a translator
+      is given the choice.
+    -->
+    <plurals name="detail_trend_description">
+        <item quantity="one">Temperature from %1$s to %2$s over the next day</item>
+        <item quantity="other">Temperature from %1$s to %2$s over the next %3$d days</item>
+    </plurals>
+    <plurals name="detail_day_description_rain">
+        <item quantity="one">%1$s, %2$s, low %3$s, high %4$s, %5$d percent chance of rain</item>
+        <item quantity="other">%1$s, %2$s, low %3$s, high %4$s, %5$d percent chance of rain</item>
+    </plurals>
+    <string name="detail_today">Today</string>
 
     <!-- ── Forecast ─────────────────────────────────────────────────────── -->
     <!--

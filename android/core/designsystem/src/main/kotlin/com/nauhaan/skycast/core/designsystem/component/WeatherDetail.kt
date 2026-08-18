@@ -35,4 +35,10 @@ enum class WeatherDetailKind {
     VISIBILITY,
     SUNRISE,
     SUNSET,
+
+    // Derived rather than reported, see `Weather.dewPointCelsius` and `Weather.daylightDuration`.
+    // They share the hue of the reading they are closest to: dew point is moisture, so it takes
+    // humidity's blue, and daylight takes the sunrise gold.
+    DEW_POINT,
+    DAYLIGHT,
 }

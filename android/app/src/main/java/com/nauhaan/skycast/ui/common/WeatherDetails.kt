@@ -4,6 +4,7 @@ import com.nauhaan.skycast.core.designsystem.component.WeatherDetail
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailKind
 import com.nauhaan.skycast.domain.model.UserPreferences
 import com.nauhaan.skycast.domain.model.Weather
+import java.time.Duration
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -13,16 +14,14 @@ import kotlin.math.roundToInt
  * Lives in `ui` rather than `domain` because every decision here is presentational: how many
  * decimal places, which unit symbol, what time format. Labels arrive already resolved, so this
  * stays free of Android's `Context` and remains a plain testable function.
+ *
+ * @param includeDerived adds dew point and length of day. Off for Today, which stays a glance; on
+ *   for the detail screen, which is where someone goes precisely because the glance was not enough.
  */
-@Suppress("LongParameterList") // Six labels, all required; a wrapper type would add no clarity.
 fun Weather.toDetails(
     preferences: UserPreferences,
-    humidityLabel: String,
-    windLabel: String,
-    pressureLabel: String,
-    visibilityLabel: String,
-    sunriseLabel: String,
-    sunsetLabel: String,
+    labels: WeatherDetailLabels,
+    includeDerived: Boolean = false,
 ): List<WeatherDetail> {
     // The location's zone, not the device's: London's sunrise is 04:49 in London, and
     // reporting it as 09:49 because the phone is five hours ahead is simply wrong.
@@ -44,22 +43,45 @@ fun Weather.toDetails(
     val visibilityUnit = preferences.visibilityUnit
     val visibility = visibilityUnit.convertFromMetres(visibilityMetres.toDouble())
 
+    val derived = if (!includeDerived) {
+        emptyList()
+    } else {
+        val temperatureUnit = preferences.temperatureUnit
+        val dewPoint = temperatureUnit.convertFromCelsius(dewPointCelsius)
+        listOf(
+            WeatherDetail(
+                label = labels.dewPoint,
+                value = "${dewPoint.roundToInt()}${temperatureUnit.symbol}",
+                kind = WeatherDetailKind.DEW_POINT,
+                // Measured against the air temperature: a dew point close to it is what "muggy"
+                // actually means, and a nearly-full bar says so without the meteorology.
+                fraction = (dewPointCelsius / temperatureCelsius).coerceIn(0.0, 1.0),
+            ),
+            WeatherDetail(
+                label = labels.daylight,
+                value = daylightDuration.toHoursAndMinutes(),
+                kind = WeatherDetailKind.DAYLIGHT,
+                fraction = (daylightDuration.toMinutes() / MINUTES_IN_A_DAY).coerceIn(0.0, 1.0),
+            ),
+        )
+    }
+
     return listOf(
         WeatherDetail(
-            label = humidityLabel,
+            label = labels.humidity,
             value = "$humidityPercent%",
             kind = WeatherDetailKind.HUMIDITY,
             // Humidity is already a percentage, so its fraction is itself.
             fraction = humidityPercent / PERCENT,
         ),
         WeatherDetail(
-            label = windLabel,
+            label = labels.wind,
             value = windText,
             kind = WeatherDetailKind.WIND,
             fraction = (windSpeedMetresPerSecond / STRONG_WIND_METRES_PER_SECOND).coerceIn(0.0, 1.0),
         ),
         WeatherDetail(
-            label = pressureLabel,
+            label = labels.pressure,
             value = pressureText,
             kind = WeatherDetailKind.PRESSURE,
             // Scaled across the range a barometer realistically covers, so the indicator moves
@@ -67,24 +89,27 @@ fun Weather.toDetails(
             fraction = ((pressureHpa - LOW_PRESSURE_HPA) / PRESSURE_RANGE_HPA).coerceIn(0.0, 1.0),
         ),
         WeatherDetail(
-            label = visibilityLabel,
+            label = labels.visibility,
             value = "${visibility.toOneDecimalPlace()} ${visibilityUnit.symbol}",
             kind = WeatherDetailKind.VISIBILITY,
             // 10 km is the value OpenWeather reports for "clear", so it is effectively the ceiling.
             fraction = (visibilityMetres / CLEAR_VISIBILITY_METRES).coerceIn(0.0, 1.0),
         ),
         WeatherDetail(
-            label = sunriseLabel,
+            label = labels.sunrise,
             value = timeFormat.format(sunrise),
             kind = WeatherDetailKind.SUNRISE,
         ),
         WeatherDetail(
-            label = sunsetLabel,
+            label = labels.sunset,
             value = timeFormat.format(sunset),
             kind = WeatherDetailKind.SUNSET,
         ),
-    )
+    ) + derived
 }
+
+/** "14h 28m", rather than a count of minutes. */
+private fun Duration.toHoursAndMinutes(): String = "${toHours()}h ${toMinutesPart()}m"
 
 /** One decimal place, which is as much precision as these readings support. */
 private fun Double.toOneDecimalPlace(): Double = (this * ONE_DECIMAL_SCALE).roundToInt() / ONE_DECIMAL_SCALE
@@ -108,3 +133,6 @@ private const val CLEAR_VISIBILITY_METRES = 10_000.0
 
 /** 24-hour clock: unambiguous, and the app is English-only for now. */
 private const val TIME_PATTERN = "HH:mm"
+
+/** The scale the daylight indicator reads against: a full 24 hours of sun. */
+private const val MINUTES_IN_A_DAY = 24.0 * 60

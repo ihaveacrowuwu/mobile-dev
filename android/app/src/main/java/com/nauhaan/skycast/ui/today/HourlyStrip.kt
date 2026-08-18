@@ -44,12 +44,15 @@ fun HourlyStrip(
     unit: TemperatureUnit,
     modifier: Modifier = Modifier,
     now: Instant = Instant.now(),
+    // Overridable because the detail screen shows only what is ahead, where "Through the day" does
+    // not apply.
+    title: String = stringResource(R.string.today_hourly_heading),
 ) {
     if (hours.isEmpty()) return
 
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.today_hourly_heading),
+            text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = Spacing.md, bottom = Spacing.sm),

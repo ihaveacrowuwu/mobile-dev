@@ -33,23 +33,29 @@ class WeatherDetailsTest {
         TimeZone.setDefault(originalTimeZone)
     }
 
-    private fun details(zoneOffset: ZoneOffset, preferences: UserPreferences = UserPreferences()) =
-        sampleWeather(zoneOffset = zoneOffset)
-            .copy(
-                // 04:49 UTC. In London (UTC+1 in summer) that is 05:49; on a UTC+5 device, 09:49.
-                sunrise = Instant.parse("2026-06-21T04:49:00Z"),
-                sunset = Instant.parse("2026-06-21T20:21:00Z"),
-            )
-            .toDetails(
-                preferences = preferences,
-                humidityLabel = "Humidity",
-                windLabel = "Wind",
-                pressureLabel = "Pressure",
-                visibilityLabel = "Visibility",
-                sunriseLabel = "Sunrise",
-                sunsetLabel = "Sunset",
-            )
-            .associate { it.label to it.value }
+    private val labels = WeatherDetailLabels(
+        humidity = "Humidity",
+        wind = "Wind",
+        pressure = "Pressure",
+        visibility = "Visibility",
+        sunrise = "Sunrise",
+        sunset = "Sunset",
+        dewPoint = "Dew point",
+        daylight = "Daylight",
+    )
+
+    private fun details(
+        zoneOffset: ZoneOffset,
+        preferences: UserPreferences = UserPreferences(),
+        includeDerived: Boolean = false,
+    ) = sampleWeather(zoneOffset = zoneOffset)
+        .copy(
+            // 04:49 UTC. In London (UTC+1 in summer) that is 05:49; on a UTC+5 device, 09:49.
+            sunrise = Instant.parse("2026-06-21T04:49:00Z"),
+            sunset = Instant.parse("2026-06-21T20:21:00Z"),
+        )
+        .toDetails(preferences = preferences, labels = labels, includeDerived = includeDerived)
+        .associate { it.label to it.value }
 
     @Test
     fun `sunrise and sunset render in the location's zone`() {
