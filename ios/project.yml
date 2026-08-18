@@ -85,7 +85,9 @@ targets:
       Release: Config/Release.xcconfig
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast
+        # From a variable so a tester can claim their own identifier in the gitignored
+        # Secrets.xcconfig instead of editing this tracked file. Default in Config/Base.xcconfig.
+        PRODUCT_BUNDLE_IDENTIFIER: $(SKYCAST_BUNDLE_ID)
         PRODUCT_NAME: SkyCast
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0.0
@@ -130,7 +132,7 @@ targets:
       - target: SkyCast
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast.tests
+        PRODUCT_BUNDLE_IDENTIFIER: $(SKYCAST_BUNDLE_ID).tests
         GENERATE_INFOPLIST_FILE: true
 
   # ── UI tests (XCUITest) ───────────────────────────────────────────────────
@@ -143,7 +145,7 @@ targets:
       - target: SkyCast
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.nauhaan.skycast.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: $(SKYCAST_BUNDLE_ID).uitests
         GENERATE_INFOPLIST_FILE: true
         TEST_TARGET_NAME: SkyCast
 

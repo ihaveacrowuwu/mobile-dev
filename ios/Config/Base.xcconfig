@@ -8,6 +8,12 @@
 // CI relies on this.
 // ────────────────────────────────────────────────────────────────────────────
 
+// The bundle identifier, declared *before* the include below so Secrets.xcconfig can override
+// it: a later assignment wins. Identifiers are globally unique across Apple's developers, so
+// anyone running this on their own iPhone needs their own; putting it here means they change one
+// gitignored file rather than a tracked one, and never risk committing it.
+SKYCAST_BUNDLE_ID = com.nauhaan.skycast
+
 #include? "Secrets.xcconfig"
 
 // Fallback so the Info.plist substitution always resolves. A real key in
