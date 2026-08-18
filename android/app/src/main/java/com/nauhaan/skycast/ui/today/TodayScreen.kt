@@ -53,7 +53,7 @@ import com.nauhaan.skycast.core.designsystem.component.WeatherBackground
 import com.nauhaan.skycast.core.designsystem.component.WeatherDetailGrid
 import com.nauhaan.skycast.core.designsystem.theme.SkyCastTheme
 import com.nauhaan.skycast.core.designsystem.theme.Spacing
-import com.nauhaan.skycast.core.designsystem.theme.weatherTint
+import com.nauhaan.skycast.core.designsystem.theme.weatherSurfaceTint
 import com.nauhaan.skycast.domain.model.WeatherCondition
 import com.nauhaan.skycast.domain.usecase.TodayLocationWeather
 import com.nauhaan.skycast.ui.common.CurrentConditionsHeader
@@ -88,7 +88,7 @@ fun TodayScreen(
     // the content rather than a descendant, so the CompositionLocal the tiles read cannot reach
     // it, state goes up by lambda and the colour comes back down as a parameter.
     val weather = uiState.weather
-    val tint = weather?.let { weatherTint(it.condition, it.isDaytime) }
+    val tint = weather?.let { weatherSurfaceTint(it.condition, it.isDaytime) }
     LaunchedEffect(tint) { onWeatherTintChanged(tint) }
 
     TodayContent(

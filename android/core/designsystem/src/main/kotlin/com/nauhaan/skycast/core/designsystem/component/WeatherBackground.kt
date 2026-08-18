@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.nauhaan.skycast.core.designsystem.theme.LocalWeatherTint
+import com.nauhaan.skycast.core.designsystem.theme.weatherSurfaceTint
 import com.nauhaan.skycast.core.designsystem.theme.weatherTint
 import com.nauhaan.skycast.domain.model.WeatherCondition
 
@@ -45,6 +46,8 @@ fun WeatherBackground(
 ) {
     val surface = MaterialTheme.colorScheme.surface
     val tint = weatherTint(condition, isDaytime)
+    // The wash uses the mood hue; surfaces on top of it use the container. See LocalWeatherTint.
+    val surfaceTint = weatherSurfaceTint(condition, isDaytime)
     val drift = animatedDrift()
 
     Box(
@@ -84,7 +87,7 @@ fun WeatherBackground(
     ) {
         // Published to the content in front, not just painted behind it: the detail tiles and any
         // other surface on the page mix a little of it into their own fill.
-        CompositionLocalProvider(LocalWeatherTint provides tint) {
+        CompositionLocalProvider(LocalWeatherTint provides surfaceTint) {
             content()
         }
     }

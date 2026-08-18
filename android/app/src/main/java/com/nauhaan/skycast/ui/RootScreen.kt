@@ -110,4 +110,4 @@ fun RootScreen(modifier: Modifier = Modifier) {
  * Lighter than the tint on the detail tiles, so the selected-item indicator and the four labels
  * stay legible.
  */
-private const val NAV_BAR_TINT_ALPHA = 0.07f
+private const val NAV_BAR_TINT_ALPHA = 0.25f

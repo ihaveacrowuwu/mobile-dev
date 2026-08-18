@@ -62,6 +62,13 @@ enum WeatherPalette {
         }
     }
 
+    /// The colour a surface on this screen should mix into its fill, the condition's container.
+    ///
+    /// See ``EnvironmentValues/weatherSurfaceTint`` for why this is not ``tint(for:isDaytime:)``.
+    static func surfaceTint(for condition: WeatherCondition, isDaytime: Bool) -> Color {
+        colours(for: condition, isDaytime: isDaytime).container
+    }
+
     /// The single hue that carries a condition's mood.
     ///
     /// Used by the background wash and by every surface that harmonises with it, so a warm page
@@ -81,13 +88,16 @@ enum WeatherPalette {
     }
 }
 
-/// The mood colour of the screen a view is on, or `nil` where there is no weather background.
+/// The colour surfaces on this screen should mix into their own fill, or `nil` where there is no
+/// weather background.
 ///
-/// Set by ``SwiftUI/View/weatherBackground(condition:isDaytime:intensity:)``. Surfaces that sit on
-/// the background read it and mix a little into their own fill, so the detail tiles belong to a
-/// warm page or a cold one rather than staying the same grey on both.
+/// Set by ``SwiftUI/View/weatherBackground(condition:isDaytime:intensity:)``. This is the
+/// **container** colour, not the mood hue the background wash uses, and the distinction matters:
+/// the mood hue is a mid-dark colour by design, cloud's is a slate grey, so laying it over a
+/// white card in light mode does not tint the card, it dims it. The containers are light pastels in
+/// light mode and deep tones in dark mode, which is exactly what a tinted surface wants in each.
 extension EnvironmentValues {
-    @Entry var weatherTint: Color?
+    @Entry var weatherSurfaceTint: Color?
 }
 
 extension Color {

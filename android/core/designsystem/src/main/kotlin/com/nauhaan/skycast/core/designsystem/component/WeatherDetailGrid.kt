@@ -195,9 +195,12 @@ private const val TILES_PER_ROW = 2
 
 /**
  * Enough to be felt when swiping between a clear place and an overcast one, little enough that the
- * tile still reads as a neutral surface rather than a coloured chip.
+ * tile still reads as a surface rather than a coloured chip.
+ *
+ * Higher than it was, and lighter for it: 10% of the *mood* hue put a mid-dark slate over a light
+ * card and the result read as dirty grey. 45% of the container keeps a light card light.
  */
-private const val TINT_ALPHA = 0.10f
+private const val TINT_ALPHA = 0.45f
 private val IconSize = 16.dp
 private val BarHeight = 4.dp
 

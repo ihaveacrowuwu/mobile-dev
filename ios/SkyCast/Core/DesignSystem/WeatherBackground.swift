@@ -146,6 +146,9 @@ extension View {
         }
         // Published to the content in front, not just painted behind it: the detail tiles and any
         // other surface on the page mix a little of it into their own fill.
-        .environment(\.weatherTint, WeatherPalette.tint(for: condition, isDaytime: isDaytime))
+        .environment(
+            \.weatherSurfaceTint,
+            WeatherPalette.surfaceTint(for: condition, isDaytime: isDaytime)
+        )
     }
 }

@@ -132,14 +132,34 @@ val weatherPalette: WeatherPalette
  * The mood colour of the screen currently being drawn, or `null` where there is no weather
  * background.
  *
- * Provided by `WeatherBackground` around its content. Surfaces sitting on that background read it
- * and mix a little into their own fill, so the detail tiles belong to a warm page or a cold one
- * rather than staying the same grey on both.
+ * Provided by `WeatherBackground` around its content. This is the **container** colour, not the mood
+ * hue the background wash uses, and the distinction matters: the mood hue is a mid-dark colour by
+ * design, cloud's is a slate grey, so laying it over a light card does not tint the card, it dims
+ * it. The containers are light pastels in the light theme and deep tones in the dark one, which is
+ * what a tinted surface wants in each.
  *
  * `compositionLocalOf`, not `staticCompositionLocalOf`: unlike the palette this changes on every
  * swipe between places, and only the handful of composables that read it should recompose.
  */
 val LocalWeatherTint = compositionLocalOf<Color?> { null }
+
+/**
+ * The colour a surface on this screen should mix into its fill: the condition's container.
+ *
+ * See [LocalWeatherTint], which this is not.
+ */
+@Composable
+@ReadOnlyComposable
+fun weatherSurfaceTint(condition: WeatherCondition, isDaytime: Boolean): Color = when (condition) {
+    WeatherCondition.CLEAR -> if (isDaytime) weatherPalette.sunContainer else weatherPalette.moonContainer
+    WeatherCondition.CLOUDS -> if (isDaytime) weatherPalette.cloudContainer else weatherPalette.moonContainer
+    WeatherCondition.RAIN -> weatherPalette.rainContainer
+    WeatherCondition.DRIZZLE -> weatherPalette.drizzleContainer
+    WeatherCondition.THUNDERSTORM -> weatherPalette.thunderContainer
+    WeatherCondition.SNOW -> weatherPalette.snowContainer
+    WeatherCondition.MIST -> weatherPalette.mistContainer
+    WeatherCondition.UNKNOWN -> MaterialTheme.colorScheme.surfaceVariant
+}
 
 /**
  * The single hue that carries a condition's mood.

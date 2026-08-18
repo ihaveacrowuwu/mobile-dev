@@ -97,8 +97,8 @@ struct WeatherDetailGrid: View {
 private struct WeatherDetailTile: View {
     let detail: WeatherDetail
 
-    /// The mood colour of the page this tile is on, if it has one.
-    @Environment(\.weatherTint) private var weatherTint
+    /// The tint of the page this tile is on, if it has one.
+    @Environment(\.weatherSurfaceTint) private var weatherSurfaceTint
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -130,9 +130,9 @@ private struct WeatherDetailTile: View {
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .fill(Color.skySurface)
                 .overlay {
-                    if let weatherTint {
+                    if let weatherSurfaceTint {
                         RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .fill(weatherTint.opacity(tintOpacity))
+                            .fill(weatherSurfaceTint.opacity(tintOpacity))
                     }
                 }
         }
@@ -144,8 +144,12 @@ private struct WeatherDetailTile: View {
     }
 
     /// Enough to be felt when swiping between a clear place and an overcast one, little enough
-    /// that the tile still reads as a neutral surface rather than a coloured chip.
-    private let tintOpacity: Double = 0.10
+    /// that the tile still reads as a surface rather than a coloured chip.
+    ///
+    /// Higher than it was, and lighter for it: the previous 10% of the *mood* hue put a mid-dark
+    /// slate over a white card, and the result read as dirty grey beside the near-white glass next
+    /// to it. 45% of the container keeps a light card light and still carries the condition.
+    private let tintOpacity: Double = 0.45
 }
 
 /// A slim bar showing where a reading sits on its scale.
