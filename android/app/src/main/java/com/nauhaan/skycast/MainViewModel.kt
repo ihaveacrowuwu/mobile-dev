@@ -6,6 +6,7 @@ import com.nauhaan.skycast.data.repository.DebugLocationSeeder
 import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +24,10 @@ data class ThemeState(val themeMode: ThemeMode = ThemeMode.SYSTEM, val useDynami
  * preference has been read.
  *
  * Without the gate, DataStore's first read completes a frame or two after launch and a
- * user with dark mode selected sees a white flash. Holding the splash screen for those
- * few milliseconds is the standard fix.
+ * user with dark mode selected sees a white flash.
+ *
+ * The gate is bounded. The splash is a window background with no content, so anything that stopped
+ * the first emission arriving would leave the user on a blank rectangle with no way out.
  */
 @HiltViewModel
 class MainViewModel
@@ -45,6 +48,15 @@ constructor(
     private val _isLoadingTheme = MutableStateFlow(true)
     val isLoadingTheme: StateFlow<Boolean> = _isLoadingTheme
 
+    init {
+        // The deadline on the gate above. Runs concurrently with the read and simply gives up
+        // holding the splash, whichever finishes first.
+        viewModelScope.launch {
+            delay(SPLASH_GATE_TIMEOUT_MILLIS)
+            _isLoadingTheme.value = false
+        }
+    }
+
     val themeState: StateFlow<ThemeState> =
         settingsRepository
             .observePreferences()
@@ -57,4 +69,12 @@ constructor(
                 started = SharingStarted.Eagerly,
                 initialValue = ThemeState(),
             )
+
+    private companion object {
+        /**
+         * Long enough for a local DataStore read many times over, short enough that a user who hits
+         * the pathological case waits less than a second rather than forever.
+         */
+        const val SPLASH_GATE_TIMEOUT_MILLIS = 700L
+    }
 }
