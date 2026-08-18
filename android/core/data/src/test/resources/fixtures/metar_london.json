@@ -1,0 +1,78 @@
+[
+  {
+    "icaoId": "EGKB",
+    "receiptTime": "2026-08-18T14:24:11.832Z",
+    "obsTime": 1787062800,
+    "reportTime": "2026-08-18T14:20:00.000Z",
+    "temp": 24,
+    "dewp": 14,
+    "wdir": 270,
+    "wspd": 11,
+    "visib": "6+",
+    "altim": 1011,
+    "qcField": 0,
+    "metarType": "METAR",
+    "rawOb": "METAR EGKB 181420Z 27011KT 240V310 9999 SCT036 24/14 Q1011",
+    "lat": 51.33,
+    "lon": 0.033,
+    "elev": 183,
+    "name": "London/Biggin Hill Arpt, EN, GB",
+    "cover": "SCT",
+    "clouds": [
+      {
+        "cover": "SCT",
+        "base": 3600
+      }
+    ],
+    "fltCat": "VFR"
+  },
+  {
+    "icaoId": "EGLC",
+    "receiptTime": "2026-08-18T14:24:11.879Z",
+    "obsTime": 1787062800,
+    "reportTime": "2026-08-18T14:20:00.000Z",
+    "temp": 26,
+    "dewp": 14,
+    "wdir": 270,
+    "wspd": 10,
+    "visib": "6+",
+    "altim": 1010,
+    "qcField": 2,
+    "metarType": "METAR",
+    "rawOb": "METAR EGLC 181420Z AUTO 27010KT 240V300 9999 NCD 26/14 Q1010",
+    "lat": 51.505,
+    "lon": 0.055,
+    "elev": 10,
+    "name": "London City Arpt, EN, GB",
+    "cover": "CLR",
+    "clouds": [],
+    "fltCat": "VFR"
+  },
+  {
+    "icaoId": "EGKK",
+    "receiptTime": "2026-08-18T14:24:12.050Z",
+    "obsTime": 1787062800,
+    "reportTime": "2026-08-18T14:20:00.000Z",
+    "temp": 26,
+    "dewp": 14,
+    "wdir": 260,
+    "wspd": 14,
+    "visib": "6+",
+    "altim": 1010,
+    "qcField": 0,
+    "metarType": "METAR",
+    "rawOb": "METAR EGKK 181420Z 26014KT 9999 FEW047 26/14 Q1010",
+    "lat": 51.148,
+    "lon": -0.19,
+    "elev": 58,
+    "name": "London/Gatwick Arpt, EN, GB",
+    "cover": "FEW",
+    "clouds": [
+      {
+        "cover": "FEW",
+        "base": 4700
+      }
+    ],
+    "fltCat": "VFR"
+  }
+]

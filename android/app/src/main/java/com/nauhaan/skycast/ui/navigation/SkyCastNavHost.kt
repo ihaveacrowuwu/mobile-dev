@@ -13,10 +13,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.nauhaan.skycast.ui.detail.DayDetailScreen
 import com.nauhaan.skycast.ui.detail.LocationDetailScreen
-import com.nauhaan.skycast.ui.forecast.ForecastScreen
 import com.nauhaan.skycast.ui.home.HomeScreen
 import com.nauhaan.skycast.ui.locations.AddLocationScreen
 import com.nauhaan.skycast.ui.locations.LocationsScreen
+import com.nauhaan.skycast.ui.metar.MetarScreen
 import com.nauhaan.skycast.ui.settings.AboutScreen
 import com.nauhaan.skycast.ui.settings.SettingsScreen
 
@@ -91,11 +91,11 @@ fun SkyCastNavHost(
             )
         }
 
-        composable<Route.Forecast>(
+        composable<Route.Metar>(
             enterTransition = { fadeIn(fadeSpec) },
             exitTransition = { fadeOut(fadeSpec) },
         ) {
-            ForecastScreen(onNavigateToDayDetail = navigator::navigateToDayDetail)
+            MetarScreen(onNavigateToAddLocation = navigator::navigateToAddLocation)
         }
 
         composable<Route.Locations>(
@@ -121,7 +121,10 @@ fun SkyCastNavHost(
         // typed route from their own SavedStateHandle via toRoute(), so argument decoding lives
         // with the code that needs it and the composables stay previewable.
         composable<Route.LocationDetail> {
-            LocationDetailScreen(onNavigateBack = navigator::navigateBack)
+            LocationDetailScreen(
+                onNavigateBack = navigator::navigateBack,
+                onNavigateToDayDetail = navigator::navigateToDayDetail,
+            )
         }
 
         composable<Route.DayDetail> {

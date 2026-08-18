@@ -72,6 +72,7 @@ fun Forecast.toDayRanges(unit: TemperatureUnit): List<DayRange> {
     val span = (ceiling - floor).takeIf { it > 0.0 } ?: 1.0
 
     val todayLabel = stringResource(R.string.detail_today)
+    val openLabel = stringResource(R.string.detail_open_day)
     val today = LocalDate.now(zoneOffset)
     val dayFormat = DateTimeFormatter.ofPattern("EEEE", Locale.getDefault())
 
@@ -93,6 +94,8 @@ fun Forecast.toDayRanges(unit: TemperatureUnit): List<DayRange> {
             lowFraction = ((day.minTemperatureCelsius - floor) / span).toFloat(),
             highFraction = ((day.maxTemperatureCelsius - floor) / span).toFloat(),
             precipitationLabel = "$rainPercent%".takeIf { rainPercent > 0 },
+            epochDay = day.date.toEpochDay(),
+            openLabel = openLabel,
             contentDescription = if (rainPercent > 0) {
                 pluralStringResource(
                     R.plurals.detail_day_description_rain,

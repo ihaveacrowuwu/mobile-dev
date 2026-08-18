@@ -8,13 +8,13 @@
 
     <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
     <string name="tab_home">Home</string>
-    <string name="tab_forecast">Forecast</string>
+    <string name="tab_metar">METAR</string>
     <string name="tab_locations">Locations</string>
     <string name="tab_settings">Settings</string>
 
     <!-- Longer descriptions announced by TalkBack, where the short label is ambiguous. -->
     <string name="tab_home_description">Current weather for your places</string>
-    <string name="tab_forecast_description">Five day forecast</string>
+    <string name="tab_metar_description">Aviation weather report</string>
     <string name="tab_locations_description">Saved locations</string>
     <string name="tab_settings_description">Settings</string>
 
@@ -118,17 +118,39 @@
         <item quantity="other">%1$s, %2$s, low %3$s, high %4$s, %5$d percent chance of rain</item>
     </plurals>
     <string name="detail_today">Today</string>
+    <string name="detail_open_day">Open the hour-by-hour breakdown</string>
 
-    <!-- ── Forecast ─────────────────────────────────────────────────────── -->
+    <!-- ── METAR ────────────────────────────────────────────────────────── -->
     <!--
-      No unit symbol: TemperatureUnit.symbol is already "°C"/"°F", so appending it produced
-      "25° / 17°°C". The unit is established by the hero reading on Home, and a bare degree sign
-      is what every weather app shows in a forecast row. The accessibility string below still
-      spells the unit out, because a screen-reader user has no hero on screen to infer it from.
+      Aviation vocabulary is used as-is: a pilot reading this screen expects "VFR", "altimeter" and
+      knots, and softening them into everyday words would make the screen less useful to the people
+      it is for. The decoded rows exist for everyone else.
     -->
-    <string name="forecast_high_low">%1$d° / %2$d°</string>
-    <!-- One combined TalkBack announcement per row: date, condition, high, low, rain chance. -->
-    <string name="forecast_day_accessibility">%1$s, %2$s, high %3$d%4$s, low %5$d%4$s, %6$d%% chance of rain</string>
+    <string name="metar_loading">Finding the nearest reporting airport…</string>
+    <string name="metar_none_title">No airport reporting nearby</string>
+    <string name="metar_none_message">METARs are issued by airports. There is no station reporting near this place, try one closer to an airport.</string>
+    <string name="metar_empty_title">No locations yet</string>
+    <string name="metar_empty_message">Add a place and SkyCast will show the nearest airport\'s report.</string>
+    <string name="metar_station_distance">%1$s km away · elevation %2$d m</string>
+    <string name="metar_observed">Observed %1$s · %2$s ago</string>
+    <string name="metar_raw_heading">Raw report</string>
+    <string name="metar_decoded_heading">Decoded</string>
+    <string name="metar_wind">Wind</string>
+    <string name="metar_wind_value">%1$s at %2$d kt</string>
+    <string name="metar_wind_variable">Variable at %1$d kt</string>
+    <string name="metar_wind_calm">Calm</string>
+    <string name="metar_visibility">Visibility</string>
+    <string name="metar_visibility_value">%1$s mi</string>
+    <string name="metar_visibility_or_greater">%1$s+ mi</string>
+    <string name="metar_temperature">Temperature</string>
+    <string name="metar_dew_point">Dew point</string>
+    <string name="metar_altimeter">Altimeter</string>
+    <string name="metar_altimeter_value">%1$s hPa · %2$s inHg</string>
+    <string name="metar_clouds">Cloud</string>
+    <string name="metar_clouds_clear">No cloud reported</string>
+    <string name="metar_cloud_layer">%1$s at %2$d ft</string>
+    <string name="metar_minutes_ago">%1$d min</string>
+    <string name="metar_hours_ago">%1$dh %2$dm</string>
 
     <!-- ── Locations ────────────────────────────────────────────────────── -->
     <string name="locations_empty_title">No saved places</string>

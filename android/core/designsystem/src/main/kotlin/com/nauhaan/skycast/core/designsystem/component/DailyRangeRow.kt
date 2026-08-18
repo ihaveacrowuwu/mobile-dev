@@ -1,5 +1,6 @@
 package com.nauhaan.skycast.core.designsystem.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,14 +29,32 @@ import com.nauhaan.skycast.core.designsystem.theme.Spacing
 import com.nauhaan.skycast.core.designsystem.theme.weatherPalette
 import com.nauhaan.skycast.domain.model.WeatherCondition
 
-/** The forecast's days, each as a labelled range bar. */
+/**
+ * The forecast's days, each as a labelled range bar.
+ *
+ * @param onDaySelected makes each row a button through to that day's hour-by-hour breakdown. `null`
+ *   leaves the rows inert, which is what a preview or a summary wants.
+ */
 @Composable
-fun DailyRangeList(days: List<DayRange>, modifier: Modifier = Modifier) {
+fun DailyRangeList(days: List<DayRange>, modifier: Modifier = Modifier, onDaySelected: ((DayRange) -> Unit)? = null) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
-        days.forEach { day -> DailyRangeRow(day = day) }
+        days.forEach { day ->
+            DailyRangeRow(
+                day = day,
+                modifier = if (onDaySelected == null) {
+                    Modifier
+                } else {
+                    Modifier
+                        // A row, not the bar: the whole row is the target, which clears the 48 dp
+                        // minimum comfortably where a 6 dp bar never could.
+                        .clickable(onClickLabel = day.openLabel) { onDaySelected(day) }
+                        .padding(vertical = Spacing.xs)
+                },
+            )
+        }
     }
 }
 

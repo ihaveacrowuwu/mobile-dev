@@ -63,6 +63,7 @@ fun LocationDetailScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LocationDetailViewModel = hiltViewModel(),
+    onNavigateToDayDetail: (Long, Long) -> Unit = { _, _ -> },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -70,6 +71,9 @@ fun LocationDetailScreen(
         uiState = uiState,
         onRefresh = viewModel::refresh,
         onNavigateBack = onNavigateBack,
+        onDaySelected = { epochDay ->
+            uiState.location?.let { onNavigateToDayDetail(it.id, epochDay) }
+        },
         modifier = modifier,
     )
 }
@@ -81,6 +85,7 @@ internal fun LocationDetailContent(
     onRefresh: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onDaySelected: (Long) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -149,7 +154,7 @@ internal fun LocationDetailContent(
                             modifier = Modifier.padding(Spacing.md),
                         )
 
-                        ForecastSections(uiState = uiState)
+                        ForecastSections(uiState = uiState, onDaySelected = onDaySelected)
 
                         SectionHeader(
                             title = stringResource(R.string.detail_section_conditions),
@@ -203,7 +208,11 @@ internal fun LocationDetailContent(
  * Silent when it has not, since the forecast and the current reading are separate requests.
  */
 @Composable
-private fun ForecastSections(uiState: LocationDetailUiState, modifier: Modifier = Modifier) {
+private fun ForecastSections(
+    uiState: LocationDetailUiState,
+    modifier: Modifier = Modifier,
+    onDaySelected: (Long) -> Unit = {},
+) {
     val forecast = uiState.forecast ?: return
     val unit = uiState.preferences.temperatureUnit
     val upcoming = uiState.upcomingHours().take(HOURS_ON_STRIP)
@@ -243,7 +252,11 @@ private fun ForecastSections(uiState: LocationDetailUiState, modifier: Modifier 
                     bottom = Spacing.sm,
                 ),
             )
-            DailyRangeList(days = days, modifier = Modifier.padding(horizontal = Spacing.md))
+            DailyRangeList(
+                days = days,
+                modifier = Modifier.padding(horizontal = Spacing.md),
+                onDaySelected = { day -> onDaySelected(day.epochDay) },
+            )
         }
     }
 }

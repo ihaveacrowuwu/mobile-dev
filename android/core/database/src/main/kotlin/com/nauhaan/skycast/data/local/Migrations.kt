@@ -70,6 +70,48 @@ internal object Migrations {
         }
     }
 
+    /**
+     * 3 → 4: adds the METAR cache.
+     *
+     * Purely additive, which is the easy kind: no existing table is touched, so nothing the user has
+     * saved can be lost. The `CREATE TABLE` has to match what Room generates for
+     * `CachedMetarEntity` exactly, column order, types, nullability and the foreign key, or Room's
+     * own schema validation rejects the database on the next open. The exported schema JSON under
+     * `core/database/schemas/` is the reference; `migrate4Test` proves the two agree.
+     */
+    val MIGRATION_3_4 = object : Migration(VERSION_3, VERSION_4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `cached_metar` (
+                    `location_id` INTEGER NOT NULL,
+                    `station_id` TEXT NOT NULL,
+                    `station_name` TEXT NOT NULL,
+                    `distance_km` REAL NOT NULL,
+                    `latitude` REAL NOT NULL,
+                    `longitude` REAL NOT NULL,
+                    `elevation_metres` INTEGER NOT NULL,
+                    `observed_at` INTEGER NOT NULL,
+                    `temperature_celsius` REAL,
+                    `dew_point_celsius` REAL,
+                    `wind_direction_degrees` INTEGER,
+                    `wind_speed_knots` INTEGER,
+                    `visibility_statute_miles` REAL,
+                    `visibility_is_or_greater` INTEGER NOT NULL,
+                    `altimeter_hectopascals` REAL,
+                    `clouds` TEXT NOT NULL,
+                    `flight_category` TEXT NOT NULL,
+                    `raw` TEXT NOT NULL,
+                    `cached_at` INTEGER NOT NULL,
+                    PRIMARY KEY(`location_id`),
+                    FOREIGN KEY(`location_id`) REFERENCES `saved_locations`(`id`)
+                        ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent(),
+            )
+        }
+    }
+
     private fun rebuildCachedWeather(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
@@ -169,4 +211,5 @@ internal object Migrations {
 
     private const val VERSION_2 = 2
     private const val VERSION_3 = 3
+    private const val VERSION_4 = 4
 }

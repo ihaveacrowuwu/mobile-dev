@@ -61,6 +61,7 @@
 		D607F8836623EDAE4D5D3CB0 /* HourlyStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD887070710D1B20520627D /* HourlyStrip.swift */; };
 		E125CD701B0D6DA398C875F1 /* LocationRepositoryImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC623FC6C8E938FB0021999 /* LocationRepositoryImpl.swift */; };
 		E539AE49B149B2FD30BE0F8E /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC708C4A1D34E852A078D3FF /* UserPreferences.swift */; };
+		E958DAFFCD4A5D83A0A892E1 /* metar_london.json in Resources */ = {isa = PBXBuildFile; fileRef = 7729025BCE6937EB1CD83C46 /* metar_london.json */; };
 		E99DCCA39ACBE282061377F6 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6949D4877A8622CF2576E73C /* AppError.swift */; };
 		E9F1806224A5A6A4BDF7FAF4 /* current_weather_london.json in Resources */ = {isa = PBXBuildFile; fileRef = D1BC6F489C15836DEAAA7CAF /* current_weather_london.json */; };
 		ECB7276786E2C65C67FD6304 /* HomeUiStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA3579D5921854C677A21F4 /* HomeUiStateTests.swift */; };
@@ -110,6 +111,7 @@
 		61D52569E4A3CB9977170E22 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		6949D4877A8622CF2576E73C /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		72D20939140A6EF35C5D5BE4 /* Weather.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Weather.swift; sourceTree = "<group>"; };
+		7729025BCE6937EB1CD83C46 /* metar_london.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = metar_london.json; sourceTree = "<group>"; };
 		8CFA537B03D6A3B41B05AF5F /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		8E871D9C6AED2D561966E10A /* GlassSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassSurface.swift; sourceTree = "<group>"; };
 		8FC56E68FCA136510317BA85 /* ForecastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastViewModel.swift; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 				D1BC6F489C15836DEAAA7CAF /* current_weather_london.json */,
 				55771D4B43F7F71A00CDE9EB /* forecast_london.json */,
 				61C41ED05B955EBE434A2A79 /* geocoding_male.json */,
+				7729025BCE6937EB1CD83C46 /* metar_london.json */,
 			);
 			path = Fixtures;
 			sourceTree = "<group>";
@@ -558,6 +561,7 @@
 				E9F1806224A5A6A4BDF7FAF4 /* current_weather_london.json in Resources */,
 				464BCBA844B5378B240C1D76 /* forecast_london.json in Resources */,
 				9F7B2EAF74EF3619B7E9347E /* geocoding_male.json in Resources */,
+				E958DAFFCD4A5D83A0A892E1 /* metar_london.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

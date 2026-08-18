@@ -23,4 +23,13 @@ data class DayRange(
     val precipitationLabel: String? = null,
     /** The whole row, spoken as one sentence. */
     val contentDescription: String,
+    /**
+     * Identifies the day to the caller when a row is tapped.
+     *
+     * An epoch day rather than a formatted label: the label is localised and could collide, and the
+     * navigation route needs a number anyway.
+     */
+    val epochDay: Long = 0,
+    /** What tapping the row does, for a screen reader's action list. `null` if it does nothing. */
+    val openLabel: String? = null,
 )

@@ -2,9 +2,11 @@ package com.nauhaan.skycast.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.nauhaan.skycast.data.local.dao.MetarCacheDao
 import com.nauhaan.skycast.data.local.dao.SavedLocationDao
 import com.nauhaan.skycast.data.local.dao.WeatherCacheDao
 import com.nauhaan.skycast.data.local.entity.CachedForecastReadingEntity
+import com.nauhaan.skycast.data.local.entity.CachedMetarEntity
 import com.nauhaan.skycast.data.local.entity.CachedWeatherEntity
 import com.nauhaan.skycast.data.local.entity.SavedLocationEntity
 
@@ -28,6 +30,7 @@ import com.nauhaan.skycast.data.local.entity.SavedLocationEntity
         SavedLocationEntity::class,
         CachedWeatherEntity::class,
         CachedForecastReadingEntity::class,
+        CachedMetarEntity::class,
     ],
     version = SkyCastDatabase.VERSION,
     exportSchema = true,
@@ -37,8 +40,10 @@ abstract class SkyCastDatabase : RoomDatabase() {
 
     abstract fun weatherCacheDao(): WeatherCacheDao
 
+    abstract fun metarCacheDao(): MetarCacheDao
+
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
         const val NAME = "skycast.db"
     }
 }

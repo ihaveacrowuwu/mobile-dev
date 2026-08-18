@@ -3,9 +3,11 @@ package com.nauhaan.skycast.core.data.di
 import com.nauhaan.skycast.core.common.DefaultDispatcherProvider
 import com.nauhaan.skycast.core.common.DispatcherProvider
 import com.nauhaan.skycast.data.repository.LocationRepositoryImpl
+import com.nauhaan.skycast.data.repository.MetarRepositoryImpl
 import com.nauhaan.skycast.data.repository.SettingsRepositoryImpl
 import com.nauhaan.skycast.data.repository.WeatherRepositoryImpl
 import com.nauhaan.skycast.domain.repository.LocationRepository
+import com.nauhaan.skycast.domain.repository.MetarRepository
 import com.nauhaan.skycast.domain.repository.SettingsRepository
 import com.nauhaan.skycast.domain.repository.WeatherRepository
 import dagger.Binds
@@ -28,6 +30,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWeatherRepository(impl: WeatherRepositoryImpl): WeatherRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMetarRepository(impl: MetarRepositoryImpl): MetarRepository
 
     @Binds
     @Singleton

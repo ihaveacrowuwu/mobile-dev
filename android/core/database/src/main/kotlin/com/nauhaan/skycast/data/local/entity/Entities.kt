@@ -116,3 +116,48 @@ data class CachedForecastReadingEntity(
     @ColumnInfo(name = "timezone_offset_seconds", defaultValue = "0")
     val timezoneOffsetSeconds: Int = 0,
 )
+
+/**
+ * The nearest airport's METAR for one saved location.
+ *
+ * Keyed by `locationId`, like the weather cache and for the same reason: one row per place, replaced
+ * on refresh rather than accumulating. A foreign key with `CASCADE` means removing a place takes its
+ * observation with it.
+ *
+ * The cloud layers are stored as one string rather than a child table. They are read and written only
+ * as a whole, never queried, and a table plus a join for "FEW045 SCT120" would be structure with no
+ * purpose. Format is `COVER:BASE` pairs separated by `;`, with an empty base for a clear sky.
+ */
+@Entity(
+    tableName = "cached_metar",
+    foreignKeys = [
+        ForeignKey(
+            entity = SavedLocationEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["location_id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class CachedMetarEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "location_id") val locationId: Long,
+    @ColumnInfo(name = "station_id") val stationId: String,
+    @ColumnInfo(name = "station_name") val stationName: String,
+    @ColumnInfo(name = "distance_km") val distanceKm: Double,
+    @ColumnInfo(name = "latitude") val latitude: Double,
+    @ColumnInfo(name = "longitude") val longitude: Double,
+    @ColumnInfo(name = "elevation_metres") val elevationMetres: Int,
+    @ColumnInfo(name = "observed_at") val observedAtEpochSeconds: Long,
+    @ColumnInfo(name = "temperature_celsius") val temperatureCelsius: Double?,
+    @ColumnInfo(name = "dew_point_celsius") val dewPointCelsius: Double?,
+    @ColumnInfo(name = "wind_direction_degrees") val windDirectionDegrees: Int?,
+    @ColumnInfo(name = "wind_speed_knots") val windSpeedKnots: Int?,
+    @ColumnInfo(name = "visibility_statute_miles") val visibilityStatuteMiles: Double?,
+    @ColumnInfo(name = "visibility_is_or_greater") val visibilityIsOrGreater: Boolean,
+    @ColumnInfo(name = "altimeter_hectopascals") val altimeterHectopascals: Double?,
+    @ColumnInfo(name = "clouds") val clouds: String,
+    @ColumnInfo(name = "flight_category") val flightCategory: String,
+    @ColumnInfo(name = "raw") val raw: String,
+    @ColumnInfo(name = "cached_at") val cachedAtEpochSeconds: Long,
+)

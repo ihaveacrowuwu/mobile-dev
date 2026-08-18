@@ -1,0 +1,456 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "4fe10e968fbb97495b3ea8fb72469252",
+    "entities": [
+      {
+        "tableName": "saved_locations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `country_code` TEXT NOT NULL, `state` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `sort_order` INTEGER NOT NULL, `is_primary` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryCode",
+            "columnName": "country_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sortOrder",
+            "columnName": "sort_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPrimary",
+            "columnName": "is_primary",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_saved_locations_latitude_longitude",
+            "unique": true,
+            "columnNames": [
+              "latitude",
+              "longitude"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_saved_locations_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          }
+        ]
+      },
+      {
+        "tableName": "cached_weather",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`location_id` INTEGER NOT NULL, `location_name` TEXT NOT NULL, `condition_id` INTEGER NOT NULL, `description` TEXT NOT NULL, `icon_code` TEXT NOT NULL, `temperature_celsius` REAL NOT NULL, `feels_like_celsius` REAL NOT NULL, `min_temperature_celsius` REAL NOT NULL, `max_temperature_celsius` REAL NOT NULL, `humidity_percent` INTEGER NOT NULL, `pressure_hpa` INTEGER NOT NULL, `wind_speed_mps` REAL NOT NULL, `wind_direction_degrees` INTEGER NOT NULL, `cloudiness_percent` INTEGER NOT NULL, `visibility_metres` INTEGER NOT NULL, `sunrise_epoch` INTEGER NOT NULL, `sunset_epoch` INTEGER NOT NULL, `observed_at_epoch` INTEGER NOT NULL, `cached_at_epoch` INTEGER NOT NULL, `timezone_offset_seconds` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`location_id`), FOREIGN KEY(`location_id`) REFERENCES `saved_locations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "locationId",
+            "columnName": "location_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "locationName",
+            "columnName": "location_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conditionId",
+            "columnName": "condition_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconCode",
+            "columnName": "icon_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temperatureCelsius",
+            "columnName": "temperature_celsius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feelsLikeCelsius",
+            "columnName": "feels_like_celsius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minTemperatureCelsius",
+            "columnName": "min_temperature_celsius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxTemperatureCelsius",
+            "columnName": "max_temperature_celsius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "humidityPercent",
+            "columnName": "humidity_percent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pressureHpa",
+            "columnName": "pressure_hpa",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windSpeedMetresPerSecond",
+            "columnName": "wind_speed_mps",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windDirectionDegrees",
+            "columnName": "wind_direction_degrees",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cloudinessPercent",
+            "columnName": "cloudiness_percent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visibilityMetres",
+            "columnName": "visibility_metres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sunriseEpochSeconds",
+            "columnName": "sunrise_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sunsetEpochSeconds",
+            "columnName": "sunset_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedAtEpochSeconds",
+            "columnName": "observed_at_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cachedAtEpochSeconds",
+            "columnName": "cached_at_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timezoneOffsetSeconds",
+            "columnName": "timezone_offset_seconds",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "location_id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "saved_locations",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "location_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "cached_forecast_readings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`location_id` INTEGER NOT NULL, `location_name` TEXT NOT NULL, `time_epoch` INTEGER NOT NULL, `condition_id` INTEGER NOT NULL, `description` TEXT NOT NULL, `icon_code` TEXT NOT NULL, `temperature_celsius` REAL NOT NULL, `precipitation_probability` REAL NOT NULL, `wind_speed_mps` REAL NOT NULL, `cached_at_epoch` INTEGER NOT NULL, `timezone_offset_seconds` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`location_id`, `time_epoch`), FOREIGN KEY(`location_id`) REFERENCES `saved_locations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "locationId",
+            "columnName": "location_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "locationName",
+            "columnName": "location_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeEpochSeconds",
+            "columnName": "time_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conditionId",
+            "columnName": "condition_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconCode",
+            "columnName": "icon_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temperatureCelsius",
+            "columnName": "temperature_celsius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "precipitationProbability",
+            "columnName": "precipitation_probability",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windSpeedMetresPerSecond",
+            "columnName": "wind_speed_mps",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cachedAtEpochSeconds",
+            "columnName": "cached_at_epoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timezoneOffsetSeconds",
+            "columnName": "timezone_offset_seconds",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "location_id",
+            "time_epoch"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "saved_locations",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "location_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "cached_metar",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`location_id` INTEGER NOT NULL, `station_id` TEXT NOT NULL, `station_name` TEXT NOT NULL, `distance_km` REAL NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `elevation_metres` INTEGER NOT NULL, `observed_at` INTEGER NOT NULL, `temperature_celsius` REAL, `dew_point_celsius` REAL, `wind_direction_degrees` INTEGER, `wind_speed_knots` INTEGER, `visibility_statute_miles` REAL, `visibility_is_or_greater` INTEGER NOT NULL, `altimeter_hectopascals` REAL, `clouds` TEXT NOT NULL, `flight_category` TEXT NOT NULL, `raw` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`location_id`), FOREIGN KEY(`location_id`) REFERENCES `saved_locations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "locationId",
+            "columnName": "location_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stationId",
+            "columnName": "station_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stationName",
+            "columnName": "station_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "distanceKm",
+            "columnName": "distance_km",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "elevationMetres",
+            "columnName": "elevation_metres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedAtEpochSeconds",
+            "columnName": "observed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temperatureCelsius",
+            "columnName": "temperature_celsius",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "dewPointCelsius",
+            "columnName": "dew_point_celsius",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "windDirectionDegrees",
+            "columnName": "wind_direction_degrees",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "windSpeedKnots",
+            "columnName": "wind_speed_knots",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "visibilityStatuteMiles",
+            "columnName": "visibility_statute_miles",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "visibilityIsOrGreater",
+            "columnName": "visibility_is_or_greater",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "altimeterHectopascals",
+            "columnName": "altimeter_hectopascals",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "clouds",
+            "columnName": "clouds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flightCategory",
+            "columnName": "flight_category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "raw",
+            "columnName": "raw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cachedAtEpochSeconds",
+            "columnName": "cached_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "location_id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "saved_locations",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "location_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4fe10e968fbb97495b3ea8fb72469252')"
+    ]
+  }
+}

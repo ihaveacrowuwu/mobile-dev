@@ -8,6 +8,7 @@ import com.nauhaan.skycast.domain.model.ThemeMode
 import com.nauhaan.skycast.domain.model.UserPreferences
 import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
+import com.nauhaan.skycast.domain.repository.MetarRepository
 import com.nauhaan.skycast.domain.repository.SettingsRepository
 import com.nauhaan.skycast.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,7 @@ class SettingsViewModel
 constructor(
     private val settingsRepository: SettingsRepository,
     private val weatherRepository: WeatherRepository,
+    private val metarRepository: MetarRepository,
 ) : ViewModel() {
     val uiState: StateFlow<SettingsUiState> =
         settingsRepository
@@ -77,6 +79,9 @@ constructor(
      */
     fun clearCache() = viewModelScope.launch {
         weatherRepository.clearCache()
+        // Both caches, or the button is a half-truth: the METAR is cached in its own table and would
+        // survive a "clear cache" that only touched the weather one.
+        metarRepository.clearCache()
     }
 
     private companion object {

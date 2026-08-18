@@ -153,6 +153,36 @@ class SkyCastDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate3To4AddsTheMetarCacheAndKeepsSavedLocations() {
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO saved_locations
+                    (id, name, country_code, state, latitude, longitude, sort_order, is_primary)
+                VALUES (1, 'London', 'GB', 'England', 51.5074, -0.1278, 0, 1)
+                """.trimIndent(),
+            )
+        }
+
+        // `runMigrationsAndValidate` is the assertion that matters most here: it compares the
+        // migrated database against the schema Room generates for the entities, so a CREATE TABLE
+        // that differs from `CachedMetarEntity` in any column, type, nullability or key fails here
+        // rather than at runtime on a user's device.
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 4, true, Migrations.MIGRATION_3_4)
+
+        assertEquals(listOf("location_id"), primaryKeyColumns(migrated, "cached_metar"))
+        val columns = columnNames(migrated, "cached_metar")
+        assertTrue("the raw report must be stored", columns.contains("raw"))
+        assertTrue("the station must be stored", columns.contains("station_id"))
+
+        // The upgrade is additive, so the user's places must be untouched by it.
+        migrated.query("SELECT name FROM saved_locations").use { cursor ->
+            assertTrue("saved locations must survive", cursor.moveToFirst())
+            assertEquals("London", cursor.getString(0))
+        }
+    }
+
     private fun columnNames(db: androidx.sqlite.db.SupportSQLiteDatabase, table: String): List<String> =
         db.query("PRAGMA table_info(`$table`)").use { cursor ->
             buildList {

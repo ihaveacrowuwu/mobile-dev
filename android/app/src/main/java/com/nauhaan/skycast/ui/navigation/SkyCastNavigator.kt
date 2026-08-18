@@ -77,7 +77,7 @@ fun SkyCastNavigator.currentTopLevelDestination(): TopLevelDestination? {
     return TopLevelDestination.entries.firstOrNull { tab ->
         when (tab.route) {
             Route.Home -> destination.hasRoute(Route.Home::class)
-            Route.Forecast -> destination.hasRoute(Route.Forecast::class)
+            Route.Metar -> destination.hasRoute(Route.Metar::class)
             Route.Locations -> destination.hasRoute(Route.Locations::class)
             Route.Settings -> destination.hasRoute(Route.Settings::class)
             else -> false

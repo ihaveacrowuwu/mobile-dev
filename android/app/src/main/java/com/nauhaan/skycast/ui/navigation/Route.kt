@@ -2,11 +2,11 @@ package com.nauhaan.skycast.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.FlightTakeoff
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WbSunny
@@ -27,7 +27,7 @@ sealed interface Route {
     data object Home : Route
 
     @Serializable
-    data object Forecast : Route
+    data object Metar : Route
 
     @Serializable
     data object Locations : Route
@@ -41,7 +41,7 @@ sealed interface Route {
     @Serializable
     data class LocationDetail(val locationId: Long) : Route
 
-    /** One day of the forecast, pushed from the Forecast tab. */
+    /** One day of the forecast, pushed from a place's detail screen. */
     @Serializable
     data class DayDetail(val locationId: Long, val epochDay: Long) : Route
 
@@ -69,8 +69,8 @@ enum class TopLevelDestination(
     /**
      * Stable handle for UI tests.
      *
-     * Necessary because tab labels are not unique on screen, "Forecast" appears both in
-     * the bottom bar and as the screen's own heading, so `onNodeWithText("Forecast")`
+     * Necessary because tab labels are not unique on screen: "METAR" appears both in
+     * the bottom bar and as the screen's own heading, so `onNodeWithText("METAR")`
      * matches two nodes and fails. A test tag identifies the bar item unambiguously and
      * survives copy changes.
      */
@@ -84,13 +84,13 @@ enum class TopLevelDestination(
         unselectedIcon = Icons.Outlined.WbSunny,
         testTag = "tab_home",
     ),
-    FORECAST(
-        route = Route.Forecast,
-        labelRes = R.string.tab_forecast,
-        contentDescriptionRes = R.string.tab_forecast_description,
-        selectedIcon = Icons.Filled.CalendarMonth,
-        unselectedIcon = Icons.Outlined.CalendarMonth,
-        testTag = "tab_forecast",
+    METAR(
+        route = Route.Metar,
+        labelRes = R.string.tab_metar,
+        contentDescriptionRes = R.string.tab_metar_description,
+        selectedIcon = Icons.Filled.FlightTakeoff,
+        unselectedIcon = Icons.Outlined.FlightTakeoff,
+        testTag = "tab_metar",
     ),
     LOCATIONS(
         route = Route.Locations,

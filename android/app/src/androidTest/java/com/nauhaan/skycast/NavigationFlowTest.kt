@@ -22,35 +22,22 @@ import org.junit.runner.RunWith
 /**
  * End-to-end navigation test.
  *
- * Covers the *Navigation* criterion directly: every tab is reachable, push destinations open and
- * dismiss, and system back returns to the right place. Because it drives the real app with a real
- * Hilt graph, it doubles as a smoke test, a broken DI binding or a missing route fails here rather
- * than in the examiner's hands.
+ * Drives the real app with a real Hilt graph: every tab is reachable, push destinations open and
+ * dismiss, and system back returns to the right place.
  *
- * Tabs are located by test tag, not by label: "Forecast" appears both in the bottom bar and as that
+ * Tabs are located by test tag, not by label: "METAR" appears both in the bottom bar and as that
  * screen's heading, so a text matcher would find two nodes and fail.
  *
- * ## Why `mainClock.autoAdvance` is disabled
+ * `mainClock.autoAdvance` is disabled. `LoadingView` uses Material 3 Expressive's
+ * `LoadingIndicator`, which morphs between shapes **indefinitely**, and with auto-advance on
+ * `waitForIdle` advances the clock until no animation is running, which never happens. Disabling it
+ * makes `waitForIdle` flush recomposition without waiting for animations to end, so [settle]
+ * advances the clock explicitly after a navigation.
  *
- * `LoadingView` uses Material 3 Expressive's `LoadingIndicator`, which morphs between shapes
- * **indefinitely**. With auto-advance on, every `performClick` and every assertion first calls
- * `waitForIdle`, which advances the clock until no animation is running, and an indefinite
- * animation means that never happens. The suite hung for ten minutes on the first test that landed
- * on a screen showing a loader, with no failure and no output.
- *
- * Disabling auto-advance makes `waitForIdle` flush recomposition without waiting for animations to
- * end, which is the documented approach for indefinite animations. The cost is that transitions no
- * longer progress on their own, so [settle] advances the clock explicitly after a navigation.
- *
- * ## Why back is pressed through the dispatcher rather than Espresso
- *
- * `pressBack()` from Espresso blocks until Espresso considers the main thread idle, and it knows
- * nothing about the Compose test clock, so against the same indefinite animation it hangs even with
- * auto-advance disabled. Every test that hung used it; none of the tests that avoided it did.
- *
- * [pressBack] instead invokes `OnBackPressedDispatcher`, which is exactly what the platform calls
- * for a system back gesture. The assertion is therefore no weaker: it still proves the real back
- * stack unwinds to the right tab, rather than merely that our own toolbar arrow works.
+ * Back is pressed through `OnBackPressedDispatcher` rather than Espresso's `pressBack()`, which
+ * blocks until Espresso considers the main thread idle and knows nothing about the Compose test
+ * clock. The dispatcher is what the platform calls for a system back gesture, so the assertion
+ * still proves the real back stack unwinds to the right tab.
  *
  * Runs on a device or emulator:
  *
@@ -168,9 +155,9 @@ class NavigationFlowTest {
         // Home is the start destination.
         composeRule.onNodeWithTag(TAB_HOME).assertIsSelected()
 
-        composeRule.onNodeWithTag(TAB_FORECAST).performClick()
+        composeRule.onNodeWithTag(TAB_METAR).performClick()
         settle()
-        composeRule.onNodeWithTag(TAB_FORECAST).assertIsSelected()
+        composeRule.onNodeWithTag(TAB_METAR).assertIsSelected()
 
         composeRule.onNodeWithTag(TAB_LOCATIONS).performClick()
         settle()
@@ -210,11 +197,10 @@ class NavigationFlowTest {
     /**
      * Locations → location detail → back.
      *
-     * The **second** push route, deliberately chosen over Forecast → day detail. A day row only
-     * exists once a forecast has been fetched, so asserting on one would make this test depend on a
-     * live network and a valid API key, it would then fail on a reviewer's machine for reasons
-     * that have nothing to do with navigation. A saved location, by contrast, comes from the debug
-     * seeder and is read from Room, so this route is deterministic offline.
+     * The **second** push route. A day row only exists once a forecast has been fetched, so
+     * asserting on one would make this test depend on a live network and a valid API key. A saved
+     * location comes from the debug seeder and is read from Room, so this route is deterministic
+     * offline.
      *
      * The day-detail push is verified manually and captured in `docs/screenshots/`.
      */
@@ -274,7 +260,7 @@ class NavigationFlowTest {
 
     private companion object {
         const val TAB_HOME = "tab_home"
-        const val TAB_FORECAST = "tab_forecast"
+        const val TAB_METAR = "tab_metar"
         const val TAB_LOCATIONS = "tab_locations"
         const val TAB_SETTINGS = "tab_settings"
 
