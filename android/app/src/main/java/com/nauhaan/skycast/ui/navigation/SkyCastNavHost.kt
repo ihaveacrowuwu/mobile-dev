@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -32,7 +33,11 @@ import com.nauhaan.skycast.ui.today.TodayScreen
  * that owns a controller cannot be rendered in a `@Preview`.
  */
 @Composable
-fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
+fun SkyCastNavHost(
+    navigator: SkyCastNavigator,
+    modifier: Modifier = Modifier,
+    onTodayWeatherTintChanged: (Color?) -> Unit = {},
+) {
     // Read the Expressive motion scheme once, here, where we are still in a @Composable.
     // The transition lambdas below run in AnimatedContentTransitionScope, which is not
     // composable, so MaterialTheme cannot be read inside them.
@@ -82,6 +87,7 @@ fun SkyCastNavHost(navigator: SkyCastNavigator, modifier: Modifier = Modifier) {
             TodayScreen(
                 onNavigateToLocationDetail = navigator::navigateToLocationDetail,
                 onNavigateToAddLocation = navigator::navigateToAddLocation,
+                onWeatherTintChanged = onTodayWeatherTintChanged,
             )
         }
 
