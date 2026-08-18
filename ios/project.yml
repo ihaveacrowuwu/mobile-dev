@@ -55,9 +55,12 @@ settings:
     GCC_TREAT_WARNINGS_AS_ERRORS: true
     SWIFT_TREAT_WARNINGS_AS_ERRORS: false # flipped on in CI only, see .github/workflows
     CODE_SIGN_STYLE: Automatic
-    # Simulator builds and CI need no signing identity.
-    CODE_SIGNING_REQUIRED: false
-    CODE_SIGNING_ALLOWED: false
+    # Scoped to the simulator SDK, deliberately. Unscoped: which is how this started, it also
+    # forbids signing for a *device*, so `Any iOS Device` failed outright and the app could not be
+    # put on a phone at all. Scoping keeps simulator and CI builds identity-free while letting a
+    # device build sign automatically with whatever team the developer has selected.
+    "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": false
+    "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": false
   configs:
     debug:
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
