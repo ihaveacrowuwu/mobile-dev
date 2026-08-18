@@ -13,7 +13,11 @@ struct SavedLocation: Equatable, Sendable, Identifiable, Hashable {
     let longitude: Double
     /// Position in the user's list; lets them reorder without touching other fields.
     var sortOrder: Int
-    /// Exactly one saved location is primary, it is what the Home tab shows.
+    /// Exactly one saved location is the favourite.
+    ///
+    /// It does two things and no more: it decides which Home page the app opens on at launch, and it
+    /// supplies the background colour the other screens are painted with. See
+    /// ``SelectedLocationStore`` for what the other tabs follow.
     var isPrimary: Bool
 
     init(
@@ -44,6 +48,25 @@ struct SavedLocation: Equatable, Sendable, Identifiable, Hashable {
     /// e.g. "London, GB", for tight spaces such as a navigation title.
     var shortDisplayName: String {
         "\(name), \(countryCode)"
+    }
+
+    /// How many places can be saved.
+    ///
+    /// A cap rather than no limit, for reasons about the app working rather than about storage: every
+    /// saved place is a page on Home and a live weather subscription, and the free OpenWeather tier
+    /// allows 60 calls a minute across the whole app. Ten places refreshing is comfortable; fifty would
+    /// be a rate-limit error the user cannot diagnose. Ten is also about as many pages as anyone can
+    /// usefully swipe through.
+    static let maxSaved = 10
+
+    /// Whether another place can be saved when `currentCount` are already stored.
+    ///
+    /// A function rather than each caller writing `count < maxSaved` itself. Two places need this
+    /// decision, the repository, which enforces it, and the Locations screen, which hides the Add
+    /// button, and a `<` in one with a `<=` in the other is a bug that shows up as a button leading
+    /// only to an error. Here it is one comparison, tested once.
+    static func canSaveAnother(currentCount: Int) -> Bool {
+        currentCount < maxSaved
     }
 }
 

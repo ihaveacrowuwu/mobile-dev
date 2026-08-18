@@ -39,6 +39,7 @@ final class MoonViewModel {
 
     private let locationRepository: any LocationRepository
     private let weatherRepository: any WeatherRepository
+    private let selectedLocationStore: SelectedLocationStore
     private let clock: () -> Date
 
     private var observationTask: Task<Void, Never>?
@@ -47,10 +48,12 @@ final class MoonViewModel {
     init(
         locationRepository: any LocationRepository,
         weatherRepository: any WeatherRepository,
+        selectedLocationStore: SelectedLocationStore,
         clock: @escaping () -> Date = { .now }
     ) {
         self.locationRepository = locationRepository
         self.weatherRepository = weatherRepository
+        self.selectedLocationStore = selectedLocationStore
         self.clock = clock
     }
 
@@ -77,7 +80,9 @@ final class MoonViewModel {
     }
 
     private func observe() async {
-        guard let location = try? await locationRepository.primaryLocation() else {
+        // The place selected on Home, not the favourite. See SelectedLocationStore.
+        let locations = await (try? locationRepository.savedLocations()) ?? []
+        guard let location = selectedLocationStore.activeLocation(from: locations) else {
             state.isLoading = false
             return
         }
@@ -138,11 +143,17 @@ struct MoonScreen: View {
         }
         .navigationTitle("Moon")
         .navigationBarTitleDisplayMode(.inline)
+        // Dark for the whole screen, whichever appearance the phone is in, so the semantic colours
+        // resolve against the night sky. The toolbar needs telling separately because it is not
+        // inside this view's environment.
+        .environment(\.colorScheme, .dark)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             if viewModel == nil {
                 viewModel = MoonViewModel(
                     locationRepository: container.locationRepository,
-                    weatherRepository: container.weatherRepository
+                    weatherRepository: container.weatherRepository,
+                    selectedLocationStore: container.selectedLocationStore
                 )
                 viewModel?.start()
             } else {
@@ -178,7 +189,10 @@ struct MoonContent: View {
                 }
                 .padding(Spacing.md)
             }
-            .background(Color.skyBackground)
+            // The sky is the screen, not a card on it. `ignoresSafeArea` so it reaches under the
+            // status bar and the tab bar rather than stopping in a band short of both.
+            .nightSky()
+            .ignoresSafeArea()
         }
     }
 }

@@ -8,10 +8,8 @@ import SwiftUI
 struct HomeScreen: View {
     @Environment(AppContainer.self) private var container
     @State private var viewModel: HomeViewModel?
-    /// The pushed detail destination. `nil` means nothing is pushed; driving the stack from a value
-    /// rather than a `NavigationLink` inside the hero keeps the hero reusable on the detail screen
-    /// itself, where there is nowhere further to push.
-    @State private var detailLocationID: Int64?
+    /// The pushed day-detail destination. `nil` means nothing is pushed.
+    @State private var selectedDay: DayRoute?
 
     var body: some View {
         Group {
@@ -21,15 +19,15 @@ struct HomeScreen: View {
                     onRefresh: { await viewModel.refresh() },
                     onDismissBanner: viewModel.dismissBanner,
                     onSelectPage: viewModel.selectPage,
-                    onOpenDetail: { detailLocationID = $0 }
+                    onSelectDay: { locationID, date in selectedDay = DayRoute(locationID: locationID, date: date) }
                 )
             } else {
                 LoadingView()
             }
         }
         .toolbarTitleDisplayMode(.inline)
-        .navigationDestination(item: $detailLocationID) { locationID in
-            LocationDetailScreen(locationID: locationID)
+        .navigationDestination(item: $selectedDay) { route in
+            DayDetailScreen(locationID: route.locationID, date: route.date)
         }
         .task {
             // @Environment is not available during init, so the view model is built here.
@@ -37,7 +35,8 @@ struct HomeScreen: View {
                 viewModel = HomeViewModel(
                     weatherRepository: container.weatherRepository,
                     locationRepository: container.locationRepository,
-                    settingsStore: container.settingsStore
+                    settingsStore: container.settingsStore,
+                    selectedLocationStore: container.selectedLocationStore
                 )
                 viewModel?.start()
             } else {
@@ -50,13 +49,22 @@ struct HomeScreen: View {
     }
 }
 
+/// One day of one place, which is what Home has to carry to push the day-detail screen.
+///
+/// Home pages across several places, so a bare `Date` would be ambiguous: tapping Thursday on Malé
+/// must not open Thursday on London.
+struct DayRoute: Hashable {
+    let locationID: Int64
+    let date: Date
+}
+
 /// The stateless half.
 struct HomeContent: View {
     let state: HomeUiState
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
     let onSelectPage: (Int) -> Void
-    let onOpenDetail: (Int64) -> Void
+    let onSelectDay: (Int64, Date) -> Void
 
     var body: some View {
         // Exactly one branch renders. The ordering encodes the offline-first rules from
@@ -94,7 +102,7 @@ struct HomeContent: View {
                         isSelected: index == state.selectedIndex,
                         onRefresh: onRefresh,
                         onDismissBanner: onDismissBanner,
-                        onOpenDetail: onOpenDetail,
+                        onSelectDay: onSelectDay,
                         onSelectPage: onSelectPage,
                         chromeInsets: proxy.safeAreaInsets
                     )
@@ -136,7 +144,7 @@ private struct HomePageView: View {
     let isSelected: Bool
     let onRefresh: () async -> Void
     let onDismissBanner: () -> Void
-    let onOpenDetail: (Int64) -> Void
+    let onSelectDay: (Int64, Date) -> Void
     let onSelectPage: (Int) -> Void
     /// The insets the pager gave up so content could run behind the bars; see
     /// ``HomeContent/pager``. Re-applied here as content padding.
@@ -165,10 +173,7 @@ private struct HomePageView: View {
                             weather: weather,
                             unit: state.preferences.temperatureUnit,
                             // The switcher above already names the place.
-                            showsLocationName: false,
-                            // Tapping the hero pushes the full detail screen, the push half of
-                            // the navigation hierarchy, reachable from Home.
-                            onTap: { onOpenDetail(weather.locationID) }
+                            showsLocationName: false
                         )
 
                         // Between the reading and the strip, centred: the indicator belongs to the
@@ -181,7 +186,12 @@ private struct HomePageView: View {
                                 announcement: "Showing \(current.name), "
                                     + "\(state.selectedIndex + 1) of \(state.pages.count)"
                             )
-                            .frame(height: Self.scrubberHeight)
+                            // Sized to its content rather than stretched, so the capsule hugs the dots.
+                            .frame(width: scrubberWidth(for: state.pages.count), height: Self.scrubberHeight)
+                            // A floating control, like the page control at the bottom of Apple's Weather
+                            // app, in the place this app's indicator already sits, under the reading.
+                            .skyGlass(.control)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
 
                         HourlyStrip(
@@ -191,6 +201,21 @@ private struct HomePageView: View {
                             timeZone: weather.timeZone,
                             unit: state.preferences.temperatureUnit
                         )
+
+                        // The forecast picture.
+                        if let forecast = page.forecast.data {
+                            TemperatureTrendSection(
+                                forecast: forecast,
+                                unit: state.preferences.temperatureUnit
+                            )
+                            DailyRangesSection(
+                                forecast: forecast,
+                                unit: state.preferences.temperatureUnit,
+                                onSelectDay: { date in onSelectDay(weather.locationID, date) }
+                            )
+                        }
+
+                        SectionHeader("Conditions")
 
                         if let sun = weather.sunPath() {
                             SunPathCard(
@@ -202,7 +227,17 @@ private struct HomePageView: View {
                             )
                         }
 
-                        WeatherDetailGrid(details: weather.details(preferences: state.preferences))
+                        // All eight tiles, including the derived dew point and length of day. Home used
+                        // to show six and keep those two behind the hero tap; with nowhere to tap
+                        // through to, holding them back would just be hiding them.
+                        WeatherDetailGrid(
+                            details: weather.details(
+                                preferences: state.preferences,
+                                includeDerived: true
+                            )
+                        )
+
+                        ObservedAtFooter(observedAt: weather.observedAt)
                     } else {
                         // A page reached by swiping ahead of its data.
                         LoadingView(message: "Fetching the latest weather…")
@@ -222,7 +257,14 @@ private struct HomePageView: View {
         .refreshable { await onRefresh() }
     }
 
-    /// Enough to scroll the last tile out from under the minimised tab bar.
+    /// Wide enough for the dots and no wider.
+    ///
+    /// Each dot occupies roughly 16 points, plus its own end padding.
+    private func scrubberWidth(for count: Int) -> CGFloat {
+        CGFloat(count) * Self.scrubberDotSpacing
+    }
+
+    private static let scrubberDotSpacing: CGFloat = 18
     private static let tabBarClearance: CGFloat = 56
 
     /// `UIPageControl` sizes itself; this only reserves the row.
@@ -296,7 +338,7 @@ private struct PlaceHeading: View {
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },
-            onOpenDetail: { _ in }
+            onSelectDay: { _, _ in }
         )
     }
 }
@@ -308,7 +350,7 @@ private struct PlaceHeading: View {
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },
-            onOpenDetail: { _ in }
+            onSelectDay: { _, _ in }
         )
     }
 }
@@ -320,7 +362,7 @@ private struct PlaceHeading: View {
             onRefresh: {},
             onDismissBanner: {},
             onSelectPage: { _ in },
-            onOpenDetail: { _ in }
+            onSelectDay: { _, _ in }
         )
     }
 }

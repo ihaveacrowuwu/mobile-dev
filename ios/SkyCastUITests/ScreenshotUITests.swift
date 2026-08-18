@@ -64,6 +64,10 @@ final class ScreenshotUITests: XCTestCase {
         try capture("01-home")
 
         selectTab(.metar)
+        // METAR fetches when its tab appears, and it is a network round trip to a second service. Without
+        // waiting, this captured the "Finding the nearest reporting airport…" spinner, a screenshot that
+        // succeeds while showing none of the screen it is named after.
+        settle(seconds: 8)
         try capture("02-metar")
 
         selectTab(.moon)

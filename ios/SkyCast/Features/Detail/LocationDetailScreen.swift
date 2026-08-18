@@ -31,7 +31,7 @@ struct LocationDetailUiState: Equatable {
     }
 
     var staleBannerMessage: String {
-        error?.message ?? "Showing saved data, it may be out of date."
+        error?.message ?? "Showing saved data. It may be out of date."
     }
 }
 
@@ -231,10 +231,7 @@ struct LocationDetailContent: View {
                             details: weather.details(preferences: state.preferences, includeDerived: true)
                         )
 
-                        Text("Observed \(weather.observedAt.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
+                        ObservedAtFooter(observedAt: weather.observedAt)
                     } else {
                         // Inline, not full-screen: the identity block above is real content, so a
                         // full-screen loader or error over the top of it would be a lie.
@@ -273,9 +270,6 @@ private struct ForecastSections: View {
         if let forecast = state.forecast {
             let unit = state.preferences.temperatureUnit
             let hours = state.upcomingHours(limit: hoursOnStrip)
-            let points = forecast.trendPoints(unit: unit)
-            let days = forecast.dayRanges(unit: unit)
-
             if !hours.isEmpty {
                 // The detail screen shows only what is ahead, so it does not reuse Home's
                 // "Through the day".
@@ -290,34 +284,10 @@ private struct ForecastSections: View {
                 .padding(.horizontal, -Spacing.md)
             }
 
-            if points.count > 1 {
-                SectionHeader("Temperature trend")
-                TemperatureTrend(points: points, summary: forecast.trendSummary(unit: unit))
-            }
-
-            if !days.isEmpty {
-                SectionHeader("Next days")
-                DailyRangeList(days: days, onDaySelected: onSelectDay.map { action in
-                    { day in action(day.date) }
-                })
-            }
+            // Shared with Home, which shows the same sections now. See Features/Common.
+            TemperatureTrendSection(forecast: forecast, unit: unit)
+            DailyRangesSection(forecast: forecast, unit: unit, onSelectDay: onSelectDay)
         }
-    }
-}
-
-/// A section title, styled once so the screen's headings cannot drift apart.
-private struct SectionHeader: View {
-    let title: String
-
-    init(_ title: String) {
-        self.title = title
-    }
-
-    var body: some View {
-        Text(title)
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -51,6 +51,13 @@ final class LocationRepositoryImpl: LocationRepository {
 
     @discardableResult
     func save(_ result: LocationSearchResult) async throws -> Int64 {
+        // The cap is enforced here rather than in the UI, because the UI is not the only caller and "the
+        // list is full" is a fact about the data, not about a screen. See `SavedLocation.maxSaved`.
+        let saved = try await savedLocations()
+        guard SavedLocation.canSaveAnother(currentCount: saved.count) else {
+            throw AppError.locationLimitReached(limit: SavedLocation.maxSaved)
+        }
+
         do {
             return try await local.save(result)
         } catch {

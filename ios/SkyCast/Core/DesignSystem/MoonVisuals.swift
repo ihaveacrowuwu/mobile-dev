@@ -2,15 +2,6 @@ import SwiftUI
 
 /// The Moon, drawn at its actual phase.
 ///
-/// ## Why this is drawn rather than an SF Symbol
-///
-/// The platform guidance is to use the platform's own components first, and
-/// `moonphase.waxing.crescent.inverse` and its seven siblings exist. They were rejected for one
-/// reason: there are eight of them, and the Moon does not come in eight states. Snapping a 27%-lit
-/// moon to the nearest symbol throws away the very quantity this screen is about, and the jump from
-/// one symbol to the next is visible day to day. The terminator here is computed from the same
-/// elongation the heading is, so the drawing and the text can never disagree.
-///
 /// ## The geometry
 ///
 /// A lit lunar disc is bounded by two curves: the **limb**, a semicircle of radius *R*, and the
@@ -22,8 +13,8 @@ struct MoonDisc: View {
     /// Elongation from the Sun in degrees: 0 new, 90 first quarter, 180 full, 270 last quarter.
     let elongationDegrees: Double
     let diameter: CGFloat
-    /// The glow and the craters are the expensive, decorative half. Off for the small discs in the
-    /// "coming up" row, where they would be sub-pixel noise.
+    /// Draws the glow and the craters. Off for the small discs in the "coming up" row, where they
+    /// would be sub-pixel noise.
     var showsDetail = true
 
     var body: some View {
@@ -43,8 +34,7 @@ struct MoonDisc: View {
                     .blur(radius: diameter * 0.06)
             }
 
-            // The unlit disc. Kept visible rather than transparent: the Moon is a sphere all month,
-            // and earthshine really does make the dark limb faintly visible.
+            // The unlit disc, kept faintly visible for earthshine.
             Circle()
                 .fill(
                     RadialGradient(
@@ -81,15 +71,12 @@ struct MoonDisc: View {
                 .frame(width: diameter, height: diameter)
         }
         .frame(width: diameter, height: diameter)
-        // One drawing, described once by whatever contains it.
         .accessibilityHidden(true)
     }
 
-    /// The maria, as soft grey blots.
-    ///
-    /// Positions are fixed rather than random: a `Double.random` here would reshuffle the Moon's face
-    /// on every redraw, and would make the screenshots in `docs/screenshots/` differ run to run.
-    /// These roughly follow the near side, Tranquillitatis and Imbrium upper left, Crisium right.
+    /// The maria, as soft grey blots at fixed positions so the face does not reshuffle between
+    /// redraws. They roughly follow the near side: Tranquillitatis and Imbrium upper left, Crisium
+    /// right.
     private var craters: some View {
         ZStack {
             ForEach(Array(Self.maria.enumerated()), id: \.offset) { _, mare in
@@ -123,9 +110,6 @@ struct MoonDisc: View {
         Mare(x: -0.26, y: 0.10, size: 0.12, opacity: 0.15),
     ]
 
-    // Fixed, not theme-derived: these are the colours of the Moon and of moonlight, and they are the
-    // same in a light interface as in a dark one. The disc always sits on the night-sky panel below,
-    // so it has a guaranteed dark ground in either appearance.
     private static let litCentre = Color(red: 0.98, green: 0.97, blue: 0.93)
     private static let litEdge = Color(red: 0.80, green: 0.79, blue: 0.76)
     private static let darkSide = Color(red: 0.13, green: 0.14, blue: 0.20)
@@ -137,9 +121,8 @@ struct MoonDisc: View {
 
 /// The lit region of the disc at a given elongation.
 ///
-/// Traced as the limb from top to bottom, then the terminator back from bottom to top. Sampled at
-/// `steps` points rather than approximated with Béziers: the curve is a true half-ellipse, sampling
-/// is exact at every sample, and at these sizes 48 segments is smoother than the display can show.
+/// Traced as the limb from top to bottom, then the terminator back from bottom to top, sampled at
+/// ``steps`` points along each curve.
 struct MoonTerminator: Shape {
     let elongationDegrees: Double
 
@@ -148,7 +131,7 @@ struct MoonTerminator: Shape {
         let centre = CGPoint(x: rect.midX, y: rect.midY)
         let theta = elongationDegrees * .pi / 180
 
-        // Signed semi-axis of the terminator: +R at new, 0 at the quarters, −R at full.
+        // Signed semi-axis of the terminator: +R at new, 0 at the quarters, -R at full.
         let terminatorAxis = radius * cos(theta)
         // Waxing moons are lit on the right in the northern hemisphere, waning on the left.
         let side: CGFloat = elongationDegrees < 180 ? 1 : -1
@@ -181,12 +164,7 @@ struct MoonTerminator: Shape {
     private static let steps = 48
 }
 
-/// The night sky the Moon hangs in.
-///
-/// A deliberately dark surface in **both** appearances. The Moon is a night-time object and moonlight
-/// only reads as moonlight against a dark ground; a pale sky in light mode would leave a near-white
-/// disc on a near-white panel. It is imagery rather than a card, which is why it is the one surface
-/// in the app that does not follow the appearance.
+/// The night sky the Moon hangs in. Dark in **both** appearances.
 struct NightSkyPanel<Content: View>: View {
     @ViewBuilder var content: Content
 
@@ -194,18 +172,24 @@ struct NightSkyPanel<Content: View>: View {
         content
             .frame(maxWidth: .infinity)
             .padding(.vertical, Spacing.lg)
-            .background {
-                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [NightSky.zenith, NightSky.horizon],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+            .nightSky(in: RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+    }
+}
+
+extension View {
+    /// Puts the night sky behind this view, clipped to `shape`.
+    func nightSky(in shape: some Shape = Rectangle()) -> some View {
+        background {
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [NightSky.zenith, NightSky.horizon],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-                    .overlay { Starfield() }
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
-            }
+                )
+                .overlay { Starfield().clipShape(shape) }
+        }
     }
 }
 
@@ -213,17 +197,14 @@ struct NightSkyPanel<Content: View>: View {
 ///
 /// Outside ``NightSkyPanel`` because a generic type cannot hold static stored properties, and the
 /// panel has to be generic to take arbitrary content.
-private enum NightSky {
+enum NightSky {
     static let zenith = Color(red: 0.05, green: 0.06, blue: 0.14)
     static let horizon = Color(red: 0.11, green: 0.13, blue: 0.24)
 }
 
-/// Stars, at fixed positions.
-///
-/// Generated once from a fixed seed rather than with `Double.random`: a starfield that reshuffles
-/// itself every time SwiftUI re-evaluates the body twinkles distractingly, and it would make every
-/// screenshot in `docs/screenshots/` differ from the last.
-private struct Starfield: View {
+/// Stars at fixed positions, generated once from a fixed seed so the layout is stable across
+/// redraws.
+struct Starfield: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topLeading) {
@@ -248,8 +229,8 @@ private struct Starfield: View {
         let opacity: Double
     }
 
-    /// A small linear congruential generator, so the layout is reproducible across launches,
-    /// platforms and screenshot runs.
+    /// A small linear congruential generator, so the layout is reproducible across launches and
+    /// platforms.
     private static let stars: [Star] = {
         var seed: UInt64 = 0x5CA5_7CA5
         func next() -> Double {
@@ -268,10 +249,6 @@ private struct Starfield: View {
 }
 
 /// Progress through the lunar month, as a ring with the four principal phases marked.
-///
-/// Wraps the hero disc rather than sitting beside it: the ring *is* the month and the disc is where
-/// in it we are, so they belong in the same place. The ticks give the reader the four landmarks
-/// without four labels.
 struct LunarCycleRing: View {
     /// 0 at new moon, 1 at the next new moon.
     let cycleFraction: Double

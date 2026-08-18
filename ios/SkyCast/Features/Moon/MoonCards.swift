@@ -153,7 +153,6 @@ struct MoonPathCard: View {
 struct MoonDistanceCard: View {
     let snapshot: MoonSnapshot
 
-
     var body: some View {
         HStack(spacing: Spacing.md) {
             // The same gauge the humidity and pressure tiles use, so "where in its range is this?"
@@ -207,7 +206,6 @@ struct MoonDistanceCard: View {
     private var apparentWidth: String {
         String(format: "%.2f", snapshot.angularDiameterDegrees)
     }
-
 }
 
 /// The next four principal phases, each with the Moon drawn as it will look.

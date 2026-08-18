@@ -24,11 +24,16 @@ struct LocationsScreen: View {
         }
         .navigationTitle("Locations")
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                NavigationLink {
-                    AddLocationScreen()
-                } label: {
-                    Label("Add location", systemImage: "plus")
+            // Hidden at the cap rather than shown-but-broken. A button that opens a search whose only
+            // possible outcome is "the list is full" spends two taps delivering bad news; the caption in
+            // the list says the same thing where the reader is already looking.
+            if viewModel?.state.canAddMore ?? true {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        AddLocationScreen()
+                    } label: {
+                        Label("Add location", systemImage: "plus")
+                    }
                 }
             }
         }
@@ -75,12 +80,25 @@ struct LocationsContent: View {
                     }
                     .swipeActions(edge: .leading) {
                         if !location.isPrimary {
-                            Button("Show on Home", systemImage: "star") {
+                            // Reworded with the favourite's meaning: it decides where the app opens and
+                            // what colours the other screens, not what Home shows from moment to moment.
+                            Button("Make favourite", systemImage: "star") {
                                 onSetPrimary(location)
                             }
                             .tint(.skyAccent)
                         }
                     }
+                }
+
+                // How full the list is, and, at the cap, why the + button has gone.
+                Section {
+                    Text(
+                        state.canAddMore
+                            ? "\(state.locations.count) of \(SavedLocation.maxSaved) places saved"
+                            : "All \(SavedLocation.maxSaved) places saved. Remove one to add another."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
         }

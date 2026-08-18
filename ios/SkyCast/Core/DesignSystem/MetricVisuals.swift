@@ -150,7 +150,6 @@ struct SkyPathCard: View {
     /// Spoken instead of the drawing.
     let announcement: String
 
-
     private var isUp: Bool {
         progress > 0 && progress < 1
     }

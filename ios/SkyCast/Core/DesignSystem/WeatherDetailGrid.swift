@@ -98,7 +98,7 @@ struct WeatherDetailGrid: View {
 private struct WeatherDetailTile: View {
     let detail: WeatherDetail
 
-    /// The tint of the page this tile is on, if it has one.
+    // The tint of the page this tile is on, if it has one.
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -147,7 +147,6 @@ private struct WeatherDetailTile: View {
         }
         return "\(detail.label), \(detail.value)"
     }
-
 }
 
 #Preview {

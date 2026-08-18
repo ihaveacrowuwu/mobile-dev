@@ -24,7 +24,9 @@ struct HomeViewModelTests {
             // A dedicated suite so tests never read or write the real app's settings.
             settingsStore: SettingsStore(
                 defaults: UserDefaults(suiteName: "com.nauhaan.skycast.tests") ?? .standard
-            )
+            ),
+            // A fresh store per view model, so one test's selection cannot leak into another's.
+            selectedLocationStore: SelectedLocationStore()
         )
     }
 

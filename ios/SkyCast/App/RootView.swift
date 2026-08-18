@@ -17,7 +17,9 @@ import SwiftUI
 /// Android needs the opposite, `TopLevelDestination.testTag`, because Compose offers no equivalent
 /// scoping.
 struct RootView: View {
+    @Environment(AppContainer.self) private var container
     @State private var selectedTab: AppTab = .home
+    @State private var background: AppBackgroundViewModel?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -27,6 +29,23 @@ struct RootView: View {
                         tab.destination
                     }
                 }
+            }
+        }
+        // The favourite's weather, behind the whole shell. Home and the Moon tab draw their own over
+        // the top of it; every other screen simply sits on it. See AppBackgroundViewModel.
+        .weatherBackground(
+            condition: background?.condition ?? .unknown,
+            isDaytime: background?.isDaytime ?? true
+        )
+        .task {
+            if background == nil {
+                background = AppBackgroundViewModel(
+                    locationRepository: container.locationRepository,
+                    weatherRepository: container.weatherRepository
+                )
+                background?.start()
+            } else {
+                await background?.reload()
             }
         }
     }

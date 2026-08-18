@@ -11,6 +11,14 @@ struct LocationsUiState: Equatable {
         locations.isEmpty && !isLoading
     }
 
+    /// Whether there is room for another place.
+    ///
+    /// Surfaced so the Add button can go quiet at the cap instead of leading to a search that can only
+    /// end in an error. The repository still enforces the limit, this is the courtesy, not the rule.
+    var canAddMore: Bool {
+        SavedLocation.canSaveAnother(currentCount: locations.count)
+    }
+
     /// The last remaining location cannot be removed: with none saved, Home has nothing to show
     /// and the user is stranded on an empty state they did not ask for.
     var canDelete: Bool {

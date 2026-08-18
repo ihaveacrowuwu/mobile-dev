@@ -28,6 +28,13 @@ enum AppError: Error, Equatable, Sendable {
     /// Reading or writing the local store failed.
     case storage(detail: String)
     /// Anything we did not anticipate.
+    /// The user already has ``SavedLocation/maxSaved`` places saved.
+    ///
+    /// A typed case rather than a boolean returned from `save`, because that is what makes the compiler
+    /// point at every place that has to say something about it. It also travels the same path every other
+    /// failure does, so the Add-location screen needs no special branch to display it.
+    case locationLimitReached(limit: Int)
+
     case unknown(description: String)
 
     /// Whether offering the user a Retry action makes sense.
@@ -36,7 +43,8 @@ enum AppError: Error, Equatable, Sendable {
     var isRetryable: Bool {
         switch self {
         case .offline, .timeout, .rateLimited, .server, .unknown: true
-        case .notFound, .unauthorized, .decoding, .storage: false
+        // Retrying a full list never empties it; the user has to remove a place first.
+        case .notFound, .unauthorized, .decoding, .storage, .locationLimitReached: false
         }
     }
 
@@ -106,6 +114,7 @@ extension AppError {
         case .server: "Service unavailable"
         case .decoding: "Unexpected response"
         case .storage: "Storage problem"
+        case .locationLimitReached: "That is as many places as SkyCast holds"
         case .unknown: "Something went wrong"
         }
     }
@@ -126,9 +135,12 @@ extension AppError {
         case .server:
             "The weather service is having problems. Please try again shortly."
         case .decoding:
-            "We couldn't read the weather data. This is a bug, please report it."
+            "We couldn't read the weather data. This is a bug. Please report it."
         case .storage:
             "Saved data couldn't be read. Clearing the cache in Settings may help."
+        case let .locationLimitReached(limit):
+            "The list is full. SkyCast holds a maximum of \(limit). "
+                + "Remove one on the Locations tab to make room."
         case .unknown:
             "An unexpected error occurred. Please try again."
         }
@@ -143,6 +155,7 @@ extension AppError {
         case .unauthorized: "key.slash"
         case .server: "exclamationmark.icloud"
         case .decoding, .storage: "exclamationmark.triangle"
+        case .locationLimitReached: "tray.full"
         case .unknown: "exclamationmark.circle"
         }
     }

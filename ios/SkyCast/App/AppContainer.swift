@@ -17,6 +17,8 @@ final class AppContainer {
     let metarRepository: any MetarRepository
     let locationRepository: any LocationRepository
     let settingsStore: SettingsStore
+    /// Which place the non-Home tabs follow. See ``SelectedLocationStore``.
+    let selectedLocationStore = SelectedLocationStore()
 
     private init(
         modelContainer: ModelContainer,

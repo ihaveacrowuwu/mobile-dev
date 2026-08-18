@@ -25,6 +25,7 @@ final class HomeViewModel {
     private let weatherRepository: any WeatherRepository
     private let locationRepository: any LocationRepository
     private let settingsStore: SettingsStore
+    private let selectedLocationStore: SelectedLocationStore
 
     /// One observation task per saved location, plus the outer one that watches the list itself.
     /// Held so a new set can cancel the old, otherwise a deleted location would keep writing.
@@ -34,11 +35,13 @@ final class HomeViewModel {
     init(
         weatherRepository: any WeatherRepository,
         locationRepository: any LocationRepository,
-        settingsStore: SettingsStore
+        settingsStore: SettingsStore,
+        selectedLocationStore: SelectedLocationStore
     ) {
         self.weatherRepository = weatherRepository
         self.locationRepository = locationRepository
         self.settingsStore = settingsStore
+        self.selectedLocationStore = selectedLocationStore
     }
 
     /// Starts (or restarts) observation. Safe to call on every `task`, the guard makes a repeated
@@ -70,6 +73,13 @@ final class HomeViewModel {
     func selectPage(_ index: Int) {
         guard state.pages.indices.contains(index) else { return }
         state.selectedIndex = index
+        publishSelection()
+    }
+
+    /// Tells the METAR and Moon tabs which place is on screen. See ``SelectedLocationStore``.
+    private func publishSelection() {
+        guard let location = state.location else { return }
+        selectedLocationStore.select(location.id)
     }
 
     /// Pull-to-refresh and the Retry button both land here.
@@ -120,6 +130,9 @@ final class HomeViewModel {
                 state.selectedIndex = primary
             }
             state.selectedIndex = min(state.selectedIndex, locations.count - 1)
+            // Publish here as well as on a swipe: the tabs that follow this selection can be opened
+            // before Home has ever been swiped, and at launch this is the favourite's page.
+            publishSelection()
 
             stopPageTasks()
             for location in locations {

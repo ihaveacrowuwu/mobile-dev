@@ -21,6 +21,13 @@ enum GlassRole {
     case notice
     /// A small decorative container.
     case badge
+    /// A floating control that sits over scrolling content, like the page indicator on Home.
+    ///
+    /// This is the role glass is actually *for*, a functional layer above content, not a content
+    /// surface. It is the same treatment Apple's Weather app gives the page control at the bottom of its
+    /// screen, and the reason to give the dots a ground of their own is contrast: bare dots on a heavily
+    /// washed background lose definition exactly when the weather behind them is most colourful.
+    case control
 }
 
 extension View {
@@ -61,7 +68,7 @@ private struct SkyGlassModifier: ViewModifier {
             return tint
         }
         switch role {
-        case .badge: return nil
+        case .badge, .control: return nil
         case .notice: return .skyWarning
         }
     }
@@ -70,6 +77,7 @@ private struct SkyGlassModifier: ViewModifier {
         switch role {
         case .notice: AnyShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
         case .badge: AnyShape(Circle())
+        case .control: AnyShape(Capsule())
         }
     }
 
@@ -79,6 +87,10 @@ private struct SkyGlassModifier: ViewModifier {
             EdgeInsets(top: Spacing.sm, leading: Spacing.md, bottom: Spacing.sm, trailing: Spacing.sm)
         case .badge:
             EdgeInsets(top: Spacing.md, leading: Spacing.md, bottom: Spacing.md, trailing: Spacing.md)
+        case .control:
+            // Tighter vertically than a badge and wider horizontally: a capsule around a row of dots
+            // needs room either side or it reads as a chip clamped to them.
+            EdgeInsets(top: Spacing.xs, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md)
         }
     }
 }
