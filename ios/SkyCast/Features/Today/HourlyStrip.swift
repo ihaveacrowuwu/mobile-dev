@@ -2,25 +2,26 @@ import SwiftUI
 
 /// A horizontally scrollable strip of three-hourly readings around the present moment.
 ///
-/// A `ScrollView` rather than a `TabView` page: the readings are a continuum, and scrolling gives
-/// momentum, rubber-banding and VoiceOver's scroll actions for free. Past hours are included
-/// deliberately, "it was 4° colder this morning" is context the current reading alone cannot
-/// give, and the present is marked so the boundary is obvious at a glance.
+/// A `ScrollView` supplies momentum, rubber-banding and VoiceOver's scroll actions. Past hours are
+/// included, and the present is marked.
 ///
-/// Times are rendered in the **forecast location's** zone, not the device's, for the same reason
-/// everything else here is: a Maldivian forecast read from London must still show Maldivian hours.
+/// Times are rendered in the **forecast location's** zone, not the device's: a Maldivian forecast
+/// read from London must still show Maldivian hours.
 struct HourlyStrip: View {
     let hours: [HourlyForecast]
     let timeZone: TimeZone
     let unit: TemperatureUnit
     var now: Date = .now
+    /// Overridable because the detail screen shows only what is ahead, where "Through the day"
+    /// does not apply.
+    var title = "Through the day"
 
     var body: some View {
         if hours.isEmpty {
             EmptyView()
         } else {
             VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Through the day")
+                Text(title)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, Spacing.md)

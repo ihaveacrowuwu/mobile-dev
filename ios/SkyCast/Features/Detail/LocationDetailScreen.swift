@@ -6,6 +6,12 @@ import SwiftUI
 struct LocationDetailUiState: Equatable {
     var location: SavedLocation?
     var weather: Weather?
+    /// The multi-day forecast for the same place.
+    ///
+    /// The detail screen is where someone goes when the Today card was not enough, so it carries
+    /// the hour-by-hour and day-by-day picture too. It is optional and never blocks: the current
+    /// reading renders the moment it arrives, and the forecast sections appear when they do.
+    var forecast: Forecast?
     var preferences: UserPreferences = .init()
     var isLoading = true
     var isRefreshing = false
@@ -13,6 +19,11 @@ struct LocationDetailUiState: Equatable {
     var error: AppError?
     /// The id resolved to no saved record: the location was deleted while this screen was open.
     var isMissing = false
+
+    /// The readings from now on. Past hours belong on Today, which is about the day in progress.
+    func upcomingHours(now: Date = .now, limit: Int) -> [HourlyForecast] {
+        Array((forecast?.days.flatMap(\.hourly) ?? []).filter { $0.time >= now }.prefix(limit))
+    }
 
     /// No `showsFullScreenLoader` / `showsFullScreenError` counterparts to ``TodayUiState`` here,
     /// deliberately: this screen always has the location's identity to render, so it never shows a
@@ -81,19 +92,38 @@ final class LocationDetailViewModel {
                 return
             }
             state.location = location
-            for await dataState in weatherRepository.currentWeather(for: location) {
-                if Task.isCancelled {
-                    return
-                }
-                state.weather = dataState.data ?? state.weather
-                state.isLoading = dataState.isLoading
-                state.isRefreshing = dataState.isRefreshing
-                state.isStale = dataState.isStale
-                state.error = dataState.error
-            }
+            // Concurrently, and independently: a forecast that fails must not stop the current
+            // reading arriving, and vice versa.
+            async let weather: Void = observeWeather(for: location)
+            async let forecast: Void = observeForecast(for: location)
+            _ = await (weather, forecast)
         } catch {
             state.isLoading = false
             state.error = AppError.from(error)
+        }
+    }
+
+    private func observeWeather(for location: SavedLocation) async {
+        for await dataState in weatherRepository.currentWeather(for: location) {
+            if Task.isCancelled {
+                return
+            }
+            state.weather = dataState.data ?? state.weather
+            state.isLoading = dataState.isLoading
+            state.isRefreshing = dataState.isRefreshing
+            state.isStale = dataState.isStale
+            state.error = dataState.error
+        }
+    }
+
+    private func observeForecast(for location: SavedLocation) async {
+        for await dataState in weatherRepository.forecast(for: location) {
+            if Task.isCancelled {
+                return
+            }
+            // Only the data. A failed forecast hides its section rather than warning about the
+            // whole screen.
+            state.forecast = dataState.data ?? state.forecast
         }
     }
 }
@@ -179,8 +209,15 @@ struct LocationDetailContent: View {
                             showsLocationName: false
                         )
 
+                        ForecastSections(state: state)
+
+                        SectionHeader("Conditions")
+
                         WeatherDetailGrid(
-                            details: weather.details(preferences: state.preferences)
+                            // Eight tiles rather than Today's six: dew point and length of day are
+                            // derived readings, and this is the screen someone opens because the
+                            // glance was not enough.
+                            details: weather.details(preferences: state.preferences, includeDerived: true)
                         )
 
                         Text("Observed \(weather.observedAt.formatted(date: .abbreviated, time: .shortened))")
@@ -208,6 +245,65 @@ struct LocationDetailContent: View {
         )
         .scrollEdgeEffectStyle(.soft, for: .all)
         .refreshable { await onRefresh() }
+    }
+}
+
+/// The hour-by-hour and day-by-day picture, when the forecast has arrived.
+///
+/// Silent when it has not, since the forecast and the current reading are separate requests.
+private struct ForecastSections: View {
+    let state: LocationDetailUiState
+
+    /// Enough to fill the strip without turning the top of the screen into a second Forecast tab.
+    private let hoursOnStrip = 8
+
+    var body: some View {
+        if let forecast = state.forecast {
+            let unit = state.preferences.temperatureUnit
+            let hours = state.upcomingHours(limit: hoursOnStrip)
+            let points = forecast.trendPoints(unit: unit)
+            let days = forecast.dayRanges(unit: unit)
+
+            if !hours.isEmpty {
+                // The detail screen shows only what is ahead, so it cannot borrow Today's
+                // "Through the day", the day may be nearly over.
+                HourlyStrip(
+                    hours: hours,
+                    timeZone: forecast.timeZone,
+                    unit: unit,
+                    title: "Next hours"
+                )
+                // The strip pads itself horizontally so it can scroll edge to edge; the rest of
+                // this screen is already inset, so that padding has to be taken back off.
+                .padding(.horizontal, -Spacing.md)
+            }
+
+            if points.count > 1 {
+                SectionHeader("Temperature trend")
+                TemperatureTrend(points: points, summary: forecast.trendSummary(unit: unit))
+            }
+
+            if !days.isEmpty {
+                SectionHeader("Next days")
+                DailyRangeList(days: days)
+            }
+        }
+    }
+}
+
+/// A section title, styled once so the screen's headings cannot drift apart.
+private struct SectionHeader: View {
+    let title: String
+
+    init(_ title: String) {
+        self.title = title
+    }
+
+    var body: some View {
+        Text(title)
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

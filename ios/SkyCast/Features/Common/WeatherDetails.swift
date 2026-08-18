@@ -10,7 +10,10 @@ import Foundation
 /// this function deliberately has none; on iOS a plain `String` literal is already a localisation
 /// key, so the indirection would buy nothing.
 extension Weather {
-    func details(preferences: UserPreferences) -> [WeatherDetail] {
+    /// - Parameter includeDerived: adds dew point and length of day. Off for Today, which stays a
+    ///   glance; on for the detail screen, which is where someone goes precisely because the
+    ///   glance was not enough.
+    func details(preferences: UserPreferences, includeDerived: Bool = false) -> [WeatherDetail] {
         let windUnit = preferences.windSpeedUnit
         let wind = windUnit.convertFromMetresPerSecond(windSpeedMetresPerSecond)
         // Beaufort is a force, not a speed: "5 Bft", never "5.0 Bft".
@@ -56,6 +59,27 @@ extension Weather {
             ),
             WeatherDetail(label: "Sunrise", value: localTime(sunrise), kind: .sunrise),
             WeatherDetail(label: "Sunset", value: localTime(sunset), kind: .sunset),
+        ] + (includeDerived ? derivedDetails(preferences: preferences) : [])
+    }
+
+    private func derivedDetails(preferences: UserPreferences) -> [WeatherDetail] {
+        let unit = preferences.temperatureUnit
+        let dewPoint = unit.convertFromCelsius(dewPointCelsius)
+        return [
+            WeatherDetail(
+                label: "Dew point",
+                value: "\(Int(dewPoint.rounded()))\(unit.symbol)",
+                kind: .dewPoint,
+                // Measured against the air temperature: a dew point close to it is what "muggy"
+                // actually means, and a nearly-full bar says so without the meteorology.
+                fraction: dewPointCelsius / temperatureCelsius
+            ),
+            WeatherDetail(
+                label: "Daylight",
+                value: daylightDuration.hoursAndMinutes,
+                kind: .daylight,
+                fraction: daylightDuration / Self.secondsInADay
+            ),
         ]
     }
 
@@ -75,6 +99,17 @@ extension Weather {
     private static let lowPressureHpa = 950.0
     private static let pressureRangeHpa = 130.0
     private static let clearVisibilityMetres = 10_000.0
+
+    /// The scale the daylight indicator reads against: a full 24 hours of sun.
+    private static let secondsInADay: TimeInterval = 24 * 60 * 60
+}
+
+private extension TimeInterval {
+    /// "14h 28m", rather than a count of seconds.
+    var hoursAndMinutes: String {
+        let minutes = Int(self / 60)
+        return "\(minutes / 60)h \(minutes % 60)m"
+    }
 }
 
 private extension Double {
