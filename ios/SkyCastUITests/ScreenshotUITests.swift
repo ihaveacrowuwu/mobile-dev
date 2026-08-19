@@ -71,10 +71,15 @@ final class ScreenshotUITests: XCTestCase {
         try capture("02-metar")
 
         selectTab(.moon)
-        // The phase drawing settles instantly, it is computed, not fetched, but the tab transition
-        // itself needs a beat before the capture.
-        settle(seconds: 2)
+        // The phase drawing settles instantly, it is computed, not fetched, but the aurora card
+        // below it reads NOAA's Kp forecast, so this waits like the METAR tab does. Capturing after
+        // two seconds stored a Moon page with no aurora card: a screenshot missing a feature.
+        settle(seconds: 8)
         try capture("11-moon")
+        // The aurora card is below the fold, since the phase drawing is large, so it gets its own
+        // capture rather than being squeezed into the Moon page shot.
+        scrollDown()
+        try capture("12-aurora")
         // The day-detail screen is now reached from a place's detail screen, captured below.
 
         selectTab(.locations)
