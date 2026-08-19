@@ -86,9 +86,10 @@ struct CurrentConditionsHero: View {
         //
         // Vertical padding only. The horizontal inset comes from the page, so the reading stays
         // aligned with the strip and tiles beneath it rather than sitting in its own margin.
-        // Less above than below: the pinned header already sits directly over this, so a full
-        // `Spacing.lg` on top read as a gap between the pill and the icon rather than as breathing room.
-        .padding(.top, Spacing.xs)
+        // Sized so the pill-to-icon gap matches the icon-to-temperature one, which measures 44 points:
+        // the icon and the temperature are only 8 apart in layout terms, and the rest of that gap is the
+        // whitespace above a very large glyph. Matching it by eye needs real space here.
+        .padding(.top, Spacing.xl)
         .padding(.bottom, Spacing.lg)
     }
 }

@@ -88,9 +88,11 @@ private struct SkyGlassModifier: ViewModifier {
         case .badge:
             EdgeInsets(top: Spacing.md, leading: Spacing.md, bottom: Spacing.md, trailing: Spacing.md)
         case .control:
-            // Tighter vertically than a badge and wider horizontally: a capsule around a row of dots
-            // needs room either side or it reads as a chip clamped to them.
-            EdgeInsets(top: Spacing.xs, leading: Spacing.md, bottom: Spacing.xs, trailing: Spacing.md)
+            // **Zero**, and the caller sizes the control instead. Padding here put an inert margin around
+            // the control it wrapped: the capsule looked draggable across its whole width, but only the
+            // dots themselves were inside `UIPageControl`, so a drag that began on the glass did nothing.
+            // A control has to own every pixel that looks like part of it.
+            EdgeInsets()
         }
     }
 }

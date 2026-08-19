@@ -41,15 +41,18 @@ struct HomeStickyHeader: View {
                     selection: Binding(get: { state.selectedIndex }, set: onSelectPage),
                     announcement: "Showing \(current.name), \(state.selectedIndex + 1) of \(state.pages.count)"
                 )
-                // Sized to its content rather than stretched, so the capsule hugs the dots.
+                // Sized to the whole capsule, not to the dots. The glass adds no padding of its own
+                // (see `GlassRole.control`), so every pixel that looks like the control *is* the control,
+                // a drag starting anywhere inside it scrubs, rather than only one starting on a dot.
                 .frame(width: scrubberWidth, height: Self.scrubberHeight)
                 .skyGlass(.control)
             }
         }
         .padding(.top, Spacing.xs)
-        // Tight at the bottom: this is what sets the gap between the pill and the weather icon below it,
-        // and the page adds its own padding underneath.
-        .padding(.bottom, Spacing.xxs)
+        // Part of the gap down to the weather icon; the hero supplies the rest. Measured against the gap
+        // between the icon and the temperature, 44 points, so the reading sits in evenly spaced bands
+        // rather than with the pill crowding the icon.
+        .padding(.bottom, Spacing.sm)
         .frame(maxWidth: .infinity)
         // No background of its own. The page's weather already runs behind this, and a bar would put an
         // opaque strip across the top of the one screen built to have content pass under its chrome.
@@ -62,11 +65,14 @@ struct HomeStickyHeader: View {
     private static let menuClearance: CGFloat = 52
 
     /// `UIPageControl` reports an intrinsic width, but inside a capsule it stretched to fill the row.
-    /// Measured from the control's own metrics: roughly 18 points per dot.
+    /// Roughly 18 points per dot, plus a margin at each end that is now part of the control rather than
+    /// dead glass around it, the dots stay centred, and the extra width is all draggable.
     private var scrubberWidth: CGFloat {
-        CGFloat(state.pages.count) * Self.scrubberDotSpacing
+        CGFloat(state.pages.count) * Self.scrubberDotSpacing + Self.scrubberEndInset * 2
     }
 
     private static let scrubberDotSpacing: CGFloat = 18
-    private static let scrubberHeight: CGFloat = 28
+    private static let scrubberEndInset: CGFloat = Spacing.md
+    /// 44 points, which is the minimum touch target, and this is a control people drag along.
+    private static let scrubberHeight: CGFloat = 44
 }
