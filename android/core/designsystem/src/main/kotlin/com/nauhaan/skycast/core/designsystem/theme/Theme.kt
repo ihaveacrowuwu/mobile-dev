@@ -68,16 +68,20 @@ fun SkyCastTheme(
 /**
  * The dark scheme, forced, for a screen that is a night sky whichever theme the phone is in.
  *
- * The Moon tab's background is a starfield, it has to be dark, because moonlight only reads as
- * moonlight against a dark ground. That makes every colour role inside it wrong in the light theme:
- * `onSurface` would be near-black text on a near-black sky, and the frosted cards would try to be pale.
+ * The Moon tab's background is a starfield, so every colour role inside it must resolve against a
+ * dark ground. Providing the dark scheme for that subtree does all of them at once.
  *
- * Providing the dark scheme for that subtree fixes all of them at once, and is why this is a theme
- * rather than a handful of hardcoded white text colours. Dynamic colour is deliberately skipped: the
- * user's wallpaper has no say over what the night sky looks like.
+ * [enabled] exists for the shell, which wraps the navigation bar in this whenever the Moon tab is
+ * showing and leaves it alone otherwise.
+ *
+ * Dynamic colour is skipped here, so the wallpaper does not tint the night sky.
  */
 @Composable
-fun NightSkyTheme(content: @Composable () -> Unit) {
+fun NightSkyTheme(enabled: Boolean = true, content: @Composable () -> Unit) {
+    if (!enabled) {
+        content()
+        return
+    }
     CompositionLocalProvider(
         LocalWeatherPalette provides DarkWeatherPalette,
         // `LocalContentColor` too, and it is not redundant: `MaterialTheme` sets the *scheme*, while the

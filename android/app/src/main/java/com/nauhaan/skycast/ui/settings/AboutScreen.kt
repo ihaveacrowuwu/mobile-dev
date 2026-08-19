@@ -64,6 +64,13 @@ fun AboutScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
                 headlineContent = { Text(stringResource(R.string.about_data_source)) },
                 supportingContent = { Text(stringResource(R.string.about_data_url)) },
             )
+            // NOAA's data is public domain and needs no attribution clause honoured. Credited anyway:
+            // two of the app's three sources are theirs, and a screen that names only one of them
+            // reads as though the other two came from nowhere.
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.about_data_source_noaa)) },
+                supportingContent = { Text(stringResource(R.string.about_data_url_noaa)) },
+            )
             HorizontalDivider()
 
             SectionHeading(stringResource(R.string.about_licences_heading))

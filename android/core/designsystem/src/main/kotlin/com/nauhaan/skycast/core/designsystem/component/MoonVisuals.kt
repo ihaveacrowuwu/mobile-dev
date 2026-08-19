@@ -212,7 +212,7 @@ fun NightSkyPanel(
 fun Modifier.nightSky(): Modifier = drawBehind {
     drawRect(
         brush = Brush.verticalGradient(
-            colors = listOf(Zenith, Horizon),
+            colors = listOf(Zenith, NightSkyHorizon),
             startY = 0f,
             endY = size.height,
         ),
@@ -324,7 +324,14 @@ private val MareTint = Color(0xFF6B6D78)
 private val Limb = Color(0x2EFFFFFF)
 private val Glow = Color(0xFFD9E3FF)
 private val Zenith = Color(0xFF0D0F24)
-private val Horizon = Color(0xFF1C2140)
+
+/**
+ * The sky where it meets the bottom of the screen.
+ *
+ * Public because the navigation bar has to sit on it. A bar in the theme's own surface colour under a
+ * full-page night sky reads as a light strip pasted over the bottom of the sky, which is what it is.
+ */
+val NightSkyHorizon = Color(0xFF1C2140)
 private val RingStart = Color(0xFF737FD9)
 private val RingMid = Color(0xFFF2F0DC)
 

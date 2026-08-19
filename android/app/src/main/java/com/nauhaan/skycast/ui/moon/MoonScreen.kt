@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nauhaan.skycast.R
+import com.nauhaan.skycast.core.designsystem.component.AuroraCard
 import com.nauhaan.skycast.core.designsystem.component.LoadingView
 import com.nauhaan.skycast.core.designsystem.component.LunarCycleRing
 import com.nauhaan.skycast.core.designsystem.component.MetricGauge
@@ -77,8 +78,13 @@ fun MoonScreen(modifier: Modifier = Modifier, viewModel: MoonViewModel = hiltVie
 internal fun MoonContent(uiState: MoonUiState, modifier: Modifier = Modifier) {
     // The sky is the screen, not a card on it, and everything inside it is themed dark so text and
     // cards are legible against it in either app theme. See NightSkyTheme.
+    //
+    // The sky itself is painted by `RootScreen`, not here. This composable sits below the status bar,
+    // so painting the gradient here left a strip of the shell's daytime background above it, a
+    // full-page background that stopped short of the top of the page. Page backgrounds are the shell's
+    // job for exactly that reason; it already owns `WeatherBackground` for every other tab.
     NightSkyTheme {
-        Box(modifier = modifier.fillMaxSize().nightSky()) {
+        Box(modifier = modifier.fillMaxSize()) {
             val snapshot = uiState.snapshot
             if (snapshot == null) {
                 LoadingView(message = stringResource(R.string.moon_loading))
@@ -101,6 +107,18 @@ internal fun MoonContent(uiState: MoonUiState, modifier: Modifier = Modifier) {
 
                 SectionHeading(stringResource(R.string.moon_distance))
                 MoonDistanceCard(snapshot = snapshot)
+
+                // The aurora belongs on this page rather than on Home: it is a night-sky event, and this is
+                // the night-sky screen. It is also the one thing here that is fetched, so it appears only once
+                // NOAA's reading has arrived, see `MoonViewModel.space`.
+                val space = uiState.spaceWeather
+                val location = uiState.location
+                if (space != null && location != null) {
+                    auroraReading(location, space)?.let { reading ->
+                        SectionHeading(stringResource(R.string.aurora_section))
+                        AuroraCard(reading = reading)
+                    }
+                }
 
                 SectionHeading(stringResource(R.string.moon_coming_up))
                 UpcomingPhasesCard(phases = snapshot.upcomingPhases, zone = uiState.zone)
@@ -411,7 +429,7 @@ private fun Instant?.formatTime(zone: ZoneId): String =
 /** 24-hour, matching iOS, so a side-by-side comparison differs only where the platforms do. */
 private val TimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val DateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM, HH:mm")
-private const val Placeholder = ""
+private const val Placeholder = "N/A"
 
 /** Any progress outside 0…1 hides the marker, which is the honest drawing when the Moon is down. */
 private const val BelowHorizon = -1f
@@ -425,16 +443,20 @@ private const val TertiaryAlpha = 0.65f
 @Composable
 private fun MoonScreenPreview() {
     SkyCastTheme {
-        MoonContent(
-            uiState = MoonUiState(
-                snapshot = MoonCalculator.snapshot(
-                    instant = Instant.parse("2026-08-18T20:00:00Z"),
-                    latitude = 51.5074,
-                    longitude = -0.1278,
+        // The sky comes from `RootScreen` at runtime, so the preview supplies its own. Without it
+        // this renders dark-themed cards on a white page, which is not what the screen looks like.
+        Box(modifier = Modifier.fillMaxSize().nightSky()) {
+            MoonContent(
+                uiState = MoonUiState(
+                    snapshot = MoonCalculator.snapshot(
+                        instant = Instant.parse("2026-08-18T20:00:00Z"),
+                        latitude = 51.5074,
+                        longitude = -0.1278,
+                        zone = ZoneOffset.UTC,
+                    ),
                     zone = ZoneOffset.UTC,
                 ),
-                zone = ZoneOffset.UTC,
-            ),
-        )
+            )
+        }
     }
 }

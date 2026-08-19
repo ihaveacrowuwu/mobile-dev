@@ -259,12 +259,53 @@ final class PersistentMetar {
     }
 }
 
+/// The cached space-weather reading, **one row, always**.
+///
+/// Unlike every other model here, this is not per location: Kp describes the whole planet's magnetic field, so a
+/// second row could only ever be a stale copy of the first. The uniqueness constraint is on a constant, which is
+/// what makes a write an upsert onto the single row.
+///
+/// The forecast periods are stored as one encoded string for the same reason ``PersistentMetar`` encodes its
+/// cloud layers: they are read and written only as a whole, never queried, and a second model plus a
+/// relationship would be structure with no purpose. Format is `epochSeconds:kp:storm` triples separated by `;`.
+@Model
+final class PersistentSpaceWeather {
+    #Unique<PersistentSpaceWeather>([\.id])
+
+    /// There is only one field around the Earth, so there is only one row.
+    var id: Int
+    var kpNow: Double
+    var observedAt: Date
+    var stormLevel: String?
+    var upcoming: String
+    var cachedAt: Date
+
+    init(
+        id: Int = PersistentSpaceWeather.singletonID,
+        kpNow: Double,
+        observedAt: Date,
+        stormLevel: String?,
+        upcoming: String,
+        cachedAt: Date
+    ) {
+        self.id = id
+        self.kpNow = kpNow
+        self.observedAt = observedAt
+        self.stormLevel = stormLevel
+        self.upcoming = upcoming
+        self.cachedAt = cachedAt
+    }
+
+    static let singletonID = 1
+}
+
 enum ModelContainerFactory {
     static let schema = Schema([
         PersistentSavedLocation.self,
         PersistentWeather.self,
         PersistentForecastReading.self,
         PersistentMetar.self,
+        PersistentSpaceWeather.self,
     ])
 
     /// The on-disk container used by the app.

@@ -161,3 +161,31 @@ data class CachedMetarEntity(
     @ColumnInfo(name = "raw") val raw: String,
     @ColumnInfo(name = "cached_at") val cachedAtEpochSeconds: Long,
 )
+
+/**
+ * The cached space-weather reading, **one row, always**.
+ *
+ * Unlike every other cache here, this is not per location: Kp describes the whole planet's magnetic field, so
+ * a second row could only ever be a stale copy of the first. The primary key is therefore a constant, and
+ * writing is an upsert onto it.
+ *
+ * The forecast periods are stored as a single encoded string for the same reason `CachedMetarEntity` encodes
+ * its cloud layers: a child table for a handful of values that are always read together, always replaced
+ * together and never queried on their own would be a join to maintain and nothing gained.
+ */
+@Entity(tableName = "cached_space_weather")
+data class CachedSpaceWeatherEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "id") val id: Int = SINGLETON_ID,
+    @ColumnInfo(name = "kp_now") val kpNow: Double,
+    @ColumnInfo(name = "observed_at") val observedAt: Long,
+    @ColumnInfo(name = "storm_level") val stormLevel: String?,
+    /** `epochSeconds:kp:storm;…`, oldest first. See the note above. */
+    @ColumnInfo(name = "upcoming") val upcoming: String,
+    @ColumnInfo(name = "cached_at") val cachedAt: Long,
+) {
+    companion object {
+        /** There is only one field around the Earth, so there is only one row. */
+        const val SINGLETON_ID = 1
+    }
+}

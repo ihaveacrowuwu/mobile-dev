@@ -7,6 +7,7 @@ import com.nauhaan.skycast.data.local.Migrations
 import com.nauhaan.skycast.data.local.SkyCastDatabase
 import com.nauhaan.skycast.data.local.dao.MetarCacheDao
 import com.nauhaan.skycast.data.local.dao.SavedLocationDao
+import com.nauhaan.skycast.data.local.dao.SpaceWeatherCacheDao
 import com.nauhaan.skycast.data.local.dao.WeatherCacheDao
 import dagger.Module
 import dagger.Provides
@@ -34,7 +35,12 @@ object DatabaseModule {
         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
         // NO fallbackToDestructiveMigration(): it would delete the user's saved locations on an
         // app update. See Migrations.
-        .addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3, Migrations.MIGRATION_3_4)
+        .addMigrations(
+            Migrations.MIGRATION_1_2,
+            Migrations.MIGRATION_2_3,
+            Migrations.MIGRATION_3_4,
+            Migrations.MIGRATION_4_5,
+        )
         .build()
 
     @Provides
@@ -45,4 +51,7 @@ object DatabaseModule {
 
     @Provides
     fun provideMetarCacheDao(database: SkyCastDatabase): MetarCacheDao = database.metarCacheDao()
+
+    @Provides
+    fun provideSpaceWeatherCacheDao(database: SkyCastDatabase): SpaceWeatherCacheDao = database.spaceWeatherCacheDao()
 }

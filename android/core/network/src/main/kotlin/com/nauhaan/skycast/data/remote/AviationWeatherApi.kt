@@ -10,7 +10,7 @@ import retrofit2.http.Query
  * A second data source, and the reason is that OpenWeather has no METAR: the format is issued by
  * airports and distributed by national weather services, so an aviation observation has to come
  * from an aviation source. This one needs **no API key**, which is also why it gets its own OkHttp
- * client, see `NetworkModule.provideAviationOkHttpClient`.
+ * client, see `NoaaNetworkModule.provideNoaaOkHttpClient`.
  *
  * There is no "nearest station" endpoint, so the query is a bounding box around the location and the
  * nearest is chosen locally in `MetarMapper`.

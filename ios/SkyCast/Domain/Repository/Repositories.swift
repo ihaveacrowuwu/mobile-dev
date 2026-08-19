@@ -114,12 +114,23 @@ protocol SettingsRepository: AnyObject {
     func reset()
 }
 
-/// The nearest airport's METAR for a saved location, offline-first.
+/// The state of the Earth's magnetic field, offline-first.
 ///
-/// Same contract as ``WeatherRepository``: emit the cache immediately, then attempt a refresh, and
-/// never discard a cached observation because the network failed. A METAR an hour old is still a real
-/// observation, arguably more clearly so than a current-conditions reading, since it carries the
-/// time it was taken.
+/// Same contract as the others: yield the cache immediately, then attempt a refresh, and never
+/// discard a cached reading because the network failed. **There is no location parameter.** Kp is a
+/// property of the planet, so one reading serves every saved place, and the calculation that makes
+/// it local to a place happens on the device (``AuroraCalculator``).
+protocol SpaceWeatherRepository: Sendable {
+    func spaceWeather() -> AsyncStream<DataState<SpaceWeather>>
+
+    /// Forces a fetch, bypassing the TTL. Returns the error, or `nil` on success.
+    @discardableResult
+    func refresh() async -> AppError?
+
+    /// Drops the cached reading. Called from Settings alongside the weather cache.
+    func clearCache() async
+}
+
 /// The nearest airport's METAR for a saved location, offline-first.
 ///
 /// Same contract as ``WeatherRepository``: emit the cache immediately, then attempt a refresh, and

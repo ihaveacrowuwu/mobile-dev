@@ -10,6 +10,7 @@ import com.nauhaan.skycast.domain.model.VisibilityUnit
 import com.nauhaan.skycast.domain.model.WindSpeedUnit
 import com.nauhaan.skycast.domain.repository.MetarRepository
 import com.nauhaan.skycast.domain.repository.SettingsRepository
+import com.nauhaan.skycast.domain.repository.SpaceWeatherRepository
 import com.nauhaan.skycast.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +38,7 @@ constructor(
     private val settingsRepository: SettingsRepository,
     private val weatherRepository: WeatherRepository,
     private val metarRepository: MetarRepository,
+    private val spaceWeatherRepository: SpaceWeatherRepository,
 ) : ViewModel() {
     val uiState: StateFlow<SettingsUiState> =
         settingsRepository
@@ -79,9 +81,10 @@ constructor(
      */
     fun clearCache() = viewModelScope.launch {
         weatherRepository.clearCache()
-        // Both caches, or the button is a half-truth: the METAR is cached in its own table and would
-        // survive a "clear cache" that only touched the weather one.
+        // Every cache, or the button is a half-truth: the METAR and the Kp reading live in their own
+        // tables and would survive a "clear cache" that only touched the weather one.
         metarRepository.clearCache()
+        spaceWeatherRepository.clearCache()
     }
 
     private companion object {

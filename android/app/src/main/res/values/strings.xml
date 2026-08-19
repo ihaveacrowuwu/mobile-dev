@@ -3,7 +3,7 @@
   Every user-facing string lives here. Never hardcode display text in a composable:
   it makes the app untranslatable, and it hides copy from review.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">SkyCast</string>
 
     <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
@@ -43,7 +43,7 @@
     <string name="home_showing_location">Showing %1$s, %2$d of %3$d</string>
 
     <!-- ── Banners ──────────────────────────────────────────────────────── -->
-    <string name="banner_data_may_be_out_of_date">Showing saved data, it may be out of date.</string>
+    <string name="banner_data_may_be_out_of_date">Showing saved data. It may be out of date.</string>
 
     <!-- ── Errors ───────────────────────────────────────────────────────── -->
     <string name="error_offline_title">No internet connection</string>
@@ -59,7 +59,7 @@
     <string name="error_server_title">Service unavailable</string>
     <string name="error_server_message">The weather service is having problems. Please try again shortly.</string>
     <string name="error_decoding_title">Unexpected response</string>
-    <string name="error_decoding_message">We couldn\'t read the weather data. This is a bug, please report it.</string>
+    <string name="error_decoding_message">We couldn\'t read the weather data. This is a bug. Please report it.</string>
     <string name="error_storage_title">Storage problem</string>
     <string name="error_storage_message">Saved data couldn\'t be read. Clearing the cache in Settings may help.</string>
     <string name="error_location_limit_title">That is as many places as SkyCast holds</string>
@@ -109,7 +109,7 @@
     <!--
       Plurals rather than plain strings: both carry a count followed by a word, and Android Lint
       correctly refuses that as a string because most languages inflect it even where English does
-      not. "Percent" happens not to, so both quantities read alike, the point is that a translator
+      not. "Percent" happens not to, so both quantities read alike, and a translator
       is given the choice.
     -->
     <plurals name="detail_trend_description">
@@ -139,7 +139,7 @@
     <string name="metar_section_sky">Sky</string>
     <string name="metar_section_wind">Wind</string>
     <string name="metar_section_derived">Worked out from the report</string>
-    <string name="metar_sky_clear">No cloud reported, a clear sky above the field.</string>
+    <string name="metar_sky_clear">No cloud reported: a clear sky above the field.</string>
     <string name="metar_sky_no_ceiling">Cloud reported, but no ceiling: nothing broken or overcast.</string>
     <string name="metar_wind_knots">%1$d kt</string>
     <string name="metar_wind_variable_direction">Variable direction</string>
@@ -159,7 +159,7 @@
     <string name="metar_category_unknown_meaning">This report did not include a flight category.</string>
     <string name="metar_loading">Finding the nearest reporting airport…</string>
     <string name="metar_none_title">No airport reporting nearby</string>
-    <string name="metar_none_message">METARs are issued by airports. There is no station reporting near this place, try one closer to an airport.</string>
+    <string name="metar_none_message">METARs are issued by airports. There is no station reporting near this place. Try one closer to an airport.</string>
     <string name="metar_empty_title">No locations yet</string>
     <string name="metar_empty_message">Add a place and SkyCast will show the nearest airport\'s report.</string>
     <string name="metar_observed">Observed %1$s · %2$s ago</string>
@@ -186,8 +186,8 @@
     <string name="locations_empty_title">No saved places</string>
     <string name="locations_empty_message">Search for a city to start tracking its weather.</string>
     <!-- %1$s is the place name, so TalkBack says which row the control belongs to. -->
-    <string name="locations_set_primary">Make %1$s the favourite, the app will open here</string>
-    <string name="locations_is_primary">%1$s is the favourite, the app opens here</string>
+    <string name="locations_set_primary">Make %1$s the favourite, so the app opens here</string>
+    <string name="locations_is_primary">%1$s is the favourite, so the app opens here</string>
     <string name="locations_delete">Remove %1$s</string>
 
     <!-- ── Add location (search) ────────────────────────────────────────── -->
@@ -202,7 +202,7 @@
     <string name="detail_day_title">Day details</string>
     <string name="detail_missing_title">Place no longer saved</string>
     <string name="detail_missing_message">It looks like this location was removed. Go back to see your list.</string>
-    <!-- Latitude, longitude. Four decimal places is roughly 11 m: more precision than a city needs. -->
+    <!-- Latitude, longitude. Four decimal places is roughly 11 m, more precision than a city needs. -->
     <string name="detail_coordinates">%1$.4f, %2$.4f</string>
     <string name="detail_observed_at">Observed %1$s</string>
 
@@ -222,6 +222,8 @@
     <!-- ── About &amp; licences (MO4) ──────────────────────────────────────── -->
     <string name="about_data_heading">Data</string>
     <string name="about_data_source">Weather data provided by OpenWeather</string>
+    <string name="about_data_source_noaa">Aviation observations and space weather from NOAA</string>
+    <string name="about_data_url_noaa">aviationweather.gov · swpc.noaa.gov</string>
     <string name="about_data_url">openweathermap.org</string>
     <string name="about_licences_heading">Licences</string>
     <string name="about_build_heading">Build</string>
@@ -232,6 +234,19 @@
 
     <!-- Moon tab. Every value on this screen is computed on the device. -->
     <string name="moon_loading">Working out where the Moon is…</string>
+    <string name="aurora_section">Aurora</string>
+    <string name="aurora_none">Not tonight</string>
+    <string name="aurora_faint">A faint chance, for a camera</string>
+    <string name="aurora_possible">Worth looking north</string>
+    <string name="aurora_likely">Aurora likely tonight</string>
+    <string name="aurora_overhead">Aurora overhead tonight</string>
+    <!-- Kp is an index on a fixed 0–9 scale, like a hurricane category. It never pluralises. -->
+    <string name="aurora_detail_look_north" tools:ignore="PluralsCandidate">The oval reaches %1$s tonight. It needs Kp %2$d here, and the field is disturbed enough. Look north, away from streetlights.</string>
+    <!-- Kp is an index on a fixed 0–9 scale, like a hurricane category. It never pluralises. -->
+    <string name="aurora_detail_needs_more" tools:ignore="PluralsCandidate">%1$s needs Kp %2$d before the aurora reaches this far. Tonight peaks at Kp %3$s.</string>
+    <string name="aurora_kp_now">Now Kp %1$s</string>
+    <string name="aurora_kp_now_storm">Now Kp %1$s · %2$s storm</string>
+    <string name="aurora_kp_peak">Tonight up to Kp %1$s</string>
     <string name="moon_tonight">Tonight</string>
     <string name="moon_distance">Distance</string>
     <string name="moon_coming_up">Coming up</string>
@@ -245,11 +260,11 @@
     <string name="moon_path_description">Moon rises at %1$s, sets at %2$s, %3$s</string>
     <string name="moon_distance_km">%1$,d km</string>
     <string name="moon_apparent_width">Apparent width %1$.2f°</string>
-    <string name="moon_distance_very_close">Unusually close, it will look large</string>
+    <string name="moon_distance_very_close">Unusually close: it will look large</string>
     <string name="moon_distance_closer">Closer than average</string>
     <string name="moon_distance_average">About average distance</string>
     <string name="moon_distance_further">Further than average</string>
-    <string name="moon_distance_very_far">Unusually far, it will look small</string>
+    <string name="moon_distance_very_far">Unusually far: it will look small</string>
     <string name="moon_phase_new">New moon</string>
     <string name="moon_phase_waxing_crescent">Waxing crescent</string>
     <string name="moon_phase_first_quarter">First quarter</string>
@@ -270,7 +285,7 @@
         <item quantity="one">in %1$d day</item>
         <item quantity="other">in %1$d days</item>
     </plurals>
-    <string name="error_location_limit_message">The list is full, SkyCast holds a maximum of %1$d. Remove one on the Locations tab to make room.</string>
+    <string name="error_location_limit_message">The list is full. SkyCast holds a maximum of %1$d. Remove one on the Locations tab to make room.</string>
     <plurals name="locations_limit_reached">
         <item quantity="one">%1$d place saved, which is the maximum. Remove it to add another.</item>
         <item quantity="other">All %1$d places saved. Remove one to add another.</item>

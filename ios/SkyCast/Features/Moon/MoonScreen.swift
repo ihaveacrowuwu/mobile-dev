@@ -12,6 +12,10 @@ import SwiftUI
 struct MoonUiState: Equatable {
     var snapshot: MoonSnapshot?
     var location: SavedLocation?
+    /// The state of the magnetic field, when it has been read.
+    ///
+    /// The only fetched value on this screen, so the card it feeds does not appear until it arrives.
+    var spaceWeather: SpaceWeather?
     /// The place's own zone, so "moonrise 20:47" is 20:47 *there*. Falls back to the device's zone
     /// until the cached weather that carries the offset has been read.
     var timeZone: TimeZone = .current
@@ -39,20 +43,24 @@ final class MoonViewModel {
 
     private let locationRepository: any LocationRepository
     private let weatherRepository: any WeatherRepository
+    private let spaceWeatherRepository: any SpaceWeatherRepository
     private let selectedLocationStore: SelectedLocationStore
     private let clock: () -> Date
 
     private var observationTask: Task<Void, Never>?
     private var tickTask: Task<Void, Never>?
+    private var spaceTask: Task<Void, Never>?
 
     init(
         locationRepository: any LocationRepository,
         weatherRepository: any WeatherRepository,
+        spaceWeatherRepository: any SpaceWeatherRepository,
         selectedLocationStore: SelectedLocationStore,
         clock: @escaping () -> Date = { .now }
     ) {
         self.locationRepository = locationRepository
         self.weatherRepository = weatherRepository
+        self.spaceWeatherRepository = spaceWeatherRepository
         self.selectedLocationStore = selectedLocationStore
         self.clock = clock
     }
@@ -64,6 +72,7 @@ final class MoonViewModel {
         recompute()
         observationTask = Task { await observe() }
         tickTask = Task { await tick() }
+        spaceTask = Task { await observeSpaceWeather() }
     }
 
     func stop() {
@@ -71,6 +80,8 @@ final class MoonViewModel {
         observationTask = nil
         tickTask?.cancel()
         tickTask = nil
+        spaceTask?.cancel()
+        spaceTask = nil
     }
 
     /// Re-reads the primary location, which may have changed on the Locations tab.
@@ -102,6 +113,21 @@ final class MoonViewModel {
             state.isLoading = dataState.isLoading
         }
         state.isLoading = false
+    }
+
+    /// Reads Kp, and keeps whatever arrives.
+    ///
+    /// A failure is silent: the aurora card is additive. The repository keeps its cache on failure,
+    /// so an offline reader still gets last night's figure.
+    private func observeSpaceWeather() async {
+        for await dataState in spaceWeatherRepository.spaceWeather() {
+            if Task.isCancelled {
+                return
+            }
+            if let weather = dataState.data {
+                state.spaceWeather = weather
+            }
+        }
     }
 
     /// Recomputes every minute, which is the smallest quantity shown on screen.
@@ -153,6 +179,7 @@ struct MoonScreen: View {
                 viewModel = MoonViewModel(
                     locationRepository: container.locationRepository,
                     weatherRepository: container.weatherRepository,
+                    spaceWeatherRepository: container.spaceWeatherRepository,
                     selectedLocationStore: container.selectedLocationStore
                 )
                 viewModel?.start()
@@ -185,6 +212,16 @@ struct MoonContent: View {
 
                     SectionHeading("Distance")
                     MoonDistanceCard(snapshot: snapshot)
+
+                    // The one fetched value on this page, so it appears only once NOAA's reading
+                    // has arrived.
+                    if let weather = state.spaceWeather,
+                       let location = state.location,
+                       let aurora = auroraReading(for: location, weather: weather)
+                    {
+                        SectionHeading("Aurora")
+                        AuroraCard(reading: aurora)
+                    }
 
                     SectionHeading("Coming up")
                     UpcomingPhasesCard(phases: snapshot.upcomingPhases, timeZone: state.timeZone)

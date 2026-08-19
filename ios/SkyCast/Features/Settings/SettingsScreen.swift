@@ -128,6 +128,12 @@ struct AboutScreen: View {
             Section("Data") {
                 Text("Weather data provided by OpenWeather.")
                 Link("openweathermap.org", destination: URL(string: "https://openweathermap.org")!)
+                // NOAA's data is public domain and needs no attribution clause honoured. Credited
+                // anyway: two of the app's three sources are theirs, and a screen that names only one
+                // of them reads as though the other two came from nowhere.
+                Text("Aviation observations and space weather from NOAA.")
+                Link("aviationweather.gov", destination: URL(string: "https://aviationweather.gov")!)
+                Link("swpc.noaa.gov", destination: URL(string: "https://www.swpc.noaa.gov")!)
             }
             Section("Licences") {
                 // iOS has no third-party runtime dependencies. Anything added must be listed in

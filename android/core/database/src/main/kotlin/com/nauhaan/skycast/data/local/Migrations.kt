@@ -112,6 +112,30 @@ internal object Migrations {
         }
     }
 
+    /**
+     * Adds the single-row space-weather cache.
+     *
+     * No foreign key and no location column: Kp belongs to the planet, so this table has exactly one row and
+     * nothing to cascade from. Additive, so nothing has to be rebuilt.
+     */
+    val MIGRATION_4_5 = object : Migration(VERSION_4, VERSION_5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `cached_space_weather` (
+                    `id` INTEGER NOT NULL,
+                    `kp_now` REAL NOT NULL,
+                    `observed_at` INTEGER NOT NULL,
+                    `storm_level` TEXT,
+                    `upcoming` TEXT NOT NULL,
+                    `cached_at` INTEGER NOT NULL,
+                    PRIMARY KEY(`id`)
+                )
+                """.trimIndent(),
+            )
+        }
+    }
+
     private fun rebuildCachedWeather(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
@@ -212,4 +236,5 @@ internal object Migrations {
     private const val VERSION_2 = 2
     private const val VERSION_3 = 3
     private const val VERSION_4 = 4
+    private const val VERSION_5 = 5
 }

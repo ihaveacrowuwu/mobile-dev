@@ -15,6 +15,7 @@ final class AppContainer {
     let modelContainer: ModelContainer
     let weatherRepository: any WeatherRepository
     let metarRepository: any MetarRepository
+    let spaceWeatherRepository: any SpaceWeatherRepository
     let locationRepository: any LocationRepository
     let settingsStore: SettingsStore
     /// Which place the non-Home tabs follow. See ``SelectedLocationStore``.
@@ -24,12 +25,14 @@ final class AppContainer {
         modelContainer: ModelContainer,
         weatherRepository: any WeatherRepository,
         metarRepository: any MetarRepository,
+        spaceWeatherRepository: any SpaceWeatherRepository,
         locationRepository: any LocationRepository,
         settingsStore: SettingsStore
     ) {
         self.modelContainer = modelContainer
         self.weatherRepository = weatherRepository
         self.metarRepository = metarRepository
+        self.spaceWeatherRepository = spaceWeatherRepository
         self.locationRepository = locationRepository
         self.settingsStore = settingsStore
     }
@@ -68,6 +71,12 @@ final class AppContainer {
                 local: local,
                 networkMonitor: monitor
             ),
+            spaceWeatherRepository: SpaceWeatherRepositoryImpl(
+                // Its own client too, for the same reason. See SpaceWeatherAPIClient.
+                api: SpaceWeatherAPIClient(),
+                local: local,
+                networkMonitor: monitor
+            ),
             locationRepository: LocationRepositoryImpl(api: api, local: local),
             settingsStore: SettingsStore()
         )
@@ -94,6 +103,11 @@ final class AppContainer {
             ),
             metarRepository: MetarRepositoryImpl(
                 api: AviationAPIClient(),
+                local: local,
+                networkMonitor: monitor
+            ),
+            spaceWeatherRepository: SpaceWeatherRepositoryImpl(
+                api: SpaceWeatherAPIClient(),
                 local: local,
                 networkMonitor: monitor
             ),

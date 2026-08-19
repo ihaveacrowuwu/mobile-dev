@@ -203,6 +203,26 @@ actor LocalDataStore {
         try modelContext.save()
     }
 
+    // MARK: - Space weather cache
+
+    /// The single cached reading, or `nil` if none has been stored.
+    ///
+    /// No location parameter, unlike every other read here: Kp is a property of the planet.
+    func cachedSpaceWeather() throws -> SpaceWeather? {
+        var descriptor = FetchDescriptor<PersistentSpaceWeather>()
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first.map(SpaceWeatherPersistence.spaceWeather(from:))
+    }
+
+    /// Upsert onto the single row: a second would only ever be a stale copy of the first.
+    func upsert(_ weather: SpaceWeather) throws {
+        for model in try modelContext.fetch(FetchDescriptor<PersistentSpaceWeather>()) {
+            modelContext.delete(model)
+        }
+        modelContext.insert(SpaceWeatherPersistence.persistent(from: weather))
+        try modelContext.save()
+    }
+
     // MARK: - Maintenance
 
     /// Clears cached weather but **not** saved locations: cache is disposable, the user's
@@ -210,8 +230,9 @@ actor LocalDataStore {
     func clearCache() throws {
         try modelContext.delete(model: PersistentWeather.self)
         try modelContext.delete(model: PersistentForecastReading.self)
-        // The METAR table too, or "clear cache" would be a half-truth.
+        // The METAR and space-weather tables too, or "clear cache" would be a half-truth.
         try modelContext.delete(model: PersistentMetar.self)
+        try modelContext.delete(model: PersistentSpaceWeather.self)
         try modelContext.save()
     }
 
