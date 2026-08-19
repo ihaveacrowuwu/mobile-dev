@@ -1,5 +1,7 @@
 package com.nauhaan.skycast
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
@@ -58,6 +60,14 @@ class NavigationFlowTest {
         hiltRule.inject()
         composeRule.mainClock.autoAdvance = false
         awaitNavigationBar()
+        // And then let it finish arriving. `awaitNavigationBar` stops the moment the tag resolves,
+        // which is typically the *first* frame of the `AnimatedVisibility` enter transition, and a
+        // `performClick` on a bar that is still sliding in is **silently lost**. Measured, not guessed:
+        // clicking one poll after the tag appeared left the tab unselected, while invoking the same
+        // node's semantics `OnClick` action selected it. `performClick` injects a real touch, so it
+        // depends on where the item actually is; the semantics action does not. Every test in this
+        // suite failed on that, all of them reporting the *next* thing they waited for.
+        settle()
     }
 
     /**
@@ -96,6 +106,29 @@ class NavigationFlowTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.onBackPressedDispatcher.onBackPressed()
         }
+    }
+
+    /**
+     * Waits for a tab to report itself **selected**, then asserts it.
+     *
+     * `settle()` alone was not enough and the whole suite failed on it: selection comes from
+     * `currentBackStackEntryAsState()`, whose emission is delivered on Compose's UI dispatcher and so
+     * arrives on a *frame*. One `advanceTimeBy` is one budget of frames, and with five tabs and a real
+     * Hilt graph behind them the state landed after it on this emulator: the assertion then read the
+     * previous tab and failed, "Selected = 'false'", in every test that switched tabs.
+     *
+     * Polling while advancing the clock is what the rest of this file already does for text and content
+     * descriptions; selection needed the same treatment. It still fails loudly: `await` gives up with a
+     * named error, so this is not a weaker assertion, just one that stops racing a frame boundary.
+     */
+    private fun awaitSelected(tag: String) {
+        await("tab \"$tag\" to become selected") {
+            composeRule
+                .onAllNodesWithTag(tag)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .any { node -> node.config.getOrNull(SemanticsProperties.Selected) == true }
+        }
+        composeRule.onNodeWithTag(tag).assertIsSelected()
     }
 
     /** Waits for real asynchronous work, such as a Room emission or a network reply, to reach the UI. */
@@ -153,19 +186,16 @@ class NavigationFlowTest {
     @Test
     fun everyTabIsReachableAndSelectable() {
         // Home is the start destination.
-        composeRule.onNodeWithTag(TAB_HOME).assertIsSelected()
+        awaitSelected(TAB_HOME)
 
         composeRule.onNodeWithTag(TAB_METAR).performClick()
-        settle()
-        composeRule.onNodeWithTag(TAB_METAR).assertIsSelected()
+        awaitSelected(TAB_METAR)
 
         composeRule.onNodeWithTag(TAB_LOCATIONS).performClick()
-        settle()
-        composeRule.onNodeWithTag(TAB_LOCATIONS).assertIsSelected()
+        awaitSelected(TAB_LOCATIONS)
 
         composeRule.onNodeWithTag(TAB_SETTINGS).performClick()
-        settle()
-        composeRule.onNodeWithTag(TAB_SETTINGS).assertIsSelected()
+        awaitSelected(TAB_SETTINGS)
         // A section header exists only on the Settings screen itself, so finding one proves the
         // content rendered rather than merely that the tab is highlighted.
         awaitText("Units")
@@ -191,7 +221,7 @@ class NavigationFlowTest {
         pressBack()
         settle()
 
-        composeRule.onNodeWithTag(TAB_LOCATIONS).assertIsSelected()
+        awaitSelected(TAB_LOCATIONS)
     }
 
     /**
@@ -216,13 +246,18 @@ class NavigationFlowTest {
 
         // The coordinate readout exists only on the detail screen, and comes from the database
         // rather than the network, so this assertion holds offline.
-        awaitText("51.5074")
-        composeRule.onNode(hasText("51.5074", substring = true)).assertIsDisplayed()
+        //
+        // Asserted through the **content description**, not the text. The identity block merges its
+        // two lines into one announcement with `clearAndSetSemantics`, so TalkBack says "London,
+        // England, GB. 51.5074, -0.1278" once. That removes the child text nodes from the tree, so
+        // a text query finds nothing.
+        awaitContentDescription("51.5074")
+        composeRule.onNodeWithContentDescription("51.5074", substring = true).assertIsDisplayed()
 
         pressBack()
         settle()
 
-        composeRule.onNodeWithTag(TAB_LOCATIONS).assertIsSelected()
+        awaitSelected(TAB_LOCATIONS)
     }
 
     @Test
