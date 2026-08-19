@@ -371,7 +371,9 @@ mobile-dev/
 ├── docs/
 │   ├── licensing.md            Dependency licences (MO4)
 │   ├── reflection.md           Graded reflection (MO4)
-│   └── screenshots/            Graded assets
+│   ├── screenshots/            Graded assets
+│   ├── user-testing/           User-testing kit (25% component)
+│   └── assessment/             The assessment briefs
 └── scripts/                    bootstrap · doctor · lint · test · screenshots
 ```
 
@@ -392,8 +394,8 @@ mobile-dev/
    the design language; lowering the target means giving up Liquid Glass.
 3. **Compose Material3 is an alpha (`1.5.0-alpha14`).** Material 3 Expressive is
    Kotlin-`internal` in 1.4.0, the newest stable release, so there is no stable route to
-   it. Pinned to an exact alpha for reproducibility. Also why the Compose BOM sits at
-   2026.01.01 rather than the newest, see the recorded decision.
+   it. Pinned to an exact alpha for reproducibility. That is also why the Compose BOM sits
+   at 2026.01.01 rather than the newest.
 4. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
    and Gradle itself onto versions whose mutual compatibility is unverified here. Hilt is
    therefore pinned to 2.58, the newest release that still works with AGP 8. Recorded in
@@ -434,6 +436,8 @@ mobile-dev/
 | --- | --- |
 | [`docs/licensing.md`](docs/licensing.md) | Every dependency and its licence (MO4) |
 | [`docs/reflection.md`](docs/reflection.md) | Reflection on process, platforms and trends (MO4) |
+| [`docs/user-testing/`](docs/user-testing/) | The user-testing kit for the 25% assessment component |
+| [`docs/screenshots/README.md`](docs/screenshots/README.md) | What each screenshot must show, and how to regenerate them |
 
 ---
 
