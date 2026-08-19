@@ -22,6 +22,7 @@
 		28DAB6D066053084D90975EE /* MetarPersistenceMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B4A5AF072C9D1CF10243F9 /* MetarPersistenceMapper.swift */; };
 		2D5119B5BDD39D3EF0EB5C1B /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 554A4A10F10849293D54C1FA /* Spacing.swift */; };
 		2E51AC1C980B4D4AC3D5164A /* DTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1CE1CA7B46B8DB18533EE1A /* DTOs.swift */; };
+		2F6733B0F01D728C2BC3BB0A /* HomeHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F0827ACBF7A65737492C54 /* HomeHeader.swift */; };
 		306F22D8FACFCF6E91F1F73A /* MoonScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17803B5B76A9F07D3E2909B /* MoonScreen.swift */; };
 		355318A41A6189EE1036E6D8 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961F135FC5E7BDBA512CE31D /* SettingsStore.swift */; };
 		355D15D1A355CC162E63166D /* TemperatureTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C34BB02536B03A9EBCDAA1B /* TemperatureTrend.swift */; };
@@ -121,6 +122,7 @@
 		251AAEE9E151CC0DFB6552F7 /* GoldenHourCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoldenHourCard.swift; sourceTree = "<group>"; };
 		29B4A5AF072C9D1CF10243F9 /* MetarPersistenceMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetarPersistenceMapper.swift; sourceTree = "<group>"; };
 		34EF7C04A10FA893DC4352F9 /* StateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateViews.swift; sourceTree = "<group>"; };
+		34F0827ACBF7A65737492C54 /* HomeHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeHeader.swift; sourceTree = "<group>"; };
 		3876D8F6B6AB078CF0D47728 /* MetarScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetarScreen.swift; sourceTree = "<group>"; };
 		3D05DD43E7C5CF949078A186 /* Fakes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fakes.swift; sourceTree = "<group>"; };
 		425868B4E5A4214C125D9806 /* DomainModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainModelTests.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 		1010C2CAF68D6458793EF0C8 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				34F0827ACBF7A65737492C54 /* HomeHeader.swift */,
 				97161DB94A09B49FF79F9B78 /* HomeScreen.swift */,
 				ACA5800B82E0AF4DE0D7FB22 /* HomeUiState.swift */,
 				F7F7FE0A2791386970E7BF7B /* HomeViewModel.swift */,
@@ -668,6 +671,7 @@
 				1BC47FA2662DC57E9CF0D6BB /* FrostedSurface.swift in Sources */,
 				CCF07140E7D7B634A0B194ED /* GlassSurface.swift in Sources */,
 				C1DAE16DEEE2105B35DF7A32 /* GoldenHourCard.swift in Sources */,
+				2F6733B0F01D728C2BC3BB0A /* HomeHeader.swift in Sources */,
 				C0E7543DA5BA1287CC604D78 /* HomeScreen.swift in Sources */,
 				0245AB32A097C14CD9871F2E /* HomeUiState.swift in Sources */,
 				02A9DEDBF93AA996FA66B3C5 /* HomeViewModel.swift in Sources */,

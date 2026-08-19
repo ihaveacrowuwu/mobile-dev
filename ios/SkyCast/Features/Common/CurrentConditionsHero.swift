@@ -86,6 +86,9 @@ struct CurrentConditionsHero: View {
         //
         // Vertical padding only. The horizontal inset comes from the page, so the reading stays
         // aligned with the strip and tiles beneath it rather than sitting in its own margin.
-        .padding(.vertical, Spacing.lg)
+        // Less above than below: the pinned header already sits directly over this, so a full
+        // `Spacing.lg` on top read as a gap between the pill and the icon rather than as breathing room.
+        .padding(.top, Spacing.xs)
+        .padding(.bottom, Spacing.lg)
     }
 }

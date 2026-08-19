@@ -191,10 +191,8 @@ struct MoonContent: View {
                 }
                 .padding(Spacing.md)
             }
-            // The sky is the screen, not a card on it. `ignoresSafeArea` so it reaches under the
-            // status bar and the tab bar rather than stopping in a band short of both.
-            .nightSky()
-            .ignoresSafeArea()
+            // The sky ignores the safe area; the **content does not**.
+            .background { Color.clear.nightSky().ignoresSafeArea() }
         }
     }
 }

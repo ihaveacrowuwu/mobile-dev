@@ -49,51 +49,6 @@ struct HomeScreen: View {
     }
 }
 
-/// The place name and the page dots, pinned above the pager.
-///
-/// One line for the name and one row of dots. The region reads as glass, so the page passes
-/// underneath rather than stopping at a bar.
-private struct HomeStickyHeader: View {
-    let state: HomeUiState
-    let onSelectPage: (Int) -> Void
-
-    var body: some View {
-        VStack(spacing: Spacing.xs) {
-            if let location = state.location {
-                Text(location.name)
-                    .font(.title3.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .accessibilityAddTraits(.isHeader)
-            }
-
-            if state.showsPageIndicator, let current = state.location {
-                PageScrubber(
-                    count: state.pages.count,
-                    selection: Binding(get: { state.selectedIndex }, set: onSelectPage),
-                    announcement: "Showing \(current.name), \(state.selectedIndex + 1) of \(state.pages.count)"
-                )
-                // Sized to its content rather than stretched, so the capsule hugs the dots.
-                .frame(width: scrubberWidth, height: Self.scrubberHeight)
-                .skyGlass(.control)
-            }
-        }
-        .padding(.vertical, Spacing.sm)
-        .frame(maxWidth: .infinity)
-        // No background of its own. The page's weather already runs behind this, and a bar would put an
-        // opaque strip across the top of the one screen built to have content pass under its chrome.
-    }
-
-    /// `UIPageControl` reports an intrinsic width, but inside a capsule it stretched to fill the row.
-    /// Measured from the control's own metrics: roughly 18 points per dot.
-    private var scrubberWidth: CGFloat {
-        CGFloat(state.pages.count) * Self.scrubberDotSpacing
-    }
-
-    private static let scrubberDotSpacing: CGFloat = 18
-    private static let scrubberHeight: CGFloat = 28
-}
-
 /// One day of one place, which is what Home has to carry to push the day-detail screen.
 ///
 /// Home pages across several places, so a bare `Date` would be ambiguous: tapping Thursday on Malé
@@ -176,13 +131,6 @@ struct HomeContent: View {
         // Without this the navigation bar paints its own background across the top of the screen.
         // Hiding it leaves only the toolbar items.
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-        .toolbar {
-            if state.showsPageIndicator {
-                ToolbarItem(placement: .topBarTrailing) {
-                    LocationMenu(state: state, onSelectPage: onSelectPage)
-                }
-            }
-        }
         // Follows the place on screen, so swiping from a clear Malé to an overcast London changes
         // the weather of the whole screen, not just the numbers on it.
         .weatherBackground(
@@ -322,11 +270,9 @@ private struct HomePageView: View {
 
 /// A menu of the saved places, for jumping straight to one.
 ///
-/// Icon-only, and only present when there is more than one place. The name used to live in this
-/// button, which made the most important word on the screen the smallest: it is now the page's
-/// heading, so all this has to do is offer the list. Shown as a `Picker` so the place on screen
-/// carries a tick, which a column of identical buttons cannot.
-private struct LocationMenu: View {
+/// Icon-only, and only present when there is more than one place. Shown as a `Picker` so the place
+/// on screen carries a tick.
+struct LocationMenu: View {
     let state: HomeUiState
     let onSelectPage: (Int) -> Void
 
