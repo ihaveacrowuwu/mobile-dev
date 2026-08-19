@@ -14,6 +14,7 @@
 		0728303A66898974BF1B1322 /* LocationsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561E133EE54195DAC8242942 /* LocationsScreen.swift */; };
 		0937C8DC0FE64DD915D5EAA8 /* MetarDerivationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8C97C353BE431EB840BF6E /* MetarDerivationsTests.swift */; };
 		0E1DA5D01280084CCF84A5DD /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 226FBF406E02FC058CF33FAA /* SettingsScreen.swift */; };
+		115755DF3EE8887030473DDE /* FrostedSurfaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D15E9B4C038FD1811D17C7 /* FrostedSurfaceTests.swift */; };
 		131D4B3575770C3836FF4C47 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78446BB3D74A6EAD25D9B6D /* AppConfiguration.swift */; };
 		1462DB060BAF53A3CAFF5A22 /* SpaceWeatherPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47993FDFB80AB6216D0813D1 /* SpaceWeatherPersistence.swift */; };
 		1BC47FA2662DC57E9CF0D6BB /* FrostedSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3458CE24F858DD65AE35217 /* FrostedSurface.swift */; };
@@ -127,6 +128,7 @@
 		0CD0987640C0FBF599843997 /* SkyCastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyCastApp.swift; sourceTree = "<group>"; };
 		0F38F78A2910ED4BDEC4B753 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		13A0F9EF92D4680EC341EF39 /* SpaceWeatherMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceWeatherMapperTests.swift; sourceTree = "<group>"; };
+		15D15E9B4C038FD1811D17C7 /* FrostedSurfaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrostedSurfaceTests.swift; sourceTree = "<group>"; };
 		214678FDA51CCC09BCBE9579 /* WeatherDetailGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDetailGrid.swift; sourceTree = "<group>"; };
 		226FBF406E02FC058CF33FAA /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
 		242F4DB981E74CEA5A1B4812 /* Forecast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Forecast.swift; sourceTree = "<group>"; };
@@ -257,6 +259,7 @@
 				F680CCBD4CC34B5AB3B99AC2 /* AuroraCalculatorTests.swift */,
 				425868B4E5A4214C125D9806 /* DomainModelTests.swift */,
 				3D05DD43E7C5CF949078A186 /* Fakes.swift */,
+				15D15E9B4C038FD1811D17C7 /* FrostedSurfaceTests.swift */,
 				DBA3579D5921854C677A21F4 /* HomeUiStateTests.swift */,
 				8CFA537B03D6A3B41B05AF5F /* HomeViewModelTests.swift */,
 				F0A35F4B169E8D0BB19411E3 /* LocationTimeZoneTests.swift */,
@@ -771,6 +774,7 @@
 				864D072F78C4AF53C264ACD8 /* AuroraCalculatorTests.swift in Sources */,
 				AB4C602E908D5AB075CB1EF0 /* DomainModelTests.swift in Sources */,
 				ED9CAF1F09814CD1486DC587 /* Fakes.swift in Sources */,
+				115755DF3EE8887030473DDE /* FrostedSurfaceTests.swift in Sources */,
 				ECB7276786E2C65C67FD6304 /* HomeUiStateTests.swift in Sources */,
 				AEFE4B16256D04FD2FDDD3F1 /* HomeViewModelTests.swift in Sources */,
 				4A4CB52AA8056DE4C34E52A6 /* LocationTimeZoneTests.swift in Sources */,
