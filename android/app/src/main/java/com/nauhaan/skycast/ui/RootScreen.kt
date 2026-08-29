@@ -84,6 +84,10 @@ fun RootScreen(modifier: Modifier = Modifier, backgroundViewModel: AppBackground
         // Transparent, so the weather background below shows through the shell rather than being
         // covered by the theme's surface colour.
         containerColor = Color.Transparent,
+        // `contentColorFor(Transparent)` can't resolve against the scheme, so without this the
+        // Scaffold falls back to Material3's ambient default, black, leaving text and icons
+        // unreadable in dark mode.
+        contentColor = MaterialTheme.colorScheme.onSurface,
         bottomBar = {
             AnimatedVisibility(visible = currentTab != null) {
                 // Dark-themed on the Moon tab, and not only for the container: the labels and the

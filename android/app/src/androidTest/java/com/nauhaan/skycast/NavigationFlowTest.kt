@@ -1,5 +1,6 @@
 package com.nauhaan.skycast
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
@@ -13,7 +14,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.nauhaan.skycast.ui.navigation.TopLevelDestination
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -188,18 +191,81 @@ class NavigationFlowTest {
         // Home is the start destination.
         awaitSelected(TAB_HOME)
 
-        composeRule.onNodeWithTag(TAB_METAR).performClick()
-        awaitSelected(TAB_METAR)
+        // Driven from the enum rather than a hand-written list. As written before, this visited
+        // four of the five tabs and passed happily without ever opening Moon: it proved "these
+        // four tabs work", not "every tab is reachable", which is what its name claims.
+        //
+        // `RootScreen` builds the navigation bar from `TopLevelDestination.entries` too, so
+        // iterating the same list makes the coverage hold *by construction*, a sixth tab appears
+        // in the bar and in this loop from the same edit, and a tab the test does not visit is not
+        // expressible. That is a stronger guarantee than the equivalent iOS test, which compares
+        // against the tab bar's own button count and so detects the mismatch rather than
+        // preventing it; XCUITest exposes no comparable list to drive from.
+        TopLevelDestination.entries.forEach { destination ->
+            composeRule.onNodeWithTag(destination.testTag).performClick()
+            awaitSelected(destination.testTag)
+        }
 
-        composeRule.onNodeWithTag(TAB_LOCATIONS).performClick()
-        awaitSelected(TAB_LOCATIONS)
-
-        composeRule.onNodeWithTag(TAB_SETTINGS).performClick()
-        awaitSelected(TAB_SETTINGS)
-        // A section header exists only on the Settings screen itself, so finding one proves the
-        // content rendered rather than merely that the tab is highlighted.
+        // Settings is last in the enum, so that is where the loop leaves off. A section header
+        // exists only on the Settings screen itself, so finding one proves the content rendered
+        // rather than merely that the tab is highlighted.
         awaitText("Units")
         composeRule.onNodeWithText("Units").assertIsDisplayed()
+    }
+
+    /**
+     * The Moon tab renders without a location, a network or a cache.
+     *
+     * Worth its own test because it is the only screen in the app with no data source: if it
+     * showed an empty state, or sat on its "Working out where the Moon is…" loader forever,
+     * nothing else in the suite would notice. Mirrors `testMoonTabShowsComputedContent` on iOS.
+     */
+    @Test
+    fun moonTabShowsComputedContent() {
+        composeRule.onNodeWithTag(TAB_MOON).performClick()
+        settle()
+
+        // "Distance" is a section heading on this screen only, and it is drawn from the computed
+        // snapshot, so its presence proves the calculation ran and rendered, not merely that the
+        // tab opened.
+        awaitText("Distance")
+        composeRule.onNodeWithText("Distance").assertIsDisplayed()
+        awaitText("Coming up")
+    }
+
+    /**
+     * Settings → About & licences → back.
+     *
+     * MO4: the attribution and dependency licences have to be reachable **in the app**, not only
+     * in the repository. Mirrors `testAboutScreenIsReachableFromSettings` on iOS.
+     */
+    @Test
+    fun aboutScreenIsReachableFromSettings() {
+        composeRule.onNodeWithTag(TAB_SETTINGS).performClick()
+        settle()
+
+        // Settings is a `verticalScroll` Column, so it composes every child whether or not it is
+        // on screen: this row is findable but sits well below the fold, and a `performClick` there
+        // would be a touch delivered outside the viewport.
+        //
+        // `performScrollTo` **hangs the suite**. It suspends on `SemanticsActions.ScrollBy`, whose
+        // scroll animation only advances when the frame clock does, and this suite runs with
+        // `autoAdvance` off (see the class KDoc), so that animation never finishes.
+        //
+        // Invoking the semantics `OnClick` action needs no viewport and no clock.
+        awaitText("About & licences")
+        composeRule.onNodeWithText("About & licences").performSemanticsAction(SemanticsActions.OnClick)
+        settle()
+
+        // The About screen's top bar reuses the row's own string, so asserting on that would pass
+        // just as well on the screen we came from. This attribution line exists only on About.
+        awaitText("Weather data provided by OpenWeather")
+        composeRule.onNodeWithText("Weather data provided by OpenWeather").assertIsDisplayed()
+
+        pressBack()
+        settle()
+
+        awaitSelected(TAB_SETTINGS)
     }
 
     @Test
@@ -295,7 +361,7 @@ class NavigationFlowTest {
 
     private companion object {
         const val TAB_HOME = "tab_home"
-        const val TAB_METAR = "tab_metar"
+        const val TAB_MOON = "tab_moon"
         const val TAB_LOCATIONS = "tab_locations"
         const val TAB_SETTINGS = "tab_settings"
 
