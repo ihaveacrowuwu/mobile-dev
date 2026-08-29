@@ -68,6 +68,8 @@ Do not remove either attribution. This is a licence obligation, not a courtesy.
 | Foundation | Core types | Apple SDK |
 | Observation | View-model observation | Apple SDK |
 | Network (`NWPathMonitor`) | Connectivity | Apple SDK |
+| Swift Charts | Temperature trend chart | Apple SDK |
+| UIKit | Interop for a few SwiftUI details | Apple SDK |
 | Swift Testing | Unit tests (test target only) | Apache-2.0 with LLVM exception |
 | XCTest / XCUITest | UI tests (test target only) | Apple SDK |
 
@@ -107,7 +109,7 @@ All versions are pinned in `android/gradle/libs.versions.toml`.
 | AndroidX Activity Compose | 1.12.4 | Apache-2.0 |
 | AndroidX Lifecycle | 2.9.4 | Apache-2.0 |
 | Jetpack Compose (BOM) | 2026.01.01 | Apache-2.0 |
-| Compose Material 3 | via BOM | Apache-2.0 |
+| Compose Material 3 | 1.5.0-alpha14 (pinned, overrides the BOM) | Apache-2.0 |
 | Navigation Compose | 2.9.8 | Apache-2.0 |
 | Room | 2.8.4 | Apache-2.0 |
 | DataStore Preferences | 1.1.7 | Apache-2.0 |
