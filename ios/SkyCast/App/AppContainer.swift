@@ -122,9 +122,9 @@ final class AppContainer {
     /// permanently offline. Two reasons it exists:
     ///
     /// 1. The iOS Simulator has no aeroplane mode, so the offline path, the single most valuable
-    ///    thing to put in front of a user tester (see `docs/user-testing/task-scenarios.md`, T6),
-    ///    is otherwise unreachable without unplugging the whole Mac.
-    /// 2. It makes the offline and error screenshots in `docs/screenshots/` reproducible rather
+    ///    thing to put in front of a user tester, is otherwise unreachable without unplugging
+    ///    the whole Mac.
+    /// 2. It makes the offline and error screenshots in `screenshots/` reproducible rather
     ///    than a matter of catching the app at the right moment.
     ///
     /// Compiled out of release builds entirely, so a shipped binary cannot be forced offline.

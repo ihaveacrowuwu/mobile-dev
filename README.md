@@ -1,457 +1,302 @@
 # SkyCast
 
-> A weather app built **twice, fully natively**, SwiftUI for iOS, Jetpack Compose for
-> Android, from a single shared architectural specification.
-
-[![Android](https://github.com/ihaveacrowuwu/mobile-dev/actions/workflows/android.yml/badge.svg)](https://github.com/ihaveacrowuwu/mobile-dev/actions/workflows/android.yml)
-[![iOS](https://github.com/ihaveacrowuwu/mobile-dev/actions/workflows/ios.yml/badge.svg)](https://github.com/ihaveacrowuwu/mobile-dev/actions/workflows/ios.yml)
-
-| | iOS | Android |
-| --- | --- | --- |
-| **Language** | Swift 6 | Kotlin 2.2 |
-| **UI** | SwiftUI + **Liquid Glass** | Jetpack Compose + **Material 3 Expressive** |
-| **Minimum OS** | iOS 26.0 | Android 8.0 (API 26) |
-| **Persistence** | SwiftData + `UserDefaults` | Room + DataStore |
-| **Networking** | `URLSession` + `async`/`await` | Retrofit + OkHttp + coroutines |
-| **DI** | `AppContainer` (hand-rolled) | Hilt |
-
----
-
-## Contents
-
-- [About](#about)
-- [Why native instead of React Native](#why-native-instead-of-react-native)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Installation and running](#installation-and-running)
-- [Technologies used](#technologies-used)
-- [Architecture](#architecture)
-- [Testing](#testing)
-- [Project structure](#project-structure)
-- [Known issues and future improvements](#known-issues-and-future-improvements)
-- [Documentation](#documentation)
-- [Licence and attribution](#licence-and-attribution)
-
----
-
-## About
-
-SkyCast shows current conditions and a five-day forecast for places the user chooses, and
-it keeps working when the network does not. Weather is fetched from the
-[OpenWeather API](https://openweathermap.org/api), cached locally, and served from that
-cache on the next launch, so the app opens with real data instantly and remains usable in
-aeroplane mode.
-
-This is the submission for **UFCF7H-15-3 Mobile Applications**, Practical Skills
-Assessment (75% of the module).
-
-**Status:** feature-complete on both platforms. Both build, lint clean and pass their full
-suites, 48 iOS unit tests across 8 suites plus 6 UI tests, the Android JVM suites plus 8
-instrumented tests covering the database and its migrations. Every screen is built; see
-[Known issues and future improvements](#known-issues-and-future-improvements) for what is
-deliberately out of scope.
-
----
-
-## Why native instead of React Native
-
-The assessment brief specifies React Native. This project deliberately does something
-harder: it implements the same application **twice, natively**, once per platform.
-
-The reasoning, in short:
-
-- **MO1** asks students to *analyse and evaluate mobile platform technologies*. Building
-  the same app on both platforms produces a genuine, evidence-based comparison rather than
-  a description of an abstraction layer that hides both.
-- **MO2** asks about *user expectations*. Native lets each platform follow its own
-  conventions, Material 3 with dynamic colour on Android, Human Interface Guidelines on
-  iOS, instead of one compromise UI on both.
-- Every requirement in the brief is still met; only the technology differs.
-
-Every React Native concept in the brief has a direct native equivalent, and each one is
-implemented:
-
-| Brief requires | iOS | Android |
-| --- | --- | --- |
-| Multi-screen navigation (stack/tabs) | `TabView` + per-tab `NavigationStack` | Navigation Compose + `NavigationBar` |
-| State management (Context/Redux/Zustand) | `@Observable` view models | `ViewModel` + `StateFlow` |
-| Persistence (AsyncStorage/SQLite) | SwiftData + `UserDefaults` | Room + DataStore |
-| Loading / network error handling | `DataState` + `AppError` | `DataState` + `AppError` |
-| Public API | OpenWeather | OpenWeather |
-
----
-
-## Features
-
-| Feature | What it does | Status |
-| --- | --- | --- |
-| **Today** | Current conditions for the primary location: temperature, condition, "feels like". Pull to refresh. | ✅ Built |
-| **Offline-first caching** | Reads the local cache first, then refreshes in the background. Cached data is **never** discarded because a request failed. | ✅ Built |
-| **Stale-data banner** | When offline or after a failed refresh, a dismissible banner appears **over** the cached content instead of an error screen replacing it. | ✅ Built |
-| **Settings, units** | Temperature (°C · °F · K), wind (m/s · km/h · mph · **knots** · Beaufort), pressure (hPa/mbar · **inHg** · mmHg) and visibility (km · statute miles · **nautical miles**). Applies instantly and works offline, because values are cached canonically and converted at render time. | ✅ Built |
-| **Settings, appearance** | Light / Dark / Follow system. Android additionally supports Material You dynamic colour. | ✅ Built |
-| **Settings, clear cache** | Removes cached forecasts while **keeping** saved locations. Confirmed before acting. | ✅ Built |
-| **Tab navigation** | Four tabs, each with an independent navigation stack, so per-tab state survives switching away and back. | ✅ Built |
-| **Push navigation** | Detail screens push on top of the current tab, with correct system-back behaviour. | ✅ Built |
-| **About & licences** | In-app attribution for OpenWeather and dependency licences (MO4). | ✅ Built |
-| **Accessibility** | VoiceOver/TalkBack labels, combined announcements for grouped readings, Dynamic Type / font scaling, 44–48 pt touch targets. | ✅ Built |
-| **Graceful missing-key state** | With no API key the app still builds and runs, showing setup instructions rather than crashing or failing to compile. | ✅ Built |
-| **Five-day forecast** | On a place's detail screen, beside the trend chart and the hourly strip: a comparable high/low bar per day, each tappable through to its hour-by-hour breakdown. It had its own tab until METAR took that slot, the same content, one tap from Home and better for sitting next to the chart. | ✅ Built |
-| **Day detail** | Hour-by-hour readings for one forecast day: temperature, wind, chance of rain, with day/night artwork per reading. | ✅ Built |
-| **Locations management** | Add by geocoding search (debounced, 400 ms), set which place Today shows, remove a place. The last remaining place cannot be deleted. | ✅ Built |
-| **Location detail** | The full picture for any saved place: the next hours, a temperature trend chart across the forecast period, a comparable high/low bar per day, and eight readings, humidity, wind, pressure, visibility, sunrise, sunset, dew point and length of day, plus coordinates and observation time. Renders the place's identity from the database before the network responds. | ✅ Built |
-| **Correct local times** | Sunrise, sunset and hourly readings are shown in the **observed location's** time zone, not the device's, and the forecast's day grouping is identical whether served from the network or the cache. | ✅ Built |
-| **Swipe between places** | Today pages through every saved location in the order the Locations tab lists them, with a menu for direct selection and dots showing position. | ✅ Built |
-| **Hourly strip** | Three-hourly readings from a little before now to a day ahead, scrollable, with the current hour marked. | ✅ Built |
-| **Weather-driven colour** | Each condition has its own hue, warm sun, cool night, blue rain, paired with contrast-checked text colours rather than one tonal palette that made every condition look alike. | ✅ Built |
-| **Condition backgrounds** | Today's background reflects the current condition and time of day and drifts slowly; the other weather screens carry a quieter version. Stops entirely under Reduce Motion. | ✅ Built |
-| **Value-aware detail tiles** | Each reading shows where it sits on its own scale, so "1014 hPa" reads as an ordinary day rather than as a number. | ✅ Built |
-| **Per-metric visuals** | Each reading draws itself the way it should: an arc gauge for anything with a range, a compass for wind (pointing where it blows *from*), and a full-width arc for the sun's day with a marker at now. Surfaces wind direction and cloud cover, both fetched since the first commit and never shown. | ✅ Built |
-| **Draggable page indicator** | Centred under the reading; press and slide to run through your places, with a haptic tick per change. `UIPageControl` on iOS, drawn by hand on Android. | ✅ Built |
-| **METAR** | The nearest reporting airport's aviation observation, drawn rather than tabulated: the flight category as a large coloured disc with what it *means* in words, the **sky drawn to scale** with cloud layers at their real heights and the ceiling marked, wind on a compass, and four figures worked out from the report that the report never contains, relative humidity, dew-point spread as fog risk, the ceiling, and density altitude. The raw coded line is still there for anyone who reads them. Nearest station by great-circle distance; cached, so it works offline and says how old the observation is. | ✅ Built |
-| **Frosted cards** | Every card is a translucent, frosted pane the weather shows through, with **no colour painted on it**, a chosen hue can only approximate the background, so the card is mostly the background instead. iOS uses a real material, which blurs its backdrop and turns opaque by itself under **Reduce Transparency**; Android uses transparency and a lit rim, because Compose has no backdrop blur below API 31 and this app supports 26. | ✅ Built |
-| **Everything on Home** | The trend chart, the five-day list and the derived readings are on the page rather than behind a tap on the hero. The day rows still push through to one day's hour-by-hour breakdown, and a place's detail screen is still what the Locations tab opens. | ✅ Built |
-| **A favourite that means one thing** | The starred place decides two things and no more: which page Home opens on at launch, and which place's weather colours the background on every other screen. METAR and Moon follow the place you are actually looking at on Home. | ✅ Built |
-| **Ten places** | A cap enforced in the repository as a typed error, surfaced as a count in the Locations list, with the Add button going quiet at the limit rather than leading to a search that can only fail. Ten places refreshing sits comfortably inside OpenWeather's 60-calls-a-minute free tier; fifty would not. | ✅ Built |
-| **Golden hour** | The evening's light, which no weather API reports: golden hour and blue hour, drawn as a band that runs gold to blue to night with a marker at now. Both are defined by the sun's **altitude**, not the clock, so the "hour" is twenty minutes in the tropics and most of an evening in the far north, computed on the device, exact for any date, and absent entirely where the sun never reaches those angles. | ✅ Built |
-| **A pinned header on Home** | The place name and the page dots stay put while everything else scrolls, in one compact strip. It also fixed a real annoyance: as page content, the dots sat wherever that page's hero happened to end, so dragging across them jumped vertically between places. | ✅ Built |
-| **Moon** | Phase drawn at its true terminator rather than snapped to one of eight icons, on a night sky, ringed by the lunar month with a marker at today. Illumination, age, distance with its apparent size, moonrise and moonset for your place, and the next four principal phases with dates. All **computed on the device**, no key, no network, exact for any date. Checked against PyEphem and against two eclipse instants. | ✅ Built |
-| **Aurora** | Whether the aurora is worth going outside for, tonight, from *this* place. NOAA's planetary K index gives how disturbed the field is now and its forecast peak; the app then does the geography itself, geomagnetic latitude, and NOAA's published table of how far equatorward the oval reaches at that Kp. A place that rarely sees it gets the number that matters most: **the Kp it needs**, with tonight's peak marked against it on the scale. Reported as bands rather than a percentage, because that is the precision the method honestly supports, and absent entirely in the tropics where the answer is never. | ✅ Built |
-| **Derived readings** | Dew point (from temperature and humidity, which OpenWeather's free tier does not send) and length of day, on the detail screen. | ✅ Built |
-| **Temperature trend chart** | The whole forecast period as one line, with its extremes annotated, Swift Charts on iOS, drawn on a Compose `Canvas` on Android, no chart dependency on either. | ✅ Built |
-| **Theming that follows the weather** | The condition's hue reaches the detail tiles and, on Android, the navigation bar while Today is open, so the screen shifts as you swipe between a clear place and an overcast one. | ✅ Built |
-
----
-
-## Screenshots
-
-> Regenerate every screenshot with the two scripts below, one command per platform, writing the
-> exact filenames these links expect. See
-> [`docs/screenshots/README.md`](docs/screenshots/README.md) for what each image must show.
->
-> ```bash
-> ./scripts/screenshots-ios.sh
-> ./scripts/screenshots-android.sh
-> ```
->
-> The brief docks up to **15 marks** if the README has no screenshots, so this section is not
-> optional decoration.
-
-| Screen | iOS | Android |
-| --- | --- | --- |
-| **Home** | ![iOS Home](docs/screenshots/ios/01-home.png) | ![Android Home](docs/screenshots/android/01-home.png) |
-| **METAR** | ![iOS METAR](docs/screenshots/ios/02-metar.png) | ![Android METAR](docs/screenshots/android/02-metar.png) |
-| **Moon** | ![iOS Moon](docs/screenshots/ios/11-moon.png) | ![Android Moon](docs/screenshots/android/11-moon.png) |
-| **Aurora** | ![iOS Aurora](docs/screenshots/ios/12-aurora.png) | ![Android Aurora](docs/screenshots/android/12-aurora.png) |
-| **Locations** | ![iOS Locations](docs/screenshots/ios/03-locations.png) | ![Android Locations](docs/screenshots/android/03-locations.png) |
-| **Add location** | ![iOS Add](docs/screenshots/ios/04-add-location.png) | ![Android Add](docs/screenshots/android/04-add-location.png) |
-| **Settings** | ![iOS Settings](docs/screenshots/ios/05-settings.png) | ![Android Settings](docs/screenshots/android/05-settings.png) |
-| **Location detail** | ![iOS Detail](docs/screenshots/ios/06-location-detail.png) | ![Android Detail](docs/screenshots/android/06-location-detail.png) |
-| **Offline banner** | ![iOS Offline](docs/screenshots/ios/07-offline-banner.png) | ![Android Offline](docs/screenshots/android/07-offline-banner.png) |
-| **Error state** | ![iOS Error](docs/screenshots/ios/08-error-state.png) | ![Android Error](docs/screenshots/android/08-error-state.png) |
-| **Dark mode** | ![iOS Dark](docs/screenshots/ios/09-dark-mode.png) | ![Android Dark](docs/screenshots/android/09-dark-mode.png) |
-| **Day detail** | ![iOS Day detail](docs/screenshots/ios/10-day-detail.png) | ![Android Day detail](docs/screenshots/android/10-day-detail.png) |
-
----
+SkyCast is a native weather app built for both iOS (SwiftUI) and Android (Jetpack
+Compose). It shows current conditions and a five day forecast for places the user
+chooses, along with aviation weather reports, moon phase data and aurora visibility,
+and keeps working offline using local cache.
 
 ## Installation and running
 
+### Install on Android without building
+
+A ready to install APK is committed at **[`dist/SkyCast.apk`](dist/SkyCast.apk)**. No
+toolchain, no API key, no build needed. It runs on Android 8.0 (API 26) or newer.
+
+Over USB:
+
+```bash
+adb install -r dist/SkyCast.apk
+```
+
+Or copy the file to the phone and tap it, then allow installation from unknown sources
+when prompted.
+
+Everything below is only needed if you want to build from source.
+
 ### Prerequisites
 
-| Tool | Version | Needed for |
-| --- | --- | --- |
-| macOS | 14+ | Both (iOS requires macOS) |
-| Xcode | 16+ | iOS |
-| Android Studio | 2024.1+ | Android (optional, the SDK alone is enough) |
-| JDK | **21** | Android, AGP rejects newer JDKs |
-| Android SDK | Platform 36, Build-Tools 36 | Android |
-| XcodeGen | 2.46+ | iOS project generation |
+**iOS**
 
-`./scripts/doctor.sh` checks every one of these and prints what is missing.
+- macOS with **Xcode 26 or newer**. The app targets iOS 26 (or the iOS 27 betas) and uses Liquid Glass, so it needs the iOS 26 SDK. Xcode 16 and earlier cannot build it.
+- An **iOS 26 simulator runtime**, installed via Xcode ▸ Settings ▸ Components. An
+  older simulator refuses to install the app with "Requires a Newer Version of iOS".
+- XcodeGen is *not* required. `SkyCast.xcodeproj` is committed, so you only need
+  XcodeGen if you edit `ios/project.yml`.
 
-### 1. Clone and bootstrap
+**Android**
+
+- **JDK 21.** Newer JDKs are rejected by the Android Gradle Plugin.
+- Android SDK with **Platform 36** and **Build-Tools 36**. Android Studio 2024.1+ is
+  optional, since the SDK alone is enough to build from the command line.
+
+Run `./scripts/doctor.sh` to check all of the above and print whatever is missing.
+
+### Setup
 
 ```bash
 git clone https://github.com/ihaveacrowuwu/mobile-dev.git
 cd mobile-dev
-./scripts/bootstrap.sh     # creates config files, generates the Xcode project, installs git hooks
-./scripts/doctor.sh        # reports anything still missing
+./scripts/bootstrap.sh     # creates the config files, installs git hooks
 ```
 
-### 2. Add an OpenWeather API key
+`bootstrap.sh` is optional and safe to re-run. It only creates the two gitignored
+config files described below and never overwrites an existing one.
+
+### API key
+
+**The API key is optional for building.** Without one, both apps still build, install
+and launch without crashing. They show an "API key not configured" screen naming the
+file to edit, instead of weather data. Add a key to see live weather.
 
 Get a free key at [openweathermap.org/api_keys](https://home.openweathermap.org/api_keys).
-A new key can take up to two hours to activate.
+A newly created key can take up to two hours to activate before it stops returning 401.
 
 ```bash
-# Android: edit android/local.properties
-OPEN_WEATHER_API_KEY=your_key_here
-
-# iOS: edit ios/Config/Secrets.xcconfig
+# iOS: ios/Config/Secrets.xcconfig
 OPEN_WEATHER_API_KEY = your_key_here
+
+# Android: android/local.properties
+OPEN_WEATHER_API_KEY=your_key_here
 ```
 
-Both files are gitignored. **The app builds and runs without a key**, it shows an
-"API key not configured" screen instead of weather data, which is also why CI needs no
-secret.
+Both files are gitignored, so a key never enters git. Note the differing
+syntax: the iOS xcconfig uses spaces around the `=`, the Android properties file does
+not. Rebuild after editing either file, since the key is baked in at build time.
 
-### 3. Run Android
+If you added a key but still see the setup screen, check that you edited the existing
+line rather than adding a second one. `bootstrap.sh` writes an empty value on Android
+and the placeholder `your_openweather_api_key_here` on iOS, and both count as
+unconfigured.
+
+> The key is embedded in the compiled app and can be extracted from a shared `.apk`
+> or `.app`. Use a free key you are willing to rotate, not one tied to a paid plan.
+
+### Run iOS
+
+```bash
+cd ios
+open SkyCast.xcodeproj
+```
+
+Pick any iPhone simulator in the toolbar and press Run. Nothing else is needed: the
+scheme is shared, signing is disabled for the simulator, and there are no third party
+packages to resolve.
+
+To build from the command line instead:
+
+```bash
+cd ios
+xcodebuild -project SkyCast.xcodeproj -scheme SkyCast \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+#### Running on a physical iPhone over USB
+
+The phone must be on iOS 26 or newer.
+
+1. Connect the iPhone by cable and unlock it. Tap **Trust** on the "Trust This
+   Computer?" prompt, then enter the passcode.
+2. On the phone, enable **Settings ▸ Privacy & Security ▸ Developer Mode**, then
+   restart when asked. This appears only once Xcode has seen the device.
+3. In Xcode, pick the iPhone from the device menu in the toolbar.
+4. Open the **SkyCast** target ▸ **Signing & Capabilities** and choose your own team
+   under **Team**. Signing is Automatic with no team committed, so Xcode provisions the
+   app for you. A free Apple ID works.
+5. Press Run.
+
+Bundle identifiers are globally unique, so if `com.nauhaan.skycast` is rejected as
+taken, override it in `ios/Config/Secrets.xcconfig`:
+
+```
+SKYCAST_BUNDLE_ID = com.yourname.skycast
+```
+
+On the first launch the phone shows "Untrusted Developer". Approve the certificate at
+**Settings ▸ General ▸ VPN & Device Management**, then open the app again. An app
+signed with a free Apple ID stops working after seven days and needs rebuilding.
+
+### Run Android
 
 ```bash
 cd android
-./gradlew installDebug          # build and install on a connected device or emulator
+./gradlew installDebug     # builds and installs on a connected device or emulator
 ```
 
-Or open the `android/` directory in Android Studio and press Run.
+Or open the `android/` folder in Android Studio and press Run.
 
-To start the emulator this project sets up:
+Any emulator running API 26 or newer works. The helper scripts in `scripts/` assume
+one named `SkyCast_API36`, which you can create in Android Studio's Device Manager and
+then start with:
 
 ```bash
 $ANDROID_HOME/emulator/emulator -avd SkyCast_API36 &
 ```
 
-### 4. Run iOS
+### Building the Android APK
+
+To produce a single installable APK to share or sideload:
 
 ```bash
-cd ios
-xcodegen generate               # only needed after editing project.yml
-open SkyCast.xcodeproj
+cd android
+./gradlew assembleRelease
 ```
 
-Then choose an iPhone simulator and press Run. From the command line:
+The APK is written to:
+
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+It is a full release build with R8 minification and resource shrinking enabled, around
+1.8 MB, and it supports arm64-v8a, armeabi-v7a, x86 and x86_64. Install it on a
+connected device with:
 
 ```bash
-xcodebuild -scheme SkyCast -destination 'platform=iOS Simulator,name=iPhone 17' build | xcbeautify
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-### 5. Verify everything
+To install it by hand, transfer the `.apk` to the phone and open it. Android will ask
+you to allow installation from unknown sources for whichever app you opened it with.
+
+To refresh the copy committed at `dist/SkyCast.apk`:
 
 ```bash
-./scripts/lint.sh               # every linter, both platforms
-./scripts/test.sh               # unit tests, both platforms
-./scripts/test.sh --all         # plus UI tests (needs a device/simulator)
+cp app/build/outputs/apk/release/app-release.apk ../dist/SkyCast.apk
 ```
 
----
+> This release build is signed with the local **debug** keystore so that
+> `assembleRelease` works on any machine without a keystore. That is fine for
+> sideloading and testing, but the Play Store will reject it. Replace the
+> `signingConfig` in `android/app/build.gradle.kts` with a real release keystore
+> before any store distribution.
+
+For a faster, unminified build instead, `./gradlew assembleDebug` writes
+`app-debug.apk` to `app/build/outputs/apk/debug/`. It installs alongside the release
+build rather than replacing it, since the debug build uses the `.debug` application ID
+suffix.
+
+## Testing and error handling
+
+```bash
+./scripts/test.sh          # unit tests, both platforms, no device needed
+./scripts/test.sh --all    # adds the UI tests (needs an emulator and a simulator)
+./scripts/lint.sh          # ktlint, detekt, Android Lint, SwiftFormat, SwiftLint
+```
+
+Android has 60 unit tests (JUnit, MockK, Turbine) plus Espresso instrumented tests. iOS
+uses Swift Testing and XCUITest. Both platforms decode the same captured OpenWeather
+responses, held byte for byte in `SkyCastTests/Fixtures/` and
+`android/core/data/src/test/resources/fixtures/`, so a decoding regression fails on both.
+
+Every network call resolves to an explicit state rather than letting an error reach the
+UI:
+
+| Condition | What the user sees |
+| --- | --- |
+| Offline, or cached data is stale | The last cached forecast, with a banner saying so |
+| Request failed | An error state with a retry action |
+| No API key configured | A setup screen naming the file to edit |
+| No saved locations | An empty state with an "Add location" action |
+
+## Features
+
+- **Current weather:** Temperature, condition, "feels like", humidity, wind, pressure,
+  visibility, sunrise, sunset, dew point and length of day for the selected location.
+- **Five day forecast:** Daily high/low, with an hourly breakdown for each day and a
+  scrollable hourly strip covering the next 24 hours.
+- **METAR:** The nearest airport's aviation weather report, flight category, cloud
+  layers, wind, and derived figures such as ceiling and density altitude, plus the raw
+  coded report.
+- **Moon phase:** Current phase, illumination, age, distance and moonrise/moonset for
+  the selected location, plus the dates of the next four principal phases. Computed on
+  the device, no network needed.
+- **Aurora visibility:** Whether the aurora is likely to be visible from the selected
+  location tonight, based on NOAA's geomagnetic (Kp) index and the location's geomagnetic
+  latitude.
+- **Multiple locations:** Add and remove saved locations by search, up to 10 at a time,
+  and choose which one is the primary location shown on Home.
+- **Unit settings:** Temperature (Celsius, Fahrenheit, Kelvin), wind speed (m/s, km/h,
+  mph, knots, Beaufort scale), pressure (hPa/mbar, inHg, mmHg) and visibility (km,
+  statute miles, nautical miles), all applied instantly.
+- **Offline caching:** Weather data is cached locally and shown immediately on launch,
+  with a banner shown when data is stale or the device is offline.
+- **Light/Dark appearance:** Light, Dark or follow system, with Material You dynamic
+  colour on Android.
+
+## Screenshots
+
+| Screen | iOS | Android |
+| --- | --- | --- |
+| Home | ![iOS Home](screenshots/ios/01-home.png) | ![Android Home](screenshots/android/01-home.png) |
+| METAR | ![iOS METAR](screenshots/ios/02-metar.png) | ![Android METAR](screenshots/android/02-metar.png) |
+| Locations | ![iOS Locations](screenshots/ios/03-locations.png) | ![Android Locations](screenshots/android/03-locations.png) |
+| Add location | ![iOS Add](screenshots/ios/04-add-location.png) | ![Android Add](screenshots/android/04-add-location.png) |
+| Settings | ![iOS Settings](screenshots/ios/05-settings.png) | ![Android Settings](screenshots/android/05-settings.png) |
+| Location detail | ![iOS Detail](screenshots/ios/06-location-detail.png) | ![Android Detail](screenshots/android/06-location-detail.png) |
+| Offline banner | ![iOS Offline](screenshots/ios/07-offline-banner.png) | ![Android Offline](screenshots/android/07-offline-banner.png) |
+| Error state | ![iOS Error](screenshots/ios/08-error-state.png) | ![Android Error](screenshots/android/08-error-state.png) |
+| Dark mode | ![iOS Dark](screenshots/ios/09-dark-mode.png) | ![Android Dark](screenshots/android/09-dark-mode.png) |
+| Day detail | ![iOS Day detail](screenshots/ios/10-day-detail.png) | ![Android Day detail](screenshots/android/10-day-detail.png) |
+| Moon | ![iOS Moon](screenshots/ios/11-moon.png) | ![Android Moon](screenshots/android/11-moon.png) |
+| Aurora | ![iOS Aurora](screenshots/ios/12-aurora.png) | ![Android Aurora](screenshots/android/12-aurora.png) |
 
 ## Technologies used
 
-### Shared
+**API**
 
-| Technology | Purpose |
-| --- | --- |
-| [OpenWeather API](https://openweathermap.org/api) | Current weather, 5-day/3-hour forecast, geocoding |
-| GitHub Actions | CI: build, lint, unit tests, R8 release verification |
+- [OpenWeather API](https://openweathermap.org/api): current weather, five day forecast, geocoding
 
-### iOS
+**iOS**
 
-| Technology | Purpose |
-| --- | --- |
-| Swift 6 (strict concurrency) | Language; data-race safety enforced at compile time |
-| SwiftUI + **Liquid Glass** (iOS 26) | Declarative UI; `glassEffect`, `GlassEffectContainer`, glass button styles |
-| SwiftData | Local relational cache and saved locations |
-| Observation (`@Observable`) | View-model state observed directly by SwiftUI |
-| `URLSession` + `async`/`await` | Networking |
-| Network framework (`NWPathMonitor`) | Connectivity detection |
-| Swift Testing | Unit tests (`@Test` / `#expect`) |
-| XCUITest | UI tests |
-| [XcodeGen](https://github.com/yonaskolb/XcodeGen) | Generates `.xcodeproj` from `project.yml` |
-| [SwiftLint](https://github.com/realm/SwiftLint) / [SwiftFormat](https://github.com/nicklockwood/SwiftFormat) | Static analysis and formatting |
+- Swift 6
+- SwiftUI (Liquid Glass)
+- SwiftData (local storage)
+- URLSession (networking)
+- Swift Testing, XCUITest
+- XcodeGen, SwiftLint, SwiftFormat
 
-**No third-party runtime dependencies on iOS**, everything shipped in the app is a
-first-party Apple framework.
+**Android**
 
-### Android
+- Kotlin 2.2, coroutines
+- Jetpack Compose, Material 3
+- Room (local storage), DataStore (settings)
+- Hilt (dependency injection)
+- Retrofit, OkHttp, kotlinx.serialization (networking)
+- JUnit, MockK, Turbine, Espresso
+- ktlint, detekt
 
-| Technology | Purpose |
-| --- | --- |
-| Kotlin 2.2 + coroutines / Flow | Language and concurrency |
-| Jetpack Compose + Material 3 **Expressive** | Declarative UI, dynamic colour, expressive motion/shape/type |
-| Navigation Compose | Type-safe `@Serializable` routes |
-| Room | Local SQLite cache and saved locations |
-| DataStore (Preferences) | Settings |
-| Hilt (Dagger) | Dependency injection |
-| Retrofit + OkHttp + kotlinx.serialization | Networking and JSON |
-| Coil | Image loading |
-| JUnit 4, MockK, Turbine | Unit tests |
-| Compose UI Test + Espresso | Instrumented tests |
-| [ktlint](https://github.com/pinterest/ktlint) / [detekt](https://detekt.dev) | Formatting and static analysis |
+## Documentation
 
-Every dependency and its licence is listed in [`docs/licensing.md`](docs/licensing.md) (MO4).
-
----
-
-## Architecture
-
-Layered MVVM with a repository boundary, implemented **identically on both platforms**.
-
-```
-   Presentation     SwiftUI View / Composable
-                    @Observable VM / ViewModel
-                    UiState (one type per screen)
-                          │
-                          ▼
-   Domain           Models · Repository protocols · AppError
-                    ── zero framework imports ──
-                          ▲
-                          │ implements
-   Data             RepositoryImpl (cache + network orchestration)
-                    Remote (DTOs) · Local (entities) · Mappers
-```
-
-**The rule that makes it work:** `domain` imports nothing platform-specific, no SwiftUI,
-no SwiftData, no Room, no Retrofit. You could delete the entire `data` layer and `domain`
-would still compile. That is what makes every view model unit-testable with a hand-written
-fake and no device.
-
-### Offline-first read algorithm
-
-```
-1. Emit the cache immediately          → content renders with no spinner
-2. Fresh enough? stop                  → no wasted request, no wasted quota
-3. Offline?  keep cache, note it       → banner, not an error screen
-4. Fetch → write cache → emit          → fresh data
-5. Fetch failed?  keep cache + error   → banner over content
-   No cache AND failed?                → full-screen error with Retry
-```
-
-### Rubric mapping
-
-| Criterion | Marks | Where it is evidenced |
-| --- | --: | --- |
-| UI/UX design & layout | 20 | Design tokens (`Spacing`, `Theme`), dark mode, Dynamic Type, accessibility labels, 44/48 pt touch targets |
-| Navigation | 15 | Four tabs with independent stacks + push destinations; type-safe routes; `NavigationFlowTest` / `NavigationFlowUITests` |
-| State management | 15 | One `UiState` per screen with derived display rules; unidirectional flow; `StateFlow` / `@Observable` |
-| Persistence | 15 | Room / SwiftData caches + DataStore / `UserDefaults` settings; TTLs; cascade deletes; works fully offline |
-| Functionality | 15 | Loading, empty, error, offline and success states all handled; retry paths; graceful missing-key state |
-| Code quality & documentation | 10 | Layered folders mirrored across platforms; doc comments; ktlint + detekt + SwiftLint + Android Lint clean with warnings-as-errors |
-| Testing & debugging | 5 | 26 Android unit + 5 instrumented; 35 iOS unit (Swift Testing) + 6 XCUITests. **All passing.** Includes contract tests against real captured API payloads, shared between platforms. Error and offline paths covered explicitly |
-| Presentation & reflection | 5 | This README, [`docs/reflection.md`](docs/reflection.md) |
-
----
-
-## Testing
-
-```bash
-cd android && ./gradlew testDebugUnitTest          # 26 unit tests, no device
-cd android && ./gradlew connectedDebugAndroidTest  # navigation + settings, needs a device
-cd ios && xcodebuild test -scheme SkyCast -destination 'platform=iOS Simulator,name=iPhone 17' | xcbeautify
-```
-
-Or both platforms at once, no `sudo xcode-select` required, the scripts resolve Xcode via
-`DEVELOPER_DIR` themselves:
-
-```bash
-./scripts/test.sh          # unit tests, both platforms
-./scripts/test.sh --all    # plus UI tests
-```
-
-The suites deliberately concentrate on **error and offline paths**, not just happy paths,
-that is what the "Testing & Debugging" criterion asks for, and it is what protects the
-persistence behaviour from regressing.
-
----
-
-## Project structure
-
-```
-mobile-dev/
-├── android/                    Gradle project, open this directory in Android Studio
-│   ├── gradle/libs.versions.toml   Single source of truth for all versions
-│   └── app/src/main/java/com/nauhaan/skycast/
-│       ├── core/               Common utilities, design system
-│       ├── domain/             Models, repository interfaces, use cases
-│       ├── data/               Remote, local, mappers, repository impls
-│       ├── di/                 Hilt modules
-│       └── ui/                 Navigation and one folder per feature
-├── ios/                        XcodeGen project, open SkyCast.xcodeproj
-│   ├── project.yml             Single source of truth for the Xcode project
-│   ├── Config/                 .xcconfig build settings + secrets template
-│   └── SkyCast/                Core · Domain · Data · Features (mirrors Android)
-├── docs/
-│   ├── licensing.md            Dependency licences (MO4)
-│   ├── reflection.md           Graded reflection (MO4)
-│   ├── screenshots/            Graded assets
-│   ├── user-testing/           User-testing kit (25% component)
-│   └── assessment/             The assessment briefs
-└── scripts/                    bootstrap · doctor · lint · test · screenshots
-```
-
----
+[LICENSING.md](LICENSING.md) covers the licence for this project and the terms of every
+API and library it uses.
 
 ## Known issues and future improvements
 
 ### Known issues
 
-1. **`Tab` accessibility identifiers do not reach the tab bar.** SwiftUI generates the
-   tab-bar button from a `Tab`'s label, and `.accessibilityIdentifier` on either the `Tab`
-   or its content is not propagated to that button (verified by dumping the accessibility
-   tree). `SkyCastUITests` therefore queries by label scoped to `app.tabBars`, which is
-   unambiguous. Android needs the opposite, `testTag`, because Compose offers no
-   equivalent scoping.
-2. **iOS requires iOS 26.** Liquid Glass is an iOS 26 API surface, so the deployment
-   target is 26.0 and devices below that are excluded. This is a deliberate trade-off for
-   the design language; lowering the target means giving up Liquid Glass.
-3. **Compose Material3 is an alpha (`1.5.0-alpha14`).** Material 3 Expressive is
-   Kotlin-`internal` in 1.4.0, the newest stable release, so there is no stable route to
-   it. Pinned to an exact alpha for reproducibility. That is also why the Compose BOM sits
-   at 2026.01.01 rather than the newest.
-4. **AGP is pinned to 8.x.** Moving to AGP 9 would force detekt, the ktlint Gradle plugin
-   and Gradle itself onto versions whose mutual compatibility is unverified here. Hilt is
-   therefore pinned to 2.58, the newest release that still works with AGP 8. Recorded in
-   `android/gradle/libs.versions.toml`.
-5. **No release signing configuration.** `assembleRelease` uses the debug signing config so
-   it is runnable locally and in CI. A real keystore would be required for Play Store
-   distribution.
-6. **English only.** Strings are externalised, but no translations exist and
-   `androidResources.localeFilters` ships only `en`.
-7. **Four of the five Android navigation UI tests fail.** `NavigationFlowTest` disables Compose's
-   `mainClock.autoAdvance` to get past the indefinite `LoadingIndicator` animation, and that also
-   stops coroutines dispatched on Compose's UI clock from being delivered, so screens fed by a
-   `StateFlow` never leave their loading state and the assertions time out. The failures predate
-   this work: the same tests fail identically at an earlier commit, verified in a separate
-   worktree. Two of the causes *are* fixed, the suite no longer hangs for twenty minutes with no
-   output, and it no longer clicks a navigation bar that has not finished animating in, but the
-   remaining four need the suite reworked to seed a cache so no indefinite loader appears, at which
-   point auto-advance can be left on. Every other test passes: the JVM unit suites, the iOS unit and
-   UI suites, and the eight Room migration and DAO instrumented tests.
+- Only up to 10 saved locations are supported.
+- The moon phase screen only shows today's phase and the dates of the next four
+  principal phases. It does not let the user browse future days individually.
+- No push notifications for severe weather.
+- English only, no other languages are supported.
 
 ### Future improvements
 
-- **Widgets**, WidgetKit and Glance widgets showing the primary location's current
-  temperature. Both platforms' data layers already support this.
-- **Background refresh**, `BGAppRefreshTask` on iOS, `WorkManager` on Android, so the
-  cache is warm before the user opens the app.
-- **Severe weather notifications** for saved locations.
-- **Location permission (opt-in)** to offer "weather here" alongside named places.
-- **Keychain / EncryptedSharedPreferences** if anything sensitive is ever stored.
-- **Snapshot testing** to catch unintended visual regressions in the design system.
-- **Localisation**, Dhivehi and Arabic, including RTL layout verification.
-
----
-
-## Documentation
-
-| Document | Contents |
-| --- | --- |
-| [`docs/licensing.md`](docs/licensing.md) | Every dependency and its licence (MO4) |
-| [`docs/reflection.md`](docs/reflection.md) | Reflection on process, platforms and trends (MO4) |
-| [`docs/user-testing/`](docs/user-testing/) | The user-testing kit for the 25% assessment component |
-| [`docs/screenshots/README.md`](docs/screenshots/README.md) | What each screenshot must show, and how to regenerate them |
-
----
-
-## Licence and attribution
-
-This project is released under the [MIT Licence](LICENSE).
-
-Weather data is provided by [OpenWeather](https://openweathermap.org) and is subject to
-their [terms of service](https://openweathermap.org/terms). OpenWeather data is licensed
-under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); the attribution here
-and the in-app About screen satisfy that requirement.
-
-Third-party dependency licences are listed in [`docs/licensing.md`](docs/licensing.md).
-
----
-
-*Ahmed Nauhaan Athif, UFCF7H-15-3 Mobile Applications, Villa College.*
+- Home screen widgets showing current temperature.
+- Background refresh so cached data stays up to date automatically.
+- Severe weather notifications.
+- The METAR and Moon screens do not have their own location picker. They always show
+  data for whichever location is currently selected on Home. So, a location picker or search for these two pages.
+- Date selection for moon phases
+- Location permission support to show weather for the user's current location.
+- Support for more than 10 saved locations.

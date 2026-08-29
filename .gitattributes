@@ -44,4 +44,4 @@ gradlew.bat text eol=crlf
 # ── Generated / vendored: collapse in PR diffs ───────────────
 *.pbxproj                          -diff linguist-generated=true
 gradle/wrapper/gradle-wrapper.jar  binary linguist-vendored=true
-docs/screenshots/**                linguist-documentation=true
+screenshots/**                                     linguist-documentation=true

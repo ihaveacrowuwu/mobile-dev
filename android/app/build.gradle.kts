@@ -11,7 +11,7 @@ plugins {
 
 /**
  * Reads the OpenWeather API key from `local.properties` (gitignored) and falls back
- * to the `OPEN_WEATHER_API_KEY` environment variable so CI can inject it.
+ * to the `OPEN_WEATHER_API_KEY` environment variable so a build server can inject it.
  *
  * Returns an empty string when neither is present. This is intentional: the build
  * must never fail because a secret is missing: the app detects the empty key at
@@ -72,7 +72,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug signing so that `assembleRelease` is runnable locally and in CI
+            // Debug signing so that `assembleRelease` is runnable on any machine
             // without a keystore. Replace with a real signing config before any
             // Play Store distribution.
             signingConfig = signingConfigs.getByName("debug")
@@ -120,7 +120,7 @@ android {
         disable += setOf(
             // Dependency currency is a deliberate, reviewed decision recorded in
             // gradle/libs.versions.toml, not something an upstream release should be
-            // able to turn into a red CI build.
+            // able to turn into a failing build.
             "GradleDependency",
             "NewerVersionAvailable",
             // AGP is pinned to 8.x. AGP 9 would force detekt, ktlint-gradle and Gradle itself
@@ -142,7 +142,7 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        // Enable with -PwarningsAsErrors=true; CI does exactly that.
+        // Enable with -PwarningsAsErrors=true.
         allWarningsAsErrors.set(providers.gradleProperty("warningsAsErrors").orNull.toBoolean())
         freeCompilerArgs.addAll(
             // Material 3 Expressive is adopted project-wide, so the opt-in lives here rather than
@@ -156,7 +156,7 @@ kotlin {
             // Opt in to Kotlin's future default: an annotation on a constructor
             // parameter also applies to the generated field. Without this, every
             // @StringRes / @Serializable constructor property emits a migration
-            // warning, which CI turns into an error.
+            // warning, which -PwarningsAsErrors=true turns into an error.
             "-Xannotation-default-target=param-property",
         )
     }

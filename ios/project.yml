@@ -53,11 +53,11 @@ settings:
     CLANG_ENABLE_MODULES: true
     # Treat warnings as errors so the codebase cannot drift.
     GCC_TREAT_WARNINGS_AS_ERRORS: true
-    SWIFT_TREAT_WARNINGS_AS_ERRORS: false # flipped on in CI only, see .github/workflows
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: false # flip on to make the build fail on any warning
     CODE_SIGN_STYLE: Automatic
     # Scoped to the simulator SDK, deliberately. Unscoped: which is how this started, it also
     # forbids signing for a *device*, so `Any iOS Device` failed outright and the app could not be
-    # put on a phone at all. Scoping keeps simulator and CI builds identity-free while letting a
+    # put on a phone at all. Scoping keeps simulator builds identity-free while letting a
     # device build sign automatically with whatever team the developer has selected.
     "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": false
     "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": false
@@ -123,7 +123,7 @@ targets:
     platform: iOS
     sources:
       # Includes SkyCastTests/Fixtures/*.json: real captured OpenWeather responses, shared
-      # byte-for-byte with android/app/src/test/resources/fixtures/. XcodeGen classifies
+      # byte-for-byte with android/core/data/src/test/resources/fixtures/. XcodeGen classifies
       # non-source files as resources automatically and flattens them into the bundle root,
       # which is where Bundle(for:).url(forResource:) looks. Do NOT also declare the folder
       # explicitly: that copies every fixture twice.

@@ -181,5 +181,5 @@ else
     "$RED" "$problems" "$warnings" "$RESET"
 fi
 
-# Exit non-zero only for real problems, so CI can gate on this.
+# Exit non-zero only for real problems, so a script can gate on this.
 (( problems == 0 ))

@@ -65,7 +65,7 @@ cat > .git/hooks/pre-commit <<'HOOK'
 #
 # Managed by scripts/bootstrap.sh: re-run it to restore this hook.
 #
-# Fast checks only. The full suite runs in CI; a slow hook just gets bypassed
+# Fast checks only. The full suite runs via scripts/test.sh; a slow hook just gets bypassed
 # with --no-verify, which is worse than no hook at all.
 
 set -uo pipefail

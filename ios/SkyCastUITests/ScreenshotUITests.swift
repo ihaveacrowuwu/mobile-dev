@@ -9,7 +9,9 @@ import XCTest
 /// does not write files into the repository. Run these explicitly:
 ///
 /// ```
-/// ./scripts/screenshots-ios.sh
+/// xcodebuild test -project SkyCast.xcodeproj -scheme SkyCast \
+///   -destination 'platform=iOS Simulator,name=iPhone 17' \
+///   -only-testing:SkyCastUITests/ScreenshotUITests
 /// ```
 ///
 /// ## How the output path is found
@@ -34,12 +36,12 @@ final class ScreenshotUITests: XCTestCase {
         if let path = ProcessInfo.processInfo.environment["SKYCAST_SCREENSHOT_DIR"] {
             return URL(fileURLWithPath: path, isDirectory: true)
         }
-        // …/ios/SkyCastUITests/ScreenshotUITests.swift → …/docs/screenshots/ios
+        // …/ios/SkyCastUITests/ScreenshotUITests.swift → …/screenshots/ios
         return URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // SkyCastUITests
             .deletingLastPathComponent() // ios
             .deletingLastPathComponent() // repository root
-            .appendingPathComponent("docs/screenshots/ios", isDirectory: true)
+            .appendingPathComponent("screenshots/ios", isDirectory: true)
     }
 
     override func setUpWithError() throws {

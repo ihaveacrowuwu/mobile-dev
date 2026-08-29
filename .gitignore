@@ -79,6 +79,8 @@ captures/
 .externalNativeBuild/
 .cxx/
 *.apk
+# The shipped APK IS committed on purpose, so testers can install without a toolchain.
+!dist/*.apk
 *.aab
 *.ap_
 *.dex

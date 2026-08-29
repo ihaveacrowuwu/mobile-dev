@@ -2,7 +2,7 @@
 #
 # lint.sh: every linter, both platforms.
 #
-#   ./scripts/lint.sh          check only (what CI runs)
+#   ./scripts/lint.sh          check only
 #   ./scripts/lint.sh --fix    autofix what can be autofixed, then check
 #
 # Runs every linter even if an earlier one fails, so one pass surfaces every

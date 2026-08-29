@@ -55,7 +55,7 @@ subprojects {
 }
 
 // Convenience: `./gradlew qualityCheck` runs every static check without needing
-// a connected device. Used by CI and by scripts/lint.sh.
+// a connected device. Used by scripts/lint.sh.
 tasks.register("qualityCheck") {
     group = "verification"
     description = "Runs ktlint, detekt, Android Lint and JVM unit tests."

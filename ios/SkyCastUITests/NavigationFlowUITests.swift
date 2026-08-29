@@ -106,7 +106,7 @@ final class NavigationFlowUITests: XCTestCase {
     /// location comes from the debug seeder and is read from SwiftData, so this route is
     /// deterministic offline.
     ///
-    /// The day-detail push is verified manually and captured in `docs/screenshots/`.
+    /// The day-detail push is verified manually and captured in `screenshots/`.
     func testLocationDetailPushesAndBackReturns() {
         tabButton("Locations").tap()
 
